@@ -941,8 +941,8 @@ const FBCFG={apiKey:"AIzaSyAuB9aEx14hPmOJuOjAvLtFgR630ThlRsE",authDomain:"accra-
 const FBNET={on:false,db:null,last:0,timer:null,pending:null};
 function fbKey(id){return String(id||'anon').replace(/[.#$\[\]\/]/g,'_').slice(0,60)||'anon'}
 function fbServerTime(){return (window.firebase&&firebase.database)?firebase.database.ServerValue.TIMESTAMP:Date.now()}
-function fbAttach(db){FBNET.db=db;FBNET.on=true;db.ref('players').on('value',snap=>{const v=snap.val()||{},list=[],me=fbKey(PID);for(const k of Object.keys(v)){list.push({peer:k,kind:'viewer',isMe:k===me,presence:v[k]||{}})}onPeersChange(list)})}
-function fbSend(o){FBNET.last=Date.now();const ref=FBNET.db.ref('players/'+fbKey(PID));ref.onDisconnect().remove();ref.set(Object.assign({},o,{t:fbServerTime()})).catch(()=>{})}
+function fbAttach(db){FBNET.db=db;FBNET.on=true;db.ref('players').on('value',snap=>{const v=snap.val()||{},list=[],me=fbKey(PID);for(const k of Object.keys(v)){list.push({peer:k,kind:'viewer',isMe:k===me,presence:v[k]||{}})}onPeersChange(list)},err=>toast('Online error: '+((err&&err.message)||err)))}
+function fbSend(o){FBNET.last=Date.now();const ref=FBNET.db.ref('players/'+fbKey(PID));ref.onDisconnect().remove();const clean=JSON.parse(JSON.stringify(Object.assign({},o,{t:fbServerTime()})));ref.set(clean).catch(e=>toast('Online send failed: '+((e&&e.message)||e)))}
 FBNET.presence=function(o){if(!FBNET.on)return Promise.resolve();FBNET.pending=o;if(!FBNET.timer){FBNET.timer=setTimeout(()=>{FBNET.timer=null;fbSend(FBNET.pending)},Math.max(0,250-(Date.now()-FBNET.last)))}return Promise.resolve()};
 function NETP(o){return room?room.presence(o):FBNET.presence(o)}
 function fbStart(){if(window.claude||FBNET.db)return;const base='https://www.gstatic.com/firebasejs/10.12.2/';const load=src=>new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=rej;document.head.appendChild(sc)});load(base+'firebase-app-compat.js').then(()=>load(base+'firebase-database-compat.js')).then(()=>{firebase.initializeApp(FBCFG);fbAttach(firebase.database());toast('Online play is on')}).catch(()=>{})}
