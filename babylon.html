@@ -36,23 +36,47 @@ const ground=BABYLON.MeshBuilder.CreateGround('g',{width:600,height:600},scene);
 const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor:new BABYLON.Color3(0,0,0)});gMat.diffuseTexture=noiseTex('#6f9448',['#5e8038','#80a655','#6a8a40','#a3a068'],5000);gMat.diffuseTexture.uScale=gMat.diffuseTexture.vScale=120;
 ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
 const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
-function road(x,z,len,ax){const r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?8:len,height:.05,depth:ax?len:8},scene);r.position.set(x,.03,z);r.material=roadM;r.receiveShadows=true;
- [-1,1].forEach(q=>box(ax?1.6:len,.22,ax?len:1.6,ax?x+q*5.2:x,.11,ax?z:z+q*5.2,'#b5b0a5',false));
- let src=null;for(let t=-len/2+4;t<len/2;t+=8){const px=ax?x:x+t,pz=ax?z+t:z;let d;
-  if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:3,height:.02,depth:ax?3:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');d.position.set(px,.07,pz);d.isPickable=false}}
-road(0,14,600,0);road(-30,0,600,1);road(60,0,600,1);
+// ===== CITY: 5 x 5 street grid, 7 districts =====
+const R=[-150,-70,0,70,150],VX=110,VZ=-95;
+function road(c,ax){const L=330,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?8:L,height:.05,depth:ax?L:8},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
+ const pts=[-165];R.forEach(q=>pts.push(q-11,q+11));pts.push(165);
+ for(let i=0;i<pts.length;i+=2){const a=pts[i],b=pts[i+1];if(b-a<2)continue;[-1,1].forEach(q=>box(ax?1.6:b-a,.22,ax?b-a:1.6,ax?c+q*5.2:(a+b)/2,.11,ax?(a+b)/2:c+q*5.2,'#b5b0a5',false))}
+ let src=null;for(let t=-160;t<165;t+=8){if(R.some(q=>Math.abs(t-q)<9))continue;let d;
+  if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:3,height:.02,depth:ax?3:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');
+  d.position.set(ax?c:t,.08,ax?t:c);d.isPickable=false}}
+R.forEach(c=>{road(c,0);road(c,1)});
+function signText(t,x,z){const dt=new BABYLON.DynamicTexture('st',{width:512,height:128},scene,false),c=dt.getContext();c.fillStyle='#17191c';c.fillRect(0,0,512,128);c.fillStyle='#c9a54a';c.font='bold 52px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(t,256,66);dt.update();
+ const m=BABYLON.MeshBuilder.CreatePlane('sg',{width:22,height:5.5},scene);m.position.set(x,32,z);m.billboardMode=BABYLON.Mesh.BILLBOARDMODE_ALL;m.isPickable=false;m.material=Object.assign(new BABYLON.StandardMaterial('sm',scene),{diffuseTexture:dt,emissiveTexture:dt,disableLighting:true,backFaceCulling:false,fogEnabled:false})}
+const facM={};
+function facMat(col,vs,us){const k=col+vs+us;if(facM[k])return facM[k];const t=new BABYLON.DynamicTexture('f',128,scene,true),c=t.getContext();c.fillStyle=col;c.fillRect(0,0,128,128);
+ [[14,18],[78,18],[14,76],[78,76]].forEach(a=>{c.fillStyle='#e8e2d0';c.fillRect(a[0]-3,a[1]-3,42,44);c.fillStyle='#1d3042';c.fillRect(a[0],a[1],36,38);c.fillStyle='rgba(255,255,255,.28)';c.fillRect(a[0],a[1],36,11)});
+ t.update();t.uScale=us;t.vScale=vs;t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;const m=Object.assign(new BABYLON.StandardMaterial('fm',scene),{specularColor:new BABYLON.Color3(.05,.05,.05)});m.diffuseTexture=t;return facM[k]=m}
+function bldg(cx,cz,w,d,h,col){const m=BABYLON.MeshBuilder.CreateBox('bd',{width:w,height:h,depth:d},scene);m.position.set(cx,h/2,cz);m.material=facMat(col,Math.max(1,Math.round(h/6)),Math.max(1,Math.round(w/7)));m.checkCollisions=true;m.receiveShadows=true;sg.addShadowCaster(m);
+ const r=BABYLON.MeshBuilder.CreateBox('rf',{width:w+.6,height:.5,depth:d+.6},scene);r.position.set(cx,h+.25,cz);r.material=mat('#7b4b33');r.isPickable=false;sg.addShadowCaster(r);m.freezeWorldMatrix();r.freezeWorldMatrix()}
+const PAL=['#e3d8c0','#d6c4a0','#c9b79a','#b8c4c0','#d9cbb6','#cfa98b','#e6e0d4','#a9b8a8'];
+const DG=[['Airport City','Osu','Osu','Labadi'],['Airport City','Makola','Makola','Labadi'],['East Legon','Makola','Makola','Central Accra'],['East Legon','Amoamah Estate','Amoamah Estate','Central Accra']];
+const STY={'Airport City':{w:14,h:[24,42],c:['#5b8aa8','#4a6f8a','#9dbbd0','#c4ccd4'],p:18},'Osu':{w:12,h:[10,16],c:PAL,p:17},'Makola':{w:9,h:[4,6],c:['#f0c27a','#c8553d','#3f8f7a','#2456a6','#e9f1f2','#d9822b'],p:12},'Central Accra':{w:16,h:[8,12],c:['#e8e6df','#f0e6d0','#dccb96'],p:20},'Labadi':{w:14,h:[7,12],c:['#f0d9a0','#e0e0d0','#d8c8a0'],p:18},'East Legon':{w:16,h:[6,8],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:22},'Amoamah Estate':{w:12,h:[5,6],c:['#e2b07a','#9fc5a8','#c9cfd6','#f0c9a8','#b7c4d0'],p:16}};
+const signed={};
+for(let i=0;i<4;i++)for(let j=0;j<4;j++){const nm=DG[i][j],S=STY[nm],x0=R[i]+12,x1=R[i+1]-12,z0=R[j]+12,z1=R[j+1]-12,nx=Math.max(1,Math.floor((x1-x0)/S.p)),nz=Math.max(1,Math.floor((z1-z0)/S.p));
+ for(let a=0;a<nx;a++)for(let b=0;b<nz;b++){const cx=x0+(a+.5)*(x1-x0)/nx,cz=z0+(b+.5)*(z1-z0)/nz;
+  if(Math.hypot(cx-VX,cz-VZ)<24)continue;                 // keep the villa plot free
+  const h=S.h[0]+Math.random()*(S.h[1]-S.h[0]),w=S.w-Math.random()*2;bldg(cx,cz,w,w*(.8+Math.random()*.2),h,S.c[(a+b*3+i)%S.c.length])}
+ if(!signed[nm]){signed[nm]=1;signText(nm,(x0+x1)/2,(z0+z1)/2)}}
+// beach and sea at the south edge (Labadi)
+box(330,.06,36,0,.03,184,'#e3cf9b',false);
+{const sea=BABYLON.MeshBuilder.CreateBox('sea',{width:560,height:.06,depth:140},scene);sea.position.set(0,.05,272);sea.isPickable=false;sea.material=Object.assign(new BABYLON.StandardMaterial('seam',scene),{diffuseColor:C3('#3d7388'),specularColor:new BABYLON.Color3(.8,.8,.8),specularPower:90})}
 function tree(x,z){const t=BABYLON.MeshBuilder.CreateCylinder('t',{height:5,diameterTop:.4,diameterBottom:.7},scene);t.position.set(x,2.5,z);t.material=mat('#8b6b4a');t.checkCollisions=true;
  const c=BABYLON.MeshBuilder.CreateSphere('c',{diameter:4},scene);c.position.set(x,6,z);c.material=mat('#4a6b3a')}
-[[-14,0],[16,-2],[-22,-24],[24,-20],[-16,26],[18,28],[30,6]].forEach(p=>tree(p[0],p[1]));
+
 function palm(x,z){const h=6+Math.random()*3,t=BABYLON.MeshBuilder.CreateCylinder('t',{height:h,diameterTop:.35,diameterBottom:.6},scene);t.position.set(x,h/2,z);t.material=mat('#8b6b4a');t.checkCollisions=true;sg.addShadowCaster(t);
  const top=new BABYLON.TransformNode('pt',scene);top.position.set(x,h,z);
  for(let i=0;i<7;i++){const a=new BABYLON.TransformNode('pa',scene);a.parent=top;a.rotation.y=i/7*Math.PI*2;const f=BABYLON.MeshBuilder.CreateBox('f',{width:.7,height:.06,depth:3.4},scene);f.parent=a;f.position.set(0,-.35,1.5);f.rotation.x=.5;f.material=mat('#4a7a35');f.isPickable=false;sg.addShadowCaster(f)}}
-for(let x=-150;x<=150;x+=30)[-9.5,9.5].forEach(o=>{if(Math.abs(x+30)>6&&Math.abs(x-60)>6)palm(x+Math.random()*4,14+o)});
+R.forEach(c=>{for(let t=-156;t<=156;t+=36)[-7.6,7.6].forEach(o=>{if(R.some(r=>Math.abs(t-r)<14))return;palm(c+o,t);palm(t,c+o)})});
 // clouds
 const clouds=[],cloudM=Object.assign(new BABYLON.StandardMaterial('cl',scene),{emissiveColor:new BABYLON.Color3(1,1,1),disableLighting:true,alpha:.92,fogEnabled:false});
 for(let i=0;i<14;i++){const c=BABYLON.MeshBuilder.CreateSphere('cl',{diameter:1},scene);c.material=cloudM;c.scaling.set(30+Math.random()*30,6+Math.random()*3,16+Math.random()*10);c.position.set(Math.random()*400-200,85+Math.random()*25,Math.random()*400-200);c.isPickable=false;clouds.push(c)}
 // ---------- VILLA 26 x 18 m: attached garage (centre front), lounge, kitchen, office, master suite, cinema ----------
-const VX=0,VZ=-40;
+/* villa position set above */
 const vb=(lx,lz,sw,sd,col)=>box(sw,3.2,sd,VX+lx,1.6,VZ+lz,col||'#f3ecdc');
 vb(0,-9,26,.3);vb(-13,0,.3,18);vb(13,0,.3,18);vb(-8.25,9,9.5,.3);vb(8.25,9,9.5,.3);   // outer walls, 7 m garage opening in the front
 [-1,1].forEach(s=>{vb(s*3.5,-6.9,.3,4.2);vb(s*3.5,.5,.3,7.4);vb(s*3.5,7.4,.3,3.2)});    // side partitions with doorways
@@ -76,7 +100,7 @@ cam.lockedTarget=camT;cam.lowerRadiusLimit=3;cam.upperRadiusLimit=16;cam.lowerBe
 cam.checkCollisions=true;cam.collisionRadius=V(.5,.5,.5);cam.minZ=.2;cam.attachControl($('c'),true);
 // ---------- car (collider box + visual parts) ----------
 const car=BABYLON.MeshBuilder.CreateBox('car',{width:2.2,height:1.4,depth:4.6},scene);
-car.isVisible=false;car.position.set(7,.8,14);car.checkCollisions=true;car.ellipsoid=V(1.15,.7,1.15);
+car.isVisible=false;car.position.set(2,.8,22);car.checkCollisions=true;car.ellipsoid=V(1.15,.7,1.15);
 const mk=(o)=>Object.assign(new BABYLON.StandardMaterial('cm',scene),o);
 const carPaint=mk({diffuseColor:C3('#a3172b'),specularColor:new BABYLON.Color3(.7,.7,.7),specularPower:80}),glassM=mk({diffuseColor:C3('#10202c'),specularColor:new BABYLON.Color3(1,1,1),specularPower:120,alpha:.92}),lightM=mk({emissiveColor:C3('#fff6d6'),disableLighting:true}),tailM=mk({emissiveColor:C3('#ff2a2a'),disableLighting:true});
 function part(w,h,d,x,y,z,m){const q=BABYLON.MeshBuilder.CreateBox('cp',{width:w,height:h,depth:d},scene);q.parent=car;q.position.set(x,y,z);q.material=typeof m==='string'?mat(m):m;q.checkCollisions=false;q.isPickable=false;sg.addShadowCaster(q);return q}
