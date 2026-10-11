@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Accra Life · asset demo</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #8fd3ff; touch-action: none; }
+  #c { width: 100%; height: 100%; display: block; outline: none; }
+  #pad { position: fixed; left: 24px; bottom: 28px; width: 130px; height: 130px; border-radius: 50%;
+         background: rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.5); touch-action: none; }
+  #knob { position: absolute; left: 40px; top: 40px; width: 50px; height: 50px; border-radius: 50%; background: #e8b923; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="pad"><div id="knob"></div></div>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="accra-assets.js"></script>
+<script>
+const canvas = document.getElementById("c");
+const engine = new BABYLON.Engine(canvas, true);
+const scene = new BABYLON.Scene(engine);
+scene.clearColor = BABYLON.Color4.FromHexString("#8fd3ffff");
+
+// lights
+const hemi = new BABYLON.HemisphericLight("h", new BABYLON.Vector3(0, 1, 0), scene);
+hemi.intensity = 0.85;
+const sun = new BABYLON.DirectionalLight("s", new BABYLON.Vector3(-0.5, -1, 0.4), scene);
+sun.intensity = 0.6;
+
+// ground + road
+const ground = BABYLON.MeshBuilder.CreateGround("g", { width: 200, height: 200 }, scene);
+const gm = new BABYLON.StandardMaterial("gm", scene);
+gm.diffuseColor = BABYLON.Color3.FromHexString("#5fae4a"); gm.specularColor = BABYLON.Color3.Black();
+ground.material = gm;
+const rm = new BABYLON.StandardMaterial("rm", scene);
+rm.diffuseColor = BABYLON.Color3.FromHexString("#2b2b2e"); rm.specularColor = BABYLON.Color3.Black();
+const road = BABYLON.MeshBuilder.CreateBox("road", { width: 200, height: 0.06, depth: 8 }, scene);
+road.position.y = 0.03; road.material = rm;
+const dm = new BABYLON.StandardMaterial("dm", scene);
+dm.emissiveColor = BABYLON.Color3.White(); dm.disableLighting = true;
+for (let x = -95; x < 100; x += 6) {
+  const dash = BABYLON.MeshBuilder.CreateBox("d", { width: 2.5, height: 0.02, depth: 0.2 }, scene);
+  dash.position.set(x, 0.07, 0); dash.material = dm;
+}
+
+// buildings: south side faces the road (+Z), north side faces it (-Z)
+const A = AccraAssets;
+A.createHouse(scene, { position: [-18, 0, -14], rotY: 0, wall: "#f2c14e", roof: "#b5472c" });
+A.createHouse(scene, { position: [-4, 0, -15], rotY: 0, wall: "#7fc8b8", roof: "#4a5d7a", w: 9, d: 8 });
+A.createHouse(scene, { position: [12, 0, -14], rotY: 0, wall: "#f08a5d", roof: "#8a8a84", roofStyle: "flat", h: 3.6 });
+A.createHouse(scene, { position: [-14, 0, 14], rotY: Math.PI, wall: "#e9e3d3", roof: "#2f6f4f" });
+A.createHouse(scene, { position: [2, 0, 14], rotY: Math.PI, wall: "#d96a8a", roof: "#8a8a84", roofStyle: "flat", h: 4 });
+A.createKiosk(scene, { position: [20, 0, -8], rotY: 0, color: "#d9382c" });
+A.createKiosk(scene, { position: [-24, 0, 8], rotY: Math.PI, color: "#2f7fd0", awning: "#ffffff" });
+A.createTrotro(scene, { position: [-10, 0, 2], rotY: Math.PI / 2 });
+A.createTrotro(scene, { position: [14, 0, -2], rotY: -Math.PI / 2, color: "#f0f0f0", stripe: "#006b3f" });
+[[-24,-8],[-10,-8],[6,-9],[24,-14],[-24,10],[-8,9],[10,9]].forEach((p, i) =>
+  A.createTree(scene, { type: i % 2 ? "neem" : "palm", position: [p[0], 0, p[1]] }));
+
+// hero
+const hero = A.createCharacter(scene, { shirt: "#e8b923" });
+hero.root.position.set(0, 0, -6);
+
+// camera
+const cam = new BABYLON.ArcRotateCamera("cam", -Math.PI / 2, 1.0, 16, hero.root.position.clone(), scene);
+cam.lowerRadiusLimit = 6; cam.upperRadiusLimit = 32; cam.upperBetaLimit = 1.35;
+cam.attachControl(canvas, true);
+
+// input: keyboard + on-screen joystick
+const keys = {};
+addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+let jx = 0, jy = 0;
+const pad = document.getElementById("pad"), knob = document.getElementById("knob");
+function joy(e) {
+  const r = pad.getBoundingClientRect();
+  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  const m = Math.hypot(dx, dy), max = 45;
+  if (m > max) { dx *= max / m; dy *= max / m; }
+  knob.style.transform = `translate(${dx}px,${dy}px)`;
+  jx = dx / max; jy = -dy / max;
+}
+pad.addEventListener("pointerdown", e => { pad.setPointerCapture(e.pointerId); joy(e); });
+pad.addEventListener("pointermove", e => { if (pad.hasPointerCapture(e.pointerId)) joy(e); });
+pad.addEventListener("pointerup", () => { jx = jy = 0; knob.style.transform = ""; });
+
+// game loop
+scene.onBeforeRenderObservable.add(() => {
+  const dt = engine.getDeltaTime() / 1000;
+  let ix = jx + ((keys["d"] || keys["arrowright"]) ? 1 : 0) - ((keys["a"] || keys["arrowleft"]) ? 1 : 0);
+  let iy = jy + ((keys["w"] || keys["arrowup"]) ? 1 : 0) - ((keys["s"] || keys["arrowdown"]) ? 1 : 0);
+  const len = Math.hypot(ix, iy);
+  if (len > 1) { ix /= len; iy /= len; }
+  const moving = len > 0.1;
+  hero.setMoving(moving);
+  if (moving) {
+    const fx = -Math.cos(cam.alpha), fz = -Math.sin(cam.alpha);   // camera forward on ground
+    const dx = fx * iy + fz * ix, dz = fz * iy - fx * ix;         // forward*iy + right*ix
+    hero.root.position.x += dx * 6 * dt;
+    hero.root.position.z += dz * 6 * dt;
+    hero.root.rotation.y = Math.atan2(dx, dz);
+  }
+  cam.target = BABYLON.Vector3.Lerp(cam.target, hero.root.position.add(new BABYLON.Vector3(0, 1.5, 0)), 0.15);
+});
+
+engine.runRenderLoop(() => scene.render());
+addEventListener("resize", () => engine.resize());
+</script>
+</body>
+</html>
