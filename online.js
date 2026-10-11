@@ -4,7 +4,7 @@
  // outfit styles change the real geometry: 0 tee + trousers, 1 suit + tie, 2 dress, 3 hoodie + shorts. Hair: 0 bald, 1 fade, 2 afro, 3 dreads, 4 braids
  function human(l){
   const root=new BABYLON.TransformNode('hu',scene);
-  const P=(k,o,x,y,z,c,par)=>{const m=BABYLON.MeshBuilder['Create'+k]('hp',o,scene);m.parent=par||root;m.position.set(x,y,z);m.material=mat(c);m.checkCollisions=false;m.isPickable=false;return m};
+  const P=(k,o,x,y,z,c,par)=>{const m=BABYLON.MeshBuilder['Create'+k]('hp',o,scene);m.parent=par||root;m.position.set(x,y,z);m.material=mat(c);m.checkCollisions=false;m.isPickable=false;if(typeof sg!=='undefined')sg.addShadowCaster(m);return m};
   const piv=(x,y)=>{const t=new BABYLON.TransformNode('pv',scene);t.parent=root;t.position.set(x,y,0);return t};
   const sk=SK[l.skin%6],ts=l.style%4==1?'#1c1e21':TP[l.top%8],pn=PN[l.pants%6],st=l.style%4,hc=HC[l.hair%4];
   P('Capsule',{height:.8,radius:.2},0,1.12,0,ts);

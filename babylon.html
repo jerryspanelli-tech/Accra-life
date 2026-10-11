@@ -22,19 +22,35 @@ html,body{margin:0;height:100%;overflow:hidden;background:#9fd3ee;touch-action:n
 const $=id=>document.getElementById(id),V=(x,y,z)=>new BABYLON.Vector3(x,y,z),C3=h=>BABYLON.Color3.FromHexString(h);
 const engine=new BABYLON.Engine($('c'),true,{adaptToDeviceRatio:true});
 const scene=new BABYLON.Scene(engine);
-scene.clearColor=new BABYLON.Color4(.62,.83,.93,1);scene.collisionsEnabled=true;
-scene.fogMode=BABYLON.Scene.FOGMODE_LINEAR;scene.fogColor=C3('#cfeaf7');scene.fogStart=90;scene.fogEnd=280;
-const hemi=new BABYLON.HemisphericLight('h',V(0,1,0),scene);hemi.intensity=.85;hemi.groundColor=C3('#6b8f4e');
-const sun=new BABYLON.DirectionalLight('s',V(-.5,-1,-.4),scene);sun.intensity=.9;
+scene.clearColor=new BABYLON.Color4(.5,.71,.9,1);scene.collisionsEnabled=true;
+const ipc=scene.imageProcessingConfiguration;ipc.toneMappingEnabled=true;ipc.toneMappingType=BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;ipc.exposure=1.05;ipc.contrast=1.15;
+scene.fogMode=BABYLON.Scene.FOGMODE_LINEAR;scene.fogColor=C3('#cfe3f2');scene.fogStart=110;scene.fogEnd=300;
+const hemi=new BABYLON.HemisphericLight('h',V(0,1,0),scene);hemi.intensity=.75;hemi.groundColor=C3('#8d8a80');hemi.diffuse=C3('#dfeeff');
+const sun=new BABYLON.DirectionalLight('s',V(-.5,-1,-.4),scene);sun.intensity=1.3;sun.diffuse=C3('#fff1d6');sun.position=V(40,80,32);sun.autoUpdateExtends=false;sun.shadowMinZ=1;sun.shadowMaxZ=220;sun.orthoLeft=-55;sun.orthoRight=55;sun.orthoTop=55;sun.orthoBottom=-55;
+const sg=new BABYLON.ShadowGenerator(1024,sun);sg.usePercentageCloserFiltering=true;sg.bias=.0008;sg.normalBias=.02;sg.darkness=.35;
 const mats={};
 const mat=h=>mats[h]||(mats[h]=Object.assign(new BABYLON.StandardMaterial('m'+h,scene),{diffuseColor:C3(h),specularColor:new BABYLON.Color3(.05,.05,.05)}));
 // every solid mesh gets checkCollisions: players, cars and the camera cannot pass through it
-function box(w,h,d,x,y,z,col,solid){const m=BABYLON.MeshBuilder.CreateBox('b',{width:w,height:h,depth:d},scene);m.position.set(x,y,z);m.material=mat(col);m.checkCollisions=solid!==false;return m}
-const ground=BABYLON.MeshBuilder.CreateGround('g',{width:600,height:600},scene);ground.material=mat('#7f9a4f');ground.checkCollisions=true;
-box(600,.04,8,0,.03,14,'#3a3a3d',false);box(8,.04,600,-30,.03,0,'#3a3a3d',false);
+function box(w,h,d,x,y,z,col,solid){const m=BABYLON.MeshBuilder.CreateBox('b',{width:w,height:h,depth:d},scene);m.position.set(x,y,z);m.material=mat(col);m.checkCollisions=solid!==false;m.receiveShadows=true;if(h>.1)sg.addShadowCaster(m);return m}
+const ground=BABYLON.MeshBuilder.CreateGround('g',{width:600,height:600},scene);function noiseTex(base,sp,n){const t=new BABYLON.DynamicTexture('nt',256,scene,true),c=t.getContext();c.fillStyle=base;c.fillRect(0,0,256,256);for(let i=0;i<n;i++){c.fillStyle=sp[i%sp.length];const q=1+Math.random()*3;c.fillRect(Math.random()*256,Math.random()*256,q,q)}t.update();t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;return t}
+const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor:new BABYLON.Color3(0,0,0)});gMat.diffuseTexture=noiseTex('#6f9448',['#5e8038','#80a655','#6a8a40','#a3a068'],5000);gMat.diffuseTexture.uScale=gMat.diffuseTexture.vScale=120;
+ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
+const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
+function road(x,z,len,ax){const r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?8:len,height:.05,depth:ax?len:8},scene);r.position.set(x,.03,z);r.material=roadM;r.receiveShadows=true;
+ [-1,1].forEach(q=>box(ax?1.6:len,.22,ax?len:1.6,ax?x+q*5.2:x,.11,ax?z:z+q*5.2,'#b5b0a5',false));
+ let src=null;for(let t=-len/2+4;t<len/2;t+=8){const px=ax?x:x+t,pz=ax?z+t:z;let d;
+  if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:3,height:.02,depth:ax?3:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');d.position.set(px,.07,pz);d.isPickable=false}}
+road(0,14,600,0);road(-30,0,600,1);road(60,0,600,1);
 function tree(x,z){const t=BABYLON.MeshBuilder.CreateCylinder('t',{height:5,diameterTop:.4,diameterBottom:.7},scene);t.position.set(x,2.5,z);t.material=mat('#8b6b4a');t.checkCollisions=true;
  const c=BABYLON.MeshBuilder.CreateSphere('c',{diameter:4},scene);c.position.set(x,6,z);c.material=mat('#4a6b3a')}
 [[-14,0],[16,-2],[-22,-24],[24,-20],[-16,26],[18,28],[30,6]].forEach(p=>tree(p[0],p[1]));
+function palm(x,z){const h=6+Math.random()*3,t=BABYLON.MeshBuilder.CreateCylinder('t',{height:h,diameterTop:.35,diameterBottom:.6},scene);t.position.set(x,h/2,z);t.material=mat('#8b6b4a');t.checkCollisions=true;sg.addShadowCaster(t);
+ const top=new BABYLON.TransformNode('pt',scene);top.position.set(x,h,z);
+ for(let i=0;i<7;i++){const a=new BABYLON.TransformNode('pa',scene);a.parent=top;a.rotation.y=i/7*Math.PI*2;const f=BABYLON.MeshBuilder.CreateBox('f',{width:.7,height:.06,depth:3.4},scene);f.parent=a;f.position.set(0,-.35,1.5);f.rotation.x=.5;f.material=mat('#4a7a35');f.isPickable=false;sg.addShadowCaster(f)}}
+for(let x=-150;x<=150;x+=30)[-9.5,9.5].forEach(o=>{if(Math.abs(x+30)>6&&Math.abs(x-60)>6)palm(x+Math.random()*4,14+o)});
+// clouds
+const clouds=[],cloudM=Object.assign(new BABYLON.StandardMaterial('cl',scene),{emissiveColor:new BABYLON.Color3(1,1,1),disableLighting:true,alpha:.92,fogEnabled:false});
+for(let i=0;i<14;i++){const c=BABYLON.MeshBuilder.CreateSphere('cl',{diameter:1},scene);c.material=cloudM;c.scaling.set(30+Math.random()*30,6+Math.random()*3,16+Math.random()*10);c.position.set(Math.random()*400-200,85+Math.random()*25,Math.random()*400-200);c.isPickable=false;clouds.push(c)}
 // ---------- VILLA 26 x 18 m: attached garage (centre front), lounge, kitchen, office, master suite, cinema ----------
 const VX=0,VZ=-40;
 const vb=(lx,lz,sw,sd,col)=>box(sw,3.2,sd,VX+lx,1.6,VZ+lz,col||'#f3ecdc');
@@ -61,9 +77,16 @@ cam.checkCollisions=true;cam.collisionRadius=V(.5,.5,.5);cam.minZ=.2;cam.attachC
 // ---------- car (collider box + visual parts) ----------
 const car=BABYLON.MeshBuilder.CreateBox('car',{width:2.2,height:1.4,depth:4.6},scene);
 car.isVisible=false;car.position.set(7,.8,14);car.checkCollisions=true;car.ellipsoid=V(1.15,.7,1.15);
-function part(w,h,d,x,y,z,col){const m=BABYLON.MeshBuilder.CreateBox('cp',{width:w,height:h,depth:d},scene);m.parent=car;m.position.set(x,y,z);m.material=mat(col);m.checkCollisions=false;return m}
-part(2,.8,4.4,0,-.1,0,'#a3172b');part(1.8,.7,2.2,0,.65,-.3,'#1b2a35');
-[[-1,1.5],[1,1.5],[-1,-1.5],[1,-1.5]].forEach(p=>part(.3,.8,.8,p[0]*1.05,-.4,p[1],'#151515'));
+const mk=(o)=>Object.assign(new BABYLON.StandardMaterial('cm',scene),o);
+const carPaint=mk({diffuseColor:C3('#a3172b'),specularColor:new BABYLON.Color3(.7,.7,.7),specularPower:80}),glassM=mk({diffuseColor:C3('#10202c'),specularColor:new BABYLON.Color3(1,1,1),specularPower:120,alpha:.92}),lightM=mk({emissiveColor:C3('#fff6d6'),disableLighting:true}),tailM=mk({emissiveColor:C3('#ff2a2a'),disableLighting:true});
+function part(w,h,d,x,y,z,m){const q=BABYLON.MeshBuilder.CreateBox('cp',{width:w,height:h,depth:d},scene);q.parent=car;q.position.set(x,y,z);q.material=typeof m==='string'?mat(m):m;q.checkCollisions=false;q.isPickable=false;sg.addShadowCaster(q);return q}
+part(2,.55,4.4,0,-.12,0,carPaint);part(1.9,.28,1.5,0,.27,1.35,carPaint);part(1.9,.32,1,0,.22,-1.65,carPaint);
+part(1.76,.66,2.1,0,.7,-.25,glassM);part(1.6,.08,1.8,0,1.06,-.25,carPaint);
+[-.65,.65].forEach(x=>{part(.5,.16,.06,x,.2,2.22,lightM);part(.5,.14,.06,x,.2,-2.22,tailM)});
+part(1.8,.2,.1,0,-.3,2.25,'#1a1a1a');part(1.8,.2,.1,0,-.3,-2.25,'#1a1a1a');
+const wheels=[];[[-1,1.4],[1,1.4],[-1,-1.4],[1,-1.4]].forEach(p=>{const pv=new BABYLON.TransformNode('wp',scene);pv.parent=car;pv.position.set(p[0]*1.02,-.4,p[1]);
+ const t=BABYLON.MeshBuilder.CreateCylinder('w',{height:.3,diameter:.82},scene);t.parent=pv;t.rotation.z=Math.PI/2;t.material=mat('#151515');t.isPickable=false;t.checkCollisions=false;
+ const r=BABYLON.MeshBuilder.CreateCylinder('wr',{height:.32,diameter:.45},scene);r.parent=pv;r.rotation.z=Math.PI/2;r.material=mat('#c9ccd1');r.isPickable=false;r.checkCollisions=false;wheels.push(pv)});
 // ---------- input ----------
 let jx=0,jy=0,jid=null,vy=0,spd=0,heading=0,driving=false,jump=0;
 const joy=$('joy'),kn=$('knob');
@@ -88,7 +111,7 @@ function update(dt){
   const want=V(Math.sin(heading)*spd*dt,0,Math.cos(heading)*spd*dt),before=car.position.clone();
   car.moveWithCollisions(want);car.position.y=.8;
   if(want.length()>.02&&BABYLON.Vector3.Distance(before,car.position)<want.length()*.5)spd*=-.3;   // hit a wall: bounce back
-  focus=car.position;$('spd').style.display='block';$('spd').textContent=Math.round(Math.abs(spd)*3.6)+' km/h';
+  wheels.forEach(w=>{w.rotation.x+=spd*dt/.4});focus=car.position;$('spd').style.display='block';$('spd').textContent=Math.round(Math.abs(spd)*3.6)+' km/h';
  }else{
   $('spd').style.display='none';
   const f=V(-Math.cos(cam.alpha),0,-Math.sin(cam.alpha)),r=V(f.z,0,-f.x),mv=f.scale(-iy).add(r.scale(ix));
@@ -100,6 +123,7 @@ function update(dt){
   focus=player.position;
  }
  camT.position.set(focus.x,focus.y+(driving?.9:.7),focus.z);
+ sun.position.set(focus.x+40,80,focus.z+32);clouds.forEach(c=>{c.position.x+=dt*1.2;if(c.position.x>220)c.position.x=-220});
  const near=!driving&&BABYLON.Vector3.Distance(player.position,car.position)<6;
  $('act').style.display=(near||driving)?'block':'none';
  roof.setEnabled(!(Math.abs(focus.x-VX)<13&&Math.abs(focus.z-VZ)<9));   // roof hides while you are inside the villa
