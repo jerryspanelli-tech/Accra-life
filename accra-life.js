@@ -308,6 +308,32 @@
     { const pill = document.querySelector(".pill"); let taps = 0, tt = 0;
       if (pill) pill.addEventListener("click", () => { const t = Date.now(); taps = t - tt < 900 ? taps + 1 : 1; tt = t; if (taps >= 5) { taps = 0; if (prompt("Admin code") === ADMIN_CODE) adminPanel(); else note("Wrong code"); } }); }
 
+    // ---------- command bar: tap the "/" button (or press the / key) and type a command ----------
+    let isAdmin = false;
+    const cmdBox = document.createElement("div");
+    cmdBox.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);width:min(72vw,380px);display:none;gap:6px;z-index:70;background:rgba(28,30,33,.95);border:2px solid #c9a54a;border-radius:14px;padding:8px";
+    const cmdIn = document.createElement("input"), cmdGo = document.createElement("button"), cmdOpen = document.createElement("button");
+    cmdIn.placeholder = "Type a command, e.g. /help"; cmdIn.autocomplete = "off"; cmdIn.autocapitalize = "off"; cmdIn.spellcheck = false;
+    cmdIn.style.cssText = "flex:1;min-width:0;border:0;border-radius:10px;padding:9px 10px;font:16px system-ui;background:#fff;color:#111";
+    cmdGo.textContent = "Go"; cmdGo.style.cssText = "border:0;border-radius:10px;background:#c9a54a;color:#17191c;font:800 14px system-ui;padding:0 14px";
+    cmdOpen.textContent = "/"; cmdOpen.style.cssText = "position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 134px);width:34px;height:30px;border:0;border-radius:10px;background:rgba(28,30,33,.72);color:#c9a54a;font:800 18px system-ui;z-index:5";
+    cmdBox.appendChild(cmdIn); cmdBox.appendChild(cmdGo); document.body.appendChild(cmdBox); document.body.appendChild(cmdOpen);
+    const openCmd = () => { cmdBox.style.display = "flex"; cmdIn.value = "/"; cmdIn.focus(); };
+    const closeCmd = () => { cmdBox.style.display = "none"; cmdIn.blur(); };
+    function runCmd(raw) {
+      const parts = raw.trim().replace(/^\//, "").split(/\s+/), k = (parts[0] || "").toUpperCase();
+      if (k === ADMIN_CODE.toUpperCase()) { isAdmin = true; closeCmd(); return adminPanel(); }
+      if (k === "HOMES") { closeCmd(); return myHomes(); }
+      if (k === "LISTINGS") { closeCmd(); return allListings(); }
+      if (k === "GIVE" && isAdmin) { const a = Math.round(+parts[1]); if (!(a > 0)) return note("Use /give 5000"); earn(a, "Admin grant"); closeCmd(); return note("You received GH\u00A2" + a.toLocaleString()); }
+      if (k === "HELP") return note("/homes  /listings  /help" + (isAdmin ? "  /give 5000" : ""));
+      note("Unknown command. Try /help");
+    }
+    cmdOpen.onclick = () => (cmdBox.style.display === "flex" ? closeCmd() : openCmd());
+    cmdGo.onclick = () => runCmd(cmdIn.value);
+    cmdIn.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") runCmd(cmdIn.value); if (e.key === "Escape") closeCmd(); });
+    window.addEventListener("keydown", e => { if (e.key === "/" && cmdBox.style.display !== "flex") { e.preventDefault(); openCmd(); } });
+
     console.log("Accra life loaded:", LISTS.length, "property doors");
     note("Life systems on \u2014 watch your health, energy and hunger");
   } catch (err) { console.error("accra-life failed (game still runs):", err); try { K0 && K0.note("\u26A0 Life: " + err.message); } catch (e) {} }
