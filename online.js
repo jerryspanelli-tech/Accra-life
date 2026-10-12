@@ -20,7 +20,10 @@
   if(h==2)P('Sphere',{diameter:.84,segments:6},0,2.02,-.04,hc);
   if(h==3)for(let i=0;i<8;i++){const a=i/8*Math.PI*2;P('Cylinder',{height:.45,diameter:.06,tessellation:5},Math.sin(a)*.26,1.78,Math.cos(a)*.26-.04,hc)}
   if(h==4)[-.18,.18].forEach(x=>P('Cylinder',{height:.7,diameter:.07,tessellation:5},x,1.62,-.22,hc));
-  B(.07,.07,.05,-.11,1.92,.24,'#111111');B(.07,.07,.05,.11,1.92,.24,'#111111');
+  [-1,1].forEach(s=>{B(.12,.09,.06,s*.11,1.93,.245,'#ffffff');B(.06,.07,.05,s*.11,1.93,.27,'#111111');B(.13,.03,.04,s*.11,2.02,.25,hc)});
+  B(.06,.08,.06,0,1.86,.27,sk);                                   // nose
+  [-1,1].forEach(s=>B(.05,.1,.07,s*.265,1.9,0,sk));                // ears
+  B(.17,.035,.04,0,1.77,.255,'#7a2a2a');B(.05,.035,.04,-.09,1.79,.25,'#7a2a2a');B(.05,.035,.04,.09,1.79,.25,'#7a2a2a');   // mouth + smile
   // arms (pivot at shoulder)
   const arm=s=>{const a=piv(s*.49,1.62);
    if(st==0||st==2){B(.2,.32,.22,0,-.16,0,ts,a);B(.17,.4,.2,0,-.52,0,sk,a)}

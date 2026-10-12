@@ -62,6 +62,14 @@
     }
     if (window.ACCRA_AVATAR) { markOwned(window.ACCRA_AVATAR.look); if (window.ACCRA_AVATAR.isNew) setTimeout(() => styler("first"), 1000); }
 
+    function tag(t, x, y, z, tw) {
+      const w = tw || 2.2, dt = new B.DynamicTexture("tg", { width: 256, height: 64 }, scene, false), c = dt.getContext();
+      c.fillStyle = "rgba(23,25,28,.85)"; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = "#c9a54a"; c.font = "bold 26px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(t, 128, 34, 244); dt.update();
+      const m = B.MeshBuilder.CreatePlane("tg", { width: w, height: w / 4 }, scene);
+      m.position.set(x, y, z); m.billboardMode = B.Mesh.BILLBOARDMODE_ALL; m.isPickable = false;
+      const mt = new B.StandardMaterial("tgm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; m.material = mt; return m;
+    }
     // ---- items you can buy: [name, price, parts [w,h,d,x,y,z,colour]] ----
     const ITEMS = {
       fan: ["Standing fan", 60, [[.4,.05,.4,0,.03,0,"#222"],[.06,1,.06,0,.55,0,"#ccc"],[.45,.45,.1,0,1.15,0,"#e8e8e8"]]],
@@ -75,20 +83,29 @@
       sofa: ["Sofa", 300, [[2,.4,.9,0,.25,0,"#7a3b3b"],[2,.5,.25,0,.65,-.35,"#7a3b3b"],[.2,.3,.9,-.9,.5,0,"#6a2f2f"],[.2,.3,.9,.9,.5,0,"#6a2f2f"]]],
       dining: ["Dining set", 220, [[1.4,.08,.9,0,.75,0,"#8a5a2b"],[.08,.75,.08,-.6,.37,-.38,"#5a3a22"],[.08,.75,.08,.6,.37,-.38,"#5a3a22"],[.08,.75,.08,-.6,.37,.38,"#5a3a22"],[.08,.75,.08,.6,.37,.38,"#5a3a22"],[.4,.06,.4,0,.45,.75,"#6d4c2f"],[.4,.06,.4,0,.45,-.75,"#6d4c2f"]]],
       wardrobe: ["Wardrobe", 180, [[1.2,2,.6,0,1,0,"#6b4a2e"],[.02,1.8,.62,0,1,0,"#3a2616"],[.05,.3,.05,-.1,1,.33,"#c9a54a"],[.05,.3,.05,.1,1,.33,"#c9a54a"]]],
-      shelf: ["Bookshelf", 90, [[1,1.8,.35,0,.9,0,"#8a5a2b"],[.9,.25,.3,0,.45,.02,"#c8553d"],[.9,.25,.3,0,.95,.02,"#2456a6"],[.9,.25,.3,0,1.45,.02,"#3f8f7a"]]]
+      shelf: ["Bookshelf", 90, [[1,1.8,.35,0,.9,0,"#8a5a2b"],[.9,.25,.3,0,.45,.02,"#c8553d"],[.9,.25,.3,0,.95,.02,"#2456a6"],[.9,.25,.3,0,1.45,.02,"#3f8f7a"]]],
+      desk: ["Desk", 0, [[1.6,.06,.75,0,.75,0,"#6d4c2f"],[.05,.75,.7,-.75,.37,0,"#5a3a22"],[.05,.75,.7,.75,.37,0,"#5a3a22"],[.5,.35,.02,0,1,-.2,"#111"],[.05,.2,.05,0,.85,-.2,"#555"],[.5,.03,.2,0,.79,.1,"#222"],[.5,.06,.5,0,.5,.9,"#222"],[.5,.5,.06,0,.78,1.15,"#222"],[.06,.5,.06,0,.25,.9,"#555"]]],
+      chair: ["Armchair", 0, [[.9,.4,.9,0,.25,0,"#3a3a40"],[.9,.55,.2,0,.7,-.35,"#3a3a40"],[.15,.35,.9,-.42,.5,0,"#2f2f34"],[.15,.35,.9,.42,.5,0,"#2f2f34"]]],
+      coffee: ["Coffee table", 0, [[1.1,.05,.6,0,.4,0,"#6d4c2f"],[.06,.4,.06,-.5,.2,-.25,"#5a3a22"],[.06,.4,.06,.5,.2,-.25,"#5a3a22"],[.06,.4,.06,-.5,.2,.25,"#5a3a22"],[.06,.4,.06,.5,.2,.25,"#5a3a22"]]],
+      counter: ["Kitchen counter", 0, [[5,.9,.7,0,.45,0,"#e9edf0"],[5,.05,.75,0,.92,0,"#3a3a3e"],[.8,.06,.5,-1.2,.95,.02,"#aab4bc"],[.05,.28,.05,-1.2,1.08,-.2,"#ccc"],[.45,.03,.45,1,.96,0,"#222"],[.45,.03,.45,1.8,.96,0,"#222"]]],
+      island: ["Kitchen island", 0, [[1,.9,3,0,.45,0,"#f4f1ea"],[1.1,.05,3.1,0,.92,0,"#8a8a8a"],[.4,.5,.4,-.85,.25,-.9,"#6d4c2f"],[.4,.5,.4,-.85,.25,.9,"#6d4c2f"]]],
+      bath: ["Bathtub", 0, [[1.6,.6,.8,0,.3,0,"#f4f7fa"],[1.4,.05,.6,0,.58,0,"#9fd0e8"],[.05,.2,.05,.7,.7,0,"#ccc"]]],
+      vanity: ["Vanity", 0, [[.6,.8,1.6,0,.4,0,"#e3eef4"],[.5,.06,.9,0,.82,0,"#ffffff"],[.04,.25,.04,0,.95,-.3,"#ccc"]]]
     };
     const APPL = ["fridge", "tv", "cooker", "washer", "micro", "fan"], FURN = ["bed1", "bed2", "sofa", "dining", "wardrobe", "shelf"];
-    function item(id, x, z, ry) {
+    function item(id, x, z, ry, lbl, sc, parent) {
       const nd = new B.TransformNode("it", scene); nd.position.set(x, 0, z); nd.rotation.y = ry || 0;
+      if (parent) nd.parent = parent; if (sc) nd.scaling.setAll(sc);
       ITEMS[id][2].forEach(p => {
         const m = B.MeshBuilder.CreateBox("ip", { width: p[0], height: p[1], depth: p[2] }, scene);
-        m.parent = nd; m.position.set(p[3], p[4], p[5]); m.material = mat(p[6]); m.isPickable = false; sg.addShadowCaster(m);
+        m.parent = nd; m.position.set(p[3], p[4], p[5]); m.material = mat(p[6]); m.isPickable = false; if (!parent) sg.addShadowCaster(m);
       });
+      if (lbl) tag(lbl === true ? ITEMS[id][0] + " \u00B7 GH\u00A2" + ITEMS[id][1] : lbl, x, 2.5, z);
       return nd;
     }
     // bought items are delivered to the villa garage (3 x 3 slots)
     const inv = ls("accra-inv", []);
-    const place = i => item(inv[i], VX + [-2.3, 0, 2.3][i % 3], VZ + [3, 5.2, 7.4][Math.floor(i / 3) % 3], 0);
+    const place = i => item(inv[i], VX + [-2.3, 0, 2.3][i % 3], VZ + [3, 5.2, 7.4][Math.floor(i / 3) % 3], 0, ITEMS[inv[i]][0]);
     inv.forEach((_, i) => place(i));
     function shop(name, ids) {
       const draw = () => show(ttl(name) + "<small>Cash: GH\u00A2" + cash() + " \u00B7 delivered to your garage (" + inv.length + "/9)</small>" +
@@ -114,7 +131,19 @@
     box(8, 1, .4, MX, MH - .5, MZ - 18, "#efe7d2");
     mw(-6.5, 10, .3, 16); mw(6.5, 10, .3, 16);                                                            // store dividers
     [[-17.875, 4.25], [-8.625, 4.25], [-4.5, 4], [4.5, 4], [8.625, 4.25], [17.875, 4.25]].forEach(s => mw(s[0], 2, s[1], .3)); // store fronts, 5 m doorways
-    fl(0, -8, 40, 20, "#e8e2d6"); fl(-13.25, 10, 13.5, 16, "#d9b8b8"); fl(0, 10, 13, 16, "#b9c4cc"); fl(13.25, 10, 13.5, 16, "#c9b79a");
+    const ck = (a, b, us, vs) => {
+      const t = new B.DynamicTexture("ck", 128, scene, true), c = t.getContext();
+      c.fillStyle = a; c.fillRect(0, 0, 128, 128); c.fillStyle = b; c.fillRect(0, 0, 64, 64); c.fillRect(64, 64, 64, 64); t.update();
+      t.uScale = us; t.vScale = vs; t.wrapU = t.wrapV = B.Texture.WRAP_ADDRESSMODE;
+      const m = new B.StandardMaterial("ckm", scene); m.diffuseTexture = t; m.specularColor = B.Color3.Black(); return m;
+    };
+    fl(0, -8, 40, 20, "#e8e2d6").material = ck("#e9e4d8", "#cfc8b8", 10, 5);
+    fl(-13.25, 10, 13.5, 16, "#d9b8b8").material = ck("#f0d5d5", "#e2bcbc", 3.4, 4);
+    fl(0, 10, 13, 16, "#b9c4cc").material = ck("#d8e2ea", "#b3c3d0", 3.3, 4);
+    fl(13.25, 10, 13.5, 16, "#c9b79a").material = ck("#e2d2b2", "#cdb98f", 3.4, 4);
+    [[-13.25, "#f0c8c8"], [0, "#c3d6ee"], [13.25, "#eadbb8"]].forEach(c => { box(13.4, 3.6, .06, MX + c[0], 2.1, MZ + 17.7, c[1], false); box(13.4, .25, .08, MX + c[0], 3.7, MZ + 17.65, "#ffffff", false); });
+    A.createKiosk(scene, { position: [MX - 11, 0, MZ - 14], color: "#d9382c" });
+    A.createKiosk(scene, { position: [MX + 11, 0, MZ - 14], color: "#2f7fd0", awning: "#ffffff" });
     const mroof = box(40.8, .4, 36.8, MX, MH + .2, MZ, "#8a8a84", false);
     function sign(t, x, y, z, sw, sh, bg, fg) {
       const dt = new B.DynamicTexture("sg", { width: 512, height: 128 }, scene, false), c = dt.getContext();
@@ -126,11 +155,55 @@
     sign("Clothing", MX - 13.25, 3.7, MZ + 1.8, 9, 1.1, "#7a2d4a", "#ffffff");
     sign("Appliances", MX, 3.7, MZ + 1.8, 9, 1.1, "#2456a6", "#ffffff");
     sign("Furniture & Beds", MX + 13.25, 3.7, MZ + 1.8, 9, 1.1, "#8a5a2b", "#ffffff");
-    APPL.forEach((id, i) => item(id, MX + (-5 + i * 2), MZ + 16.3, Math.PI));
-    FURN.forEach((id, i) => item(id, MX + 13.25 + (-5.5 + i * 2.2), MZ + 16.4, Math.PI));
+    APPL.forEach((id, i) => item(id, MX + (-5 + i * 2), MZ + 16.3, Math.PI, true));
+    FURN.forEach((id, i) => item(id, MX + 13.25 + (-5.5 + i * 2.2), MZ + 16.4, Math.PI, true));
     for (let i = 0; i < 5; i++) { box(.5, 1, .15, MX - 13.25 - 5 + i * 2.5, 1.2, MZ + 16.2, ["#9a4a42", "#c9a54a", "#56705a", "#4d6a8a", "#e8e6df"][i], false); box(1.6, .05, .4, MX - 13.25 - 5 + i * 2.5, 1.65, MZ + 16.2, "#6d4c2f", false); }
     box(2.4, 2.2, .06, MX - 13.25, 1.4, MZ + 17.7, "#9cc9e0", false);
     [-8, 8].forEach(x => { box(2.5, .5, .7, MX + x, .25, MZ - 8, "#6d4c2f", false); [-4, 4].forEach(z => { box(.8, .5, .8, MX + x, .25, MZ + z - 10, "#7a5a3a", false); const s = B.MeshBuilder.CreateSphere("pl", { diameter: 1.4, segments: 5 }, scene); s.convertToFlatShadedMesh(); s.position.set(MX + x, 1.2, MZ + z - 10); s.material = mat("#3f8f4a"); s.isPickable = false; }); });
+
+    // ---- stock the mall and label the villa ----
+    const bx = (a, b, c, x, y, z, col) => box(a, b, c, MX + x, y, MZ + z, col, false);
+    const ball = (d, x, y, z, col) => { const s = B.MeshBuilder.CreateSphere("bl", { diameter: d, segments: 6 }, scene); s.convertToFlatShadedMesh(); s.position.set(MX + x, y, MZ + z); s.material = mat(col); s.isPickable = false; return s; };
+    const cy = (d, h, x, y, z, col) => { const m = B.MeshBuilder.CreateCylinder("cy", { diameter: d, height: h, tessellation: 12 }, scene); m.convertToFlatShadedMesh(); m.position.set(MX + x, y, MZ + z); m.material = mat(col); m.isPickable = false; return m; };
+    const COL = ["#9a4a42", "#c9a54a", "#56705a", "#4d6a8a", "#e8e6df", "#2a2c30", "#7a6a8a", "#c08a5a"];
+    const shelves = x => { box(.5, 2, 10, MX + x, 1, MZ + 10.2, "#8a5a2b", false); for (let k = 0; k < 3; k++) for (let j = 0; j < 6; j++) bx(.4, .28, .9, x, .6 + k * .6, 6.6 + j * 1.6, COL[(j + k * 3) % 8]); };
+    [-19.6, -6.1, 6.1, 19.6].forEach(shelves);
+    [[-4.5, 0], [-1.5, 3], [1.5, 1], [4.5, 2]].forEach(m => {        // mannequins in the clothing store
+      const x = -13.25 + m[0], c = COL[m[1]];
+      bx(.5, .06, .5, x, .03, 9, "#222"); bx(.2, .9, .2, x, .5, 9, "#2f3a4a"); bx(.5, .7, .25, x, 1.3, 9, c);
+      bx(.12, .6, .12, x - .31, 1.3, 9, c); bx(.12, .6, .12, x + .31, 1.3, 9, c); ball(.28, x, 1.8, 9, "#d9b8a0");
+    });
+    [[-13.25 + 4.3, 5], [3.8, 4.5], [13.25 - 4.3, 5]].forEach(c => { bx(2.4, 1, .8, c[0], .5, c[1], "#4a4a52"); bx(.4, .3, .4, c[0], 1.15, c[1], "#222"); });   // counters + tills
+    bx(4, .03, 3, 13.25 - 3.5, .06, 10.5, "#9a4a42"); bx(4, .03, 3, 13.25 + 3.5, .06, 10.5, "#4d6a8a");
+    item("sofa", MX + 13.25 - 3.5, MZ + 10.5, Math.PI, true); item("bed1", MX + 13.25 + 3.5, MZ + 10.5, Math.PI, true);
+    item("tv", MX - 3.5, MZ + 10.5, Math.PI, true); item("washer", MX + 3.5, MZ + 10.5, Math.PI, true);
+    [-1, 1].forEach(s => { const x = 13.25 + s * 6.2; bx(.06, 1.6, .06, x, .8, 14, "#ccc"); ball(.5, x, 1.7, 14, "#fff3c4"); });
+    cy(4, .5, 0, .25, -8, "#bdb7aa"); cy(3.4, .35, 0, .4, -8, "#4aa3c7"); cy(.5, 1.6, 0, .9, -8, "#bdb7aa"); ball(.9, 0, 1.9, -8, "#4aa3c7");   // fountain
+    bx(6, .02, 14, 0, .07, -11, "#cdbd8f");
+    bx(40.4, .9, .6, 0, MH - .55, -18.1, "#c9a54a"); [-12, 12].forEach(x => bx(10, 2.2, .1, x, 2.1, -18.3, "#2b4a63"));
+    tag("Clothing \u00B7 Appliances \u00B7 Furniture", MX, 2.8, MZ - 15, 6);
+    tag("Suit GH\u00A2150 \u00B7 Dress GH\u00A2100 \u00B7 Hoodie GH\u00A280", MX - 13.25, 3.2, MZ + 17, 6);
+    tag("SALE \u2014 TVs & fridges", MX, 3.2, MZ + 17, 5);
+    tag("Beds \u00B7 Sofas \u00B7 Tables", MX + 13.25, 3.2, MZ + 17, 5);
+    // villa: name tags and details so every object can be identified
+    [["Sofa", -8.5, 3, .9], ["Corner sofa", -6.9, 6.2, .85], ["Armchair", -11.6, 7.2, 1], ["TV", -8.5, .7, 1.1], ["Coffee table", -4.9, 8, .8],
+     ["Kitchen counter", 12.5, 4, .9], ["Kitchen island", 9.2, 4, .95], ["Fridge", 12.4, 7.9, 2], ["Dining table", 6.3, 7.2, .75],
+     ["Desk", 0, -6.2, .75], ["Bookshelf", -2.6, -8.55, 2.2], ["Bookshelf", 2.6, -8.55, 2.2],
+     ["Bed", -6.5, -6.8, .5], ["Wardrobe", -5, -.55, 2], ["Bathtub", -11.4, -8.2, .6], ["Sink", -10, -7.2, .9],
+     ["Cinema sofa", 8.5, -3.2, .6], ["Cinema screen", 8.5, -8.4, 1.1]].forEach(o => tag(o[0], VX + o[1], o[3] + .7, VZ + o[2], 1.6));
+    {
+      const vdec = new B.TransformNode("villaDeco", scene), P = Math.PI;
+      [[-8.5, .7, "tv", 0, 1.7], [-8.5, 3, "sofa", P, 1.5], [-6.9, 6.2, "sofa", P, 1.5], [-11.6, 7.2, "chair", P / 2, 1.1], [-4.9, 8, "coffee", 0, 1.5],
+       [12.5, 4, "counter", -P / 2, 1], [9.2, 4, "island", 0, 1], [12.4, 7.9, "fridge", -P / 2, 1.1], [6.3, 7.2, "dining", 0, 1.5],
+       [0, -6.2, "desk", 0, 1.4], [-2.6, -8.55, "shelf", 0, 1.25], [2.6, -8.55, "shelf", 0, 1.25],
+       [-6.5, -6.8, "bed2", 0, 1.4], [-5, -.55, "wardrobe", P, 1.3], [-11.4, -8.2, "bath", 0, 1], [-10, -7.2, "vanity", 0, 1],
+       [8.5, -3.2, "sofa", P, 1.5], [8.5, -8.4, "tv", 0, 1.7]].forEach(f => {
+        const old = scene.meshes.find(m => m.name === "b" && Math.abs(m.position.x - (VX + f[0])) < .01 && Math.abs(m.position.z - (VZ + f[1])) < .01);
+        if (old) { old.isVisible = false; sg.removeShadowCaster(old); }
+        item(f[2], VX + f[0], VZ + f[1], f[3], false, f[4], vdec);
+      });
+      const vm = mergeAsset(vdec); if (vm) { vm.receiveShadows = true; vm.isPickable = false; }
+    }
 
     // gold beam over the mall so it is easy to find, plus a banner proving this version is loaded
     {
