@@ -6,10 +6,13 @@
   try {
     const K = window.ACCRA_KIT, AV = window.ACCRA_AVATAR;
     if (!K || !AV) { console.log("accra-life: needs accra-upgrade.js and online.js"); return; }
-    const B = BABYLON, P = Math.PI, { item, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, points } = K;
+    const B = BABYLON, P = Math.PI, { item, note, show, hide, ttl, BS, GOLD, cash, ls, sv, points } = K;
     const clamp = v => Math.max(0, Math.min(100, v));
-    const earn = (n, why) => { if (window.ACCRA_ADD) window.ACCRA_ADD(n, why); };
+    const earn = (n, why) => { if (window.ACCRA_ADD) window.ACCRA_ADD(n, why); save(); };
     const st = Object.assign({ hp: 100, en: 100, hu: 80, hy: 80, md: 70, food: {}, keys: {}, play: 0 }, ls("accra-life", {}));
+    const save = () => sv("accra-life", st);
+    const pay = (n, w) => { K.pay(n, w); save(); };
+    window.addEventListener("pagehide", save); document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
     const SB = "border:0;border-radius:9px;background:#c9a54a;color:#17191c;font:700 12px system-ui;padding:6px 10px;margin:4px 4px 0 0";
     const CLOSE = '<button data-x="1" style="' + BS + ';text-align:center">Close</button>';
     let seated = null, busy = false, inside = null, ret = null;
@@ -34,7 +37,10 @@
     player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (st.en < 12 ? .8 : 1.3); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
 
     // ---------- seating and sleeping ----------
-    function sit(x, z, ry) { seated = { x, z, out: [Math.sin(ry) * 1.1, Math.cos(ry) * 1.1] }; player.position.set(x, .91, z); player.rotation.y = ry; AV.pose = "sit"; }
+    function sit(x, z, ry, sh, m) {   // sh = seat height, m = how you get up: 1 forward, -1 backward, 0 sideways
+      const f = [Math.sin(ry), Math.cos(ry)], o = m === 0 ? [f[1], -f[0]] : [f[0] * m, f[1] * m];
+      seated = { x, z, out: [o[0] * 1.2, o[1] * 1.2] }; player.position.set(x, .91, z); player.rotation.y = ry; AV.sitH = sh || .45; AV.pose = "sit";
+    }
     function stand() { if (!seated) return; const s = seated; seated = null; AV.pose = null; player.position.set(s.x + s.out[0], .91, s.z + s.out[1]); }
     points.push({ get x() { return player.position.x; }, get z() { return player.position.z; }, r: 1e9, t: "\u2B06 Stand up", ok: () => !!seated, f: stand });
     function sleep(x, z, ry) {
@@ -103,9 +109,9 @@
         if (/^bed/.test(id)) A(x, z, 2.8, "\uD83D\uDECF\uFE0F Sleep", () => sleep(x, z, ry));
         else if (id === "fridge") A(x + fx * 1.1, z + fz * 1.1, 1.7, "\uD83E\uDDCA Fridge", fridge);
         else if (id === "counter" || id === "kit2") A(x + fx, z + fz, 2.6, "\uD83C\uDF73 Cook", cook);
-        else if (id === "desk") { const sx = x + fx * .9 * sc, sz = z + fz * .9 * sc; A(sx, sz, 2, "\uD83D\uDCBB Laptop", () => { sit(sx, sz, ry + P); laptop(); }); }
-        else if (id === "sofa" || id === "chair") A(x, z, 2.4, "\uD83D\uDECB\uFE0F Sit", () => sit(x, z, ry));
-        else if (id === "dining") { [[1, P], [-1, 0]].forEach(s => { const sx = x + fx * .75 * sc * s[0], sz = z + fz * .75 * sc * s[0]; A(sx, sz, 1.6, "\uD83C\uDF7D\uFE0F Sit", () => sit(sx, sz, ry + s[1])); }); }
+        else if (id === "desk") { const sx = x + fx * .9 * sc, sz = z + fz * .9 * sc; A(sx, sz, 2, "\uD83D\uDCBB Laptop", () => { sit(sx, sz, ry + P, .53 * sc, -1); laptop(); }); }
+        else if (id === "sofa" || id === "chair") A(x, z, 2.4, "\uD83D\uDECB\uFE0F Sit", () => sit(x, z, ry, .45 * sc, 1));
+        else if (id === "dining") { [[1, P], [-1, 0]].forEach(s => { const sx = x + fx * .75 * sc * s[0], sz = z + fz * .75 * sc * s[0]; A(sx, sz, 1.6, "\uD83C\uDF7D\uFE0F Sit", () => sit(sx, sz, ry + s[1], .48 * sc, 0)); }); }
         else if (id === "bath") A(x, z, 2.4, "\uD83D\uDEC1 Wash", wash);
         else if (id === "wardrobe" && !skipWard) A(x + fx, z + fz, 1.8, "\uD83D\uDC54 Wardrobe", () => K.styler("wardrobe"));
       });
@@ -130,7 +136,7 @@
       const hw = W / 2 - .9; wall(-(W / 2 + .9) / 2, -D / 2, hw, .3); wall((W / 2 + .9) / 2, -D / 2, hw, .3);   // 1.8 m doorway
       T.p.forEach(p => wall(p[0], p[1], p[2], p[3]));
       box(W, .05, D, sx, .03, sz, T.c, false);
-      T.f.forEach(f => item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1));
+      T.f.forEach(f => { K.collider(f[2], sx + f[0], sz + f[1], f[3], f[4] || 1); item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1); });
       const here = p => Math.abs(p.x - sx) < W / 2 && Math.abs(p.z - sz) < D / 2;
       reg(T.f, sx, sz, here);
       points.push({ x: sx, z: sz - D / 2 + 1.1, r: 1.9, t: "\uD83D\uDEAA Leave", ok: () => !busy && !seated && here(player.position), f: leave });
@@ -182,7 +188,7 @@
      ["eln1", "East Legon 4-bed house", "East Legon", 2, 0, "house", 380, 52000], ["elm1", "East Legon mansion", "East Legon", 3, 0, "mansion", 650, 120000], ["amo1", "Amoamah family house", "Amoamah Estate", 3, 1, "house", 200, 26000], ["amo2", "Amoamah garden house", "Amoamah Estate", 3, 1, "house", 240, 32000], ["amo3", "Amoamah poolside house", "Amoamah Estate", 3, 1, "mansion", 300, 42000]].forEach(h => {
       const b = pick(h[3], h[4], false); if (!b) return;
       const u = UNITS[h[0]] = { id: h[0], name: h[1], tpl: h[5], rent: h[6], buy: h[7], dist: h[2] };
-      LISTS.push({ name: h[1], units: [u], door: door(b, h[1], "Rent GH\u00A2" + h[6] + "/wk \u00B7 Buy GH\u00A2" + h[7].toLocaleString(), "#2a7ab8") });
+      LISTS.push({ name: h[1], units: [u], gar: b.metadata && b.metadata.garage, door: door(b, h[1], "Rent GH\u00A2" + h[6] + "/wk \u00B7 Buy GH\u00A2" + h[7].toLocaleString(), "#2a7ab8") });
     });
     // ---- ownership + marketplace: owners can list their homes for sale or rent; everyone sees the listings ----
     const ME = localStorage.getItem("accra-name") || "You";
@@ -260,16 +266,17 @@
       if (st.hu < 20 || st.hy < 20) st.md = clamp(st.md - dt * .05); else st.md = clamp(st.md + (60 - st.md) * dt * .002);
       if (st.hp <= 0 && !busy) passOut();
       acc += dt; if (acc > .5) { acc = 0; paintHud(); }
-      saveT += dt; if (saveT > 5) { saveT = 0; sv("accra-life", st); }
+      saveT += dt; if (saveT > 2) { saveT = 0; save(); }
       rentT += dt; if (rentT > 2) { rentT = 0; rentCheck(); }
     });
-    // ---------- Hospital (HP) and Police Department (PD) ----------
+    // ---------- Hospital (HP), Police (PD), car dealership, garages and driving jobs ----------
     const PL = window.ACCRA_PLACES || {};
     let freeAt = 0;
     function hospital() {
       show(ttl("\uD83C\uDFE5 Accra Hospital") + "<small>Health " + Math.round(st.hp) + "% \u00B7 Cash GH\u00A2" + cash() + "</small>" +
-        '<button data-h="30" style="' + BS + '">Check-up \u00B7 GH\u00A230 \u00B7 +40 health</button><button data-h="80" style="' + BS + '">Full treatment \u00B7 GH\u00A280 \u00B7 full health, +25 energy</button><button data-h="0" style="' + BS + '">Emergency care (free if you cannot pay)</button>' + CLOSE, d => {
+        '<button data-h="30" style="' + BS + '">Check-up \u00B7 GH\u00A230 \u00B7 +40 health</button><button data-h="80" style="' + BS + '">Full treatment \u00B7 GH\u00A280 \u00B7 full health, +25 energy</button><button data-h="0" style="' + BS + '">Emergency care (free if you cannot pay)</button><button data-amb="1" style="' + BS + '">\uD83D\uDE91 Ambulance duty \u00B7 drive an emergency call \u00B7 +GH\u00A2120</button>' + CLOSE, d => {
         if (d.x) return hide();
+        if (d.amb) return startJob(ambulanceJob());
         const f = +d.h;
         if (f === 0) { if (cash() >= 30) return note("Free care is only for people who cannot pay."); if (st.play < freeAt) return note("Please wait a few minutes before free care again."); freeAt = st.play + 180; st.hp = clamp(st.hp + 25); return note("A nurse treated you. +25 health"); }
         if (cash() < f) return note("Not enough cash.");
@@ -279,17 +286,75 @@
     }
     const TIPS = ["Keep your phone safe in busy markets like Makola.", "Always lock your door when you leave home.", "Do not drive when you are exhausted.", "Eat and rest: low health makes you pass out."];
     function police() {
-      show(ttl("\uD83D\uDE93 Police Department") + '<button data-j="patrol" style="' + BS + '">Patrol shift \u00B7 +GH\u00A290 \u00B7 uses 25 energy</button><button data-j="comm" style="' + BS + '">Community service \u00B7 +GH\u00A245 \u00B7 uses 12 energy</button><button data-j="tip" style="' + BS + '">Safety tip</button>' + CLOSE, d => {
+      show(ttl("\uD83D\uDE93 Police Department") + '<button data-j="patrol" style="' + BS + '">\uD83D\uDE94 Patrol: drive the police car \u00B7 +GH\u00A2140</button><button data-j="comm" style="' + BS + '">Community service \u00B7 +GH\u00A245 \u00B7 uses 12 energy</button><button data-j="tip" style="' + BS + '">Safety tip</button>' + CLOSE, d => {
         if (d.x) return hide();
         if (d.j === "tip") return note(TIPS[Math.floor(Math.random() * TIPS.length)]);
-        const patrol = d.j === "patrol", cost = patrol ? 25 : 12, gain = patrol ? 90 : 45;
-        if (st.en < cost) return note("Too tired for this shift."); if (st.hu < 10) return note("Eat something first.");
-        hide(); busy = true; note(patrol ? "On patrol\u2026" : "Community service\u2026");
-        setTimeout(() => { earn(gain, patrol ? "Police patrol" : "Community service"); st.en = clamp(st.en - cost); st.hu = clamp(st.hu - 8); st.md = clamp(st.md + 3); busy = false; note("Shift done. +GH\u00A2" + gain); }, 4000);
+        if (d.j === "patrol") return startJob(patrolJob());
+        if (st.en < 12) return note("Too tired for this shift."); if (st.hu < 10) return note("Eat something first.");
+        hide(); busy = true; note("Community service\u2026");
+        setTimeout(() => { earn(45, "Community service"); st.en = clamp(st.en - 12); st.hu = clamp(st.hu - 8); st.md = clamp(st.md + 3); busy = false; note("Shift done. +GH\u00A245"); save(); }, 4000);
       });
     }
-    if (PL.hp) points.push({ x: PL.hp.x, z: PL.hp.z, r: 3.2, t: "\uD83C\uDFE5 Hospital desk", ok: () => !busy && !seated, f: hospital });
-    if (PL.pd) points.push({ x: PL.pd.x, z: PL.pd.z, r: 3.2, t: "\uD83D\uDE93 Police desk", ok: () => !busy && !seated, f: police });
+    // ---- driving jobs: you take the police car or ambulance out and drive to the gold beams ----
+    let job = null, savedPaint = null, flash = 0;
+    const lightBar = [[-.3, "#ff1a1a"], [.3, "#1a4bff"]].map(o => {
+      const m = B.MeshBuilder.CreateBox("lb", { width: .4, height: .12, depth: .3 }, scene); m.parent = car; m.position.set(o[0], 1.22, -.25);
+      const mt = new B.StandardMaterial("lbm", scene); mt.emissiveColor = B.Color3.FromHexString(o[1]); mt.disableLighting = true; m.material = mt; m.isPickable = false; m.setEnabled(false); return m;
+    });
+    const beam = B.MeshBuilder.CreateCylinder("jobbeam", { height: 60, diameter: 3 }, scene);
+    { const mt = new B.StandardMaterial("jbm", scene); mt.emissiveColor = B.Color3.FromHexString("#c9a54a"); mt.disableLighting = true; mt.alpha = .35; mt.fogEnabled = false; beam.material = mt; beam.isPickable = false; beam.setEnabled(false); }
+    function endJob(ok) {
+      if (!job) return; const j = job; job = null; beam.setEnabled(false); lightBar.forEach(l => l.setEnabled(false)); if (savedPaint) carPaint.diffuseColor = savedPaint;
+      if (ok) { earn(j.pay, j.title); st.en = clamp(st.en - j.cost); st.hu = clamp(st.hu - 8); st.md = clamp(st.md + 4); note(j.title + " complete! +GH\u00A2" + j.pay); } else note(j.title + " cancelled");
+      save();
+    }
+    function startJob(j) {
+      if (job) return note("Finish your current job first."); if (st.en < j.cost) return note("Too tired. Rest first."); if (st.hu < 10) return note("Eat something first.");
+      hide(); job = Object.assign({ i: 0, t0: st.play }, j); savedPaint = carPaint.diffuseColor.clone();
+      if (driving) toggleCar();
+      car.position.set(j.depot.x, .8, j.depot.z); heading = j.depot.h; car.rotation.y = heading;
+      player.position.set(j.depot.x + 2.8, .91, j.depot.z); toggleCar();
+      carPaint.diffuseColor = B.Color3.FromHexString(j.paint); lightBar.forEach(l => l.setEnabled(true));
+      beam.setEnabled(true); beam.position.set(j.stops[0].x, 30, j.stops[0].z); note(j.title + ": " + j.stops[0].say);
+    }
+    const inter = () => ({ x: R[Math.floor(Math.random() * 5)], z: R[Math.floor(Math.random() * 5)] });
+    const patrolJob = () => { const stops = []; for (let i = 0; i < 4; i++) { const p = inter(); stops.push({ x: p.x, z: p.z, say: "Checkpoint " + (i + 1) + " of 4: drive to the gold beam" }); } return { title: "Police patrol", paint: "#1d3b6b", pay: 140, cost: 25, depot: PL.pd.depot, stops }; };
+    const ambulanceJob = () => { const p = inter(); return { title: "Ambulance call", paint: "#f0f0f0", pay: 120, cost: 20, depot: PL.hp.depot, stops: [{ x: p.x, z: p.z, say: "A patient is waiting at the gold beam" }, { x: PL.hp.ox, z: PL.hp.oz, say: "Take the patient to the hospital" }] }; };
+    scene.onBeforeRenderObservable.add(() => {
+      if (!job) return;
+      flash += engine.getDeltaTime(); const on = Math.floor(flash / 250) % 2; lightBar[0].setEnabled(!!on); lightBar[1].setEnabled(!on);
+      if (!driving) { if (st.play - job.t0 > 3) endJob(false); return; }
+      const s = job.stops[job.i];
+      if (Math.hypot(car.position.x - s.x, car.position.z - s.z) < 12) { job.i++; if (job.i >= job.stops.length) return endJob(true); const n = job.stops[job.i]; beam.position.set(n.x, 30, n.z); note(n.say); }
+    });
+    // ---- cars: dealership + personal garages ----
+    const CARS = [["starter", "Starter hatch", 0, "#a3172b"], ["hatch", "City hatch", 8000, "#f2f2f2"], ["sedan", "Osu sedan", 15000, "#b8bcc2"], ["legon", "Legon sedan", 22000, "#1f4fa3"], ["suv", "Labadi SUV", 35000, "#17191c"], ["coupe", "Sport coupe", 80000, "#d11a2a"], ["super", "Supercar", 250000, "#f2c200"]];
+    st.cars = st.cars || ["starter"]; st.car = st.car || "starter";
+    const paintCar = id => { const c = CARS.find(x => x[0] === id); if (c) carPaint.diffuseColor = B.Color3.FromHexString(c[3]); };
+    paintCar(st.car);
+    function garage(g) {
+      const draw = () => show(ttl("\uD83D\uDE97 My garage") + st.cars.map(id => { const c = CARS.find(x => x[0] === id); return '<button data-c="' + id + '" style="' + BS + '">' + c[1] + (st.car === id ? " \u00B7 current" : "") + " \u00B7 take out</button>"; }).join("") + CLOSE, d => {
+        if (d.x) return hide(); if (!d.c || job) return note("Finish your job first.");
+        st.car = d.c; paintCar(d.c); if (driving) toggleCar(); car.position.set(g.x, .8, g.z); heading = g.h; car.rotation.y = heading; save(); hide(); note("Your " + CARS.find(x => x[0] === d.c)[1] + " is ready outside.");
+      });
+      draw();
+    }
+    function dealer() {
+      const draw = () => show(ttl("\uD83D\uDE98 Accra Motors") + "<small>Cash: GH\u00A2" + cash() + " \u00B7 new cars go to your garage</small>" + CARS.filter(c => c[2] > 0).map(c => '<button data-c="' + c[0] + '" style="' + BS + '">' + c[1] + " \u00B7 GH\u00A2" + c[2].toLocaleString() + (st.cars.includes(c[0]) ? " \u00B7 owned" : "") + "</button>").join("") + CLOSE, d => {
+        if (d.x) return hide(); const c = CARS.find(x => x[0] === d.c); if (!c) return;
+        if (st.cars.includes(c[0])) return note("You already own this car.");
+        if (cash() < c[2]) return note("Not enough cash. You need GH\u00A2" + c[2].toLocaleString());
+        pay(c[2], "Car: " + c[1]); st.cars.push(c[0]); save(); note(c[1] + " is yours! Collect it from your garage."); draw();
+      });
+      draw();
+    }
+    const A2 = (x, z, r, t, fn) => points.push({ x, z, r, t, f: fn, ok: () => !busy && !seated });
+    if (PL.hp) A2(PL.hp.x, PL.hp.z, 3.2, "\uD83C\uDFE5 Hospital desk", hospital);
+    if (PL.pd) A2(PL.pd.x, PL.pd.z, 3.2, "\uD83D\uDE93 Police desk", police);
+    if (PL.dealer) A2(PL.dealer.x, PL.dealer.z, 3.6, "\uD83D\uDE98 Car dealer", dealer);
+    A2(VX, VZ + 8.3, 3, "\uD83D\uDE97 My garage", () => garage({ x: VX, z: VZ + 14, h: 0 }));
+    LISTS.forEach(l => { if (l.gar) points.push({ x: l.gar.x, z: l.gar.z, r: 3.8, t: "\uD83D\uDE97 My garage", ok: () => !busy && !seated && l.units.some(u => st.keys[u.id]), f: () => garage({ x: l.gar.x, z: l.gar.z, h: l.gar.h }) }); });
+    window.ACCRA_SHOP = () => kiosk(true);
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
@@ -306,7 +371,7 @@
       });
     }
     { const pill = document.querySelector(".pill"); let taps = 0, tt = 0;
-      if (pill) pill.addEventListener("click", () => { const t = Date.now(); taps = t - tt < 900 ? taps + 1 : 1; tt = t; if (taps >= 5) { taps = 0; if (prompt("Admin code") === ADMIN_CODE) adminPanel(); else note("Wrong code"); } }); }
+      if (pill) pill.addEventListener("click", () => { const t = Date.now(); taps = t - tt < 900 ? taps + 1 : 1; tt = t; if (taps >= 5) { taps = 0; if (prompt("Admin code") === ADMIN_CODE) { adminPanel(); K.keep(); } else note("Wrong code"); } }); }
 
     // ---------- command bar: tap the "/" button (or press the / key) and type a command ----------
     let isAdmin = false;
@@ -322,9 +387,9 @@
     const closeCmd = () => { cmdBox.style.display = "none"; cmdIn.blur(); };
     function runCmd(raw) {
       const parts = raw.trim().replace(/^\//, "").split(/\s+/), k = (parts[0] || "").toUpperCase();
-      if (k === ADMIN_CODE.toUpperCase()) { isAdmin = true; closeCmd(); return adminPanel(); }
-      if (k === "HOMES") { closeCmd(); return myHomes(); }
-      if (k === "LISTINGS") { closeCmd(); return allListings(); }
+      if (k === ADMIN_CODE.toUpperCase()) { isAdmin = true; closeCmd(); adminPanel(); return K.keep(); }
+      if (k === "HOMES") { closeCmd(); myHomes(); return K.keep(); }
+      if (k === "LISTINGS") { closeCmd(); allListings(); return K.keep(); }
       if (k === "GIVE" && isAdmin) { const a = Math.round(+parts[1]); if (!(a > 0)) return note("Use /give 5000"); earn(a, "Admin grant"); closeCmd(); return note("You received GH\u00A2" + a.toLocaleString()); }
       if (k === "HELP") return note("/homes  /listings  /help" + (isAdmin ? "  /give 5000" : ""));
       note("Unknown command. Try /help");

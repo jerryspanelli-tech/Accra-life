@@ -60,7 +60,7 @@
   smv+=(Math.min(raw,9)-smv)*Math.min(1,dt*9);cur.sp=smv;
   vyaw+=adiff(player.rotation.y,vyaw)*Math.min(1,dt*12);mine.root.rotation.y=vyaw-player.rotation.y;   // smooth turning
   const r=mine.root,pose=window.ACCRA_AVATAR&&window.ACCRA_AVATAR.pose;
-  if(pose==='sit'){r.rotation.x=0;r.position.set(0,-1.21,0);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=-1.5;mine.al.rotation.x=mine.ar.rotation.x=-.7}
+  if(pose==='sit'){r.rotation.x=0;r.position.set(0,-.91+((window.ACCRA_AVATAR.sitH||.45)+.05-.748),0);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=-1.5;mine.al.rotation.x=mine.ar.rotation.x=-.7}
   else if(pose==='sleep'){r.rotation.x=-Math.PI/2;r.position.set(0,-.29,.95);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=mine.al.rotation.x=mine.ar.rotation.x=0}
   else{r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
  // ---------- online ----------

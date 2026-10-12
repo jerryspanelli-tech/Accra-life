@@ -106,6 +106,13 @@
       if (lbl) tag(lbl === true ? ITEMS[id][0] + " \u00B7 GH\u00A2" + ITEMS[id][1] : lbl, x, 2.5, z);
       return nd;
     }
+    function collider(id, x, z, ry, sc) {   // invisible solid box so you cannot walk through furniture
+      let x0 = 9, x1 = -9, z0 = 9, z1 = -9, y1 = 0;
+      ITEMS[id][2].forEach(p => { x0 = Math.min(x0, p[3] - p[0] / 2); x1 = Math.max(x1, p[3] + p[0] / 2); z0 = Math.min(z0, p[5] - p[2] / 2); z1 = Math.max(z1, p[5] + p[2] / 2); y1 = Math.max(y1, p[4] + p[1] / 2); });
+      const s = sc || 1, cx = (x0 + x1) / 2 * s, cz = (z0 + z1) / 2 * s, c = Math.cos(ry), sn = Math.sin(ry), h = Math.min(y1 * s, 1.3);
+      const m = B.MeshBuilder.CreateBox("col", { width: (x1 - x0) * s * .92, height: h, depth: (z1 - z0) * s * .92 }, scene);
+      m.position.set(x + cx * c + cz * sn, h / 2, z - cx * sn + cz * c); m.rotation.y = ry; m.isVisible = false; m.checkCollisions = true; m.isPickable = false; return m;
+    }
     // bought items are delivered to the villa garage (3 x 3 slots)
     const inv = ls("accra-inv", []);
     const place = i => item(inv[i], VX + [-2.3, 0, 2.3][i % 3], VZ + [3, 5.2, 7.4][Math.floor(i / 3) % 3], 0, ITEMS[inv[i]][0]);
@@ -189,22 +196,24 @@
     tag("SALE \u2014 TVs & fridges", MX, 3.2, MZ + 17, 5);
     tag("Beds \u00B7 Sofas \u00B7 Tables", MX + 13.25, 3.2, MZ + 17, 5);
     // villa: name tags and details so every object can be identified
-    [["Sofa", -8.5, 3, .9], ["Corner sofa", -6.9, 6.2, .85], ["Armchair", -11.6, 7.2, 1], ["TV", -8.5, .7, 1.1], ["Coffee table", -4.9, 8, .8],
+    [["Sofa", -9.6, 5.5, .9], ["Corner sofa", -7, 8.1, .85], ["Armchair", -4.9, 7.9, 1], ["TV", -12.45, 5.5, 1.1], ["Coffee table", -7.4, 5.4, .8],
      ["Kitchen counter", 12.5, 4, .9], ["Kitchen island", 9.2, 4, .95], ["Fridge", 12.4, 7.9, 2], ["Dining table", 6.3, 7.2, .75],
      ["Desk", 0, -6.2, .75], ["Bookshelf", -2.6, -8.55, 2.2], ["Bookshelf", 2.6, -8.55, 2.2],
      ["Bed", -6.5, -6.8, .5], ["Wardrobe", -5, -.55, 2], ["Bathtub", -11.4, -8.2, .6], ["Sink", -10, -7.2, .9],
      ["Cinema sofa", 8.5, -3.2, .6], ["Cinema screen", 8.5, -8.4, 1.1]].forEach(o => tag(o[0], VX + o[1], o[3] + .7, VZ + o[2], 1.6));
     {
       const vdec = new B.TransformNode("villaDeco", scene), P = Math.PI;
-      const VF = [[-8.5, .7, "tv", 0, 1.7], [-8.5, 3, "sofa", P, 1.5], [-6.9, 6.2, "sofa", P, 1.5], [-11.6, 7.2, "chair", P / 2, 1.1], [-4.9, 8, "coffee", 0, 1.5],
+      const VF = [[-12.45, 5.5, "tv", P / 2, 1.7, -8.5, .7], [-9.6, 5.5, "sofa", -P / 2, 1.5, -8.5, 3], [-7, 8.1, "sofa", P, 1.5, -6.9, 6.2], [-4.9, 7.9, "chair", P, 1.1, -11.6, 7.2], [-7.4, 5.4, "coffee", 0, 1.5, -4.9, 8],
        [12.5, 4, "counter", -P / 2, 1], [9.2, 4, "island", 0, 1], [12.4, 7.9, "fridge", -P / 2, 1.1], [6.3, 7.2, "dining", 0, 1.5],
        [0, -6.2, "desk", 0, 1.4], [-2.6, -8.55, "shelf", 0, 1.25], [2.6, -8.55, "shelf", 0, 1.25],
        [-6.5, -6.8, "bed2", 0, 1.4], [-5, -.55, "wardrobe", P, 1.3], [-11.4, -8.2, "bath", 0, 1], [-10, -7.2, "vanity", 0, 1],
        [8.5, -3.2, "sofa", P, 1.5], [8.5, -8.4, "tv", 0, 1.7]];
       window.ACCRA_VILLA = VF;
       VF.forEach(f => {
-        const old = scene.meshes.find(m => m.name === "b" && Math.abs(m.position.x - (VX + f[0])) < .01 && Math.abs(m.position.z - (VZ + f[1])) < .01);
-        if (old) { old.isVisible = false; sg.removeShadowCaster(old); }
+        const ox = f[5] !== undefined ? f[5] : f[0], oz = f[6] !== undefined ? f[6] : f[1];
+        const old = scene.meshes.find(m => m.name === "b" && Math.abs(m.position.x - (VX + ox)) < .01 && Math.abs(m.position.z - (VZ + oz)) < .01);
+        if (old) { sg.removeShadowCaster(old); old.dispose(); }
+        collider(f[2], VX + f[0], VZ + f[1], f[3], f[4]);
         item(f[2], VX + f[0], VZ + f[1], f[3], false, f[4], vdec);
       });
       const vm = mergeAsset(vdec); if (vm) { vm.receiveShadows = true; vm.isPickable = false; }
@@ -265,7 +274,9 @@
       bx(1.6, .05, 6.9, 0, .07, -6.95, "#d8c9a0", false);                                      // stone path
       const wall = ["#d9d2c3", "#e8ddc6", "#cfd8d6", "#e6cbb0"][k % 4];
       const body = bx(11, 3.4, 8, 0, 1.7, .5, wall); body.name = "amh";
-      const gp = [cx, cz - s * 10.4]; body.metadata = { gate: gp, n: [0, -s] };
+      const gp = [cx, cz - s * 10.4]; body.metadata = { gate: gp, n: [0, -s], garage: { x: cx + s * -9.4, z: cz + s * -2.5, h: s === 1 ? Math.PI : 0 } };
+      bx(5, .06, 6.5, -9.4, .05, -2.5, "#9a9a92", false); bx(5.4, .25, 6.9, -9.4, 3, -2.5, "#8a8a84", false);          // personal garage / carport
+      [[-2.4, -3.2], [2.4, -3.2], [-2.4, 3.2], [2.4, 3.2]].forEach(q => bx(.2, 3, .2, -9.4 + q[0], 1.5, -2.5 + q[1], "#777777", false));
       [-3.6, 3.6].forEach(x => { bx(1.5, 1.3, .08, x, 1.9, -3.52, "#e8e2d0", false); bx(1.3, 1.1, .1, x, 1.9, -3.54, "#1d3042", false); });
       bx(1.4, 2.4, .1, 0, 1.2, -3.53, "#e8e2d0", false); bx(1.2, 2.2, .12, 0, 1.1, -3.56, "#5a3a22", false);
       [-1, 1].forEach(q => bx(.1, 1.1, 1.3, q * 5.54, 1.9, .5, "#1d3042", false)); bx(1.3, 1.1, .1, 0, 1.9, 4.54, "#1d3042", false);
@@ -306,43 +317,75 @@
     }
     } catch (e) { banner("Amoamah/stadium: " + e.message); }
 
-    // ===== POLICE DEPARTMENT (Central Accra, west) and ACCRA HOSPITAL (Central Accra, east) =====
+    // ===== POLICE DEPARTMENT, ACCRA HOSPITAL and CAR DEALERSHIP: real buildings with separate rooms =====
     try {
-      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.z > 86 && m.position.z < 112 && ((m.position.x > 12 && m.position.x < 58) || (m.position.x > 82 && m.position.x < 138))).forEach(m => m.dispose());
-      const roofs = [];
-      function fac(cx, cz, W, D, wallCol, bandCol, title, bg, fg, floorCol) {
-        const H = 4.4, w = (x, z, sw, sd) => box(sw, H, sd, cx + x, H / 2, cz + z, wallCol);
-        w(0, D / 2, W, .4); w(-W / 2, 0, .4, D); w(W / 2, 0, .4, D);
-        const hw = W / 2 - 2.5; w(-(W / 2 + 2.5) / 2, -D / 2, hw, .4); w((W / 2 + 2.5) / 2, -D / 2, hw, .4);       // 5 m entrance
-        box(W + .2, .7, .6, cx, H - .35, cz - D / 2, bandCol, false);
-        box(W, .05, D, cx, .03, cz, floorCol, false);
-        const roof = box(W + .8, .4, D + .8, cx, H + .2, cz, "#8a8a84", false); roofs.push([roof, cx, cz, W / 2, D / 2]);
+      const inB = (m, x0, x1, z0, z1) => m.position.x > x0 && m.position.x < x1 && m.position.z > z0 && m.position.z < z1;
+      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && (inB(m, 12, 58, 82, 112) || inB(m, 82, 138, 82, 112) || inB(m, 12, 58, -58, -12))).forEach(m => m.dispose());
+      const roofs = [], dec = new B.TransformNode("facDeco", scene), PI = Math.PI;
+      const D = (w, h, d, x, y, z, c) => { const m = B.MeshBuilder.CreateBox("d", { width: w, height: h, depth: d }, scene); m.parent = dec; m.position.set(x, y, z); m.material = mat(c); return m; };
+      const I = (id, x, z, ry, sc) => { collider(id, x, z, ry, sc); return item(id, x, z, ry, false, sc, dec); };
+      const SOLID = (w, h, d, x, y, z, c) => box(w, h, d, x, y, z, c);
+      function bld(cx, cz, W, D2, wallCol, floorCol, inner, title, bg, fg, gap) {   // outer shell + inner walls [x, z, w, d] in local coordinates, front = -z
+        const H = 4.2, w = (x, z, sw, sd) => box(sw, H, sd, cx + x, H / 2, cz + z, wallCol), g = gap || 5;
+        w(0, D2 / 2, W, .4); w(-W / 2, 0, .4, D2); w(W / 2, 0, .4, D2);
+        const hw = W / 2 - g / 2; w(-(W / 2 + g / 2) / 2, -D2 / 2, hw, .4); w((W / 2 + g / 2) / 2, -D2 / 2, hw, .4);
+        inner.forEach(p => w(p[0], p[1], p[2], p[3]));
+        box(W, .05, D2, cx, .03, cz, floorCol, false);
+        roofs.push([box(W + .8, .4, D2 + .8, cx, H + .2, cz, "#8a8a84", false), cx, cz, W / 2, D2 / 2]);
         const dt = new B.DynamicTexture("fs", { width: 512, height: 128 }, scene, false), c = dt.getContext();
-        c.fillStyle = bg; c.fillRect(0, 0, 512, 128); c.fillStyle = fg; c.font = "bold 46px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(title, 256, 66, 490); dt.update();
-        const sn = B.MeshBuilder.CreatePlane("fsn", { width: 16, height: 4 }, scene); sn.position.set(cx, H + 2.4, cz - D / 2 - .5); sn.isPickable = false;
+        c.fillStyle = bg; c.fillRect(0, 0, 512, 128); c.fillStyle = fg; c.font = "bold 44px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(title, 256, 66, 490); dt.update();
+        const sn = B.MeshBuilder.CreatePlane("fsn", { width: 16, height: 4 }, scene); sn.position.set(cx, H + 2.4, cz - D2 / 2 - .5); sn.isPickable = false;
         const mt = new B.StandardMaterial("fsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
       }
-      // Police Department
-      fac(35, 98, 30, 18, "#dfe6ee", "#1d3b6b", "POLICE DEPARTMENT", "#1d3b6b", "#ffffff", "#b8c4d0");
-      box(7, 1.1, 1.2, 35, .55, 100, "#5a4a3a"); box(.6, .4, .05, 33.5, 1.3, 100, "#111", false);
-      [27, 29].forEach(x => item("chair", x, 93, 0, false, .9));
-      for (let i = 0; i < 9; i++) box(.08, 3, .08, 41 + i, 1.5, 101.9, "#555", false);
-      for (let j = 0; j < 5; j++) box(.08, 3, .08, 45, 1.5, 102 + j, "#555", false);
-      box(2, .5, .8, 43, .25, 106.4, "#777", false); box(2, .5, .8, 47, .25, 106.4, "#777", false);
-      A.createTrotro(scene, { position: [24, 0, 83], rotY: Math.PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
-      A.createTrotro(scene, { position: [46, 0, 83], rotY: Math.PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
-      box(.15, 8, .15, 18, 4, 86, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => box(1.8, .5, .05, 18.95, f[1], 86, f[0], false));
-      // Hospital
-      fac(110, 98, 44, 24, "#f4f7fa", "#c8102e", "ACCRA HOSPITAL", "#ffffff", "#c8102e", "#e6eef2");
-      box(4.4, 4.4, .3, 110, 9.4, 85.6, "#ffffff", false); box(1.2, 3.6, .4, 110, 9.4, 85.5, "#c8102e", false); box(3.6, 1.2, .4, 110, 9.4, 85.5, "#c8102e", false);   // red cross
-      box(8, 1.1, 1.2, 110, .55, 91, "#ffffff"); box(8.4, .1, 1.4, 110, 1.15, 91, "#c8102e", false);
-      for (let i = 0; i < 6; i++) item("bed1", 96 + i * 3.6, 108.5, Math.PI, false, 1);
-      for (let i = 0; i < 4; i++) item("chair", 92.5, 94.5 + i * 2.2, Math.PI / 2, false, .9);
-      A.createTrotro(scene, { position: [100, 0, 83], rotY: Math.PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
-      A.createTrotro(scene, { position: [120, 0, 83], rotY: Math.PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
+      const fl = (x, z, w, d, c) => box(w, .04, d, x, .06, z, c, false);
+      // ---- POLICE DEPARTMENT: lobby, 2 offices, interview room, holding cells ----
+      { const cx = 35, cz = 98;
+        bld(cx, cz, 30, 18, "#dfe6ee", "#c9d3de", [[-9, -1, 12, .3], [9, -1, 12, .3], [-3, 0, .3, 2], [-3, 4.1, .3, 3.8], [-3, 8.1, .3, 1.8], [3, 0, .3, 2], [3, 4.1, .3, 3.8], [3, 8.1, .3, 1.8], [-9, 4.1, 12, .3], [11, 2.1, 8, .3], [11, 5.4, 8, .3]], "POLICE DEPARTMENT", "#1d3b6b", "#ffffff");
+        fl(cx - 9, cz + 1.5, 11.5, 5, "#b9c6d6"); fl(cx - 9, cz + 6.5, 11.5, 4.5, "#cdbfa5"); fl(cx + 9, cz + 4, 11.5, 10, "#8f979f");
+        SOLID(7, 1.1, 1.2, cx, .55, cz - 5.2, "#5a4a3a"); D(.6, .4, .05, cx - 1.5, 1.3, cz - 5.2, "#111");
+        [-13, -11.2, -9.4].forEach(x => I("chair", cx + x, cz - 7, PI, .9));
+        I("desk", cx - 14, cz + 1.5, PI / 2, 1); I("shelf", cx - 8, cz + .3, 0, 1); I("desk", cx - 14, cz + 6.8, PI / 2, 1); I("dining", cx - 8.5, cz + 6.8, 0, .9);
+        for (let i = 0; i < 17; i++) D(.07, 3, .07, cx + 7, 1.5, cz - .8 + i * .6, "#555");
+        [0, 3.3, 6.6].forEach(z => D(2.2, .45, .8, cx + 13.6, .22, cz + z + .6, "#7a7a7a"));
+        box(.15, 8, .15, 18, 4, 86, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => D(1.8, .5, .05, 18.95, f[1], 86, f[0]));
+        D(6, .02, 10, cx, .07, 83, "#ffffff"); D(5.6, .03, 9.6, cx, .075, 83, "#3a3d42");
+        A.createTrotro(scene, { position: [24, 0, 83], rotY: PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
+      }
+      // ---- HOSPITAL: reception, emergency room, consulting room, pharmacy, 2 wards ----
+      { const cx = 110, cz = 98;
+        bld(cx, cz, 44, 24, "#f4f7fa", "#e6eef2", [[-19.5, -3, 5, .3], [-8.9, -3, 13.8, .3], [8, -3, 12, .3], [18.6, -3, 6.8, .3], [-11, 4.5, .3, 15], [-2, 0, .3, 6], [-2, 8.1, .3, 7.8], [2, 0, .3, 6], [2, 8.1, .3, 7.8], [9, 4.5, .3, 15], [11.5, 4.5, 5, .3], [18.6, 4.5, 6.8, .3]], "ACCRA HOSPITAL", "#ffffff", "#c8102e");
+        D(4.4, 4.4, .3, cx, 9.4, cz - 12.4, "#ffffff"); D(1.2, 3.6, .4, cx, 9.4, cz - 12.5, "#c8102e"); D(3.6, 1.2, .4, cx, 9.4, cz - 12.5, "#c8102e");
+        fl(cx - 16.5, cz + 4.5, 11, 15, "#d6e6ea"); fl(cx - 6.5, cz + 4.5, 9, 15, "#e0e8f0"); fl(cx + 5.5, cz + 4.5, 7, 15, "#e4efe0"); fl(cx + 15.5, cz + 4.5, 13, 15, "#dce8f0");
+        SOLID(8, 1.1, 1.2, cx, .55, cz - 6.5, "#ffffff"); D(8.4, .1, 1.4, cx, 1.15, cz - 6.5, "#c8102e");
+        [-10, -8, -6, 6, 8, 10].forEach(x => I("chair", cx + x, cz - 9.5, 0, .9));
+        [-19, -14.5].forEach(x => I("bed1", cx + x, cz + 10.5, PI)); D(.7, 1.6, .5, cx - 21, .8, cz + 3, "#9aa7b0");
+        I("desk", cx - 10, cz + 1, PI / 2, 1); I("bed1", cx - 4, cz + 10, PI);
+        SOLID(5, 1, .8, cx + 5.5, .5, cz + 1.5, "#cfd6dc"); I("shelf", cx + 8.4, cz + 7, -PI / 2); I("shelf", cx + 8.4, cz + 9.4, -PI / 2);
+        [-1.8, .8, 3.2].forEach(z => I("bed1", cx + 20.4, cz + z, -PI / 2)); [6, 8.5, 11].forEach(z => I("bed1", cx + 20.4, cz + z, -PI / 2));
+        A.createTrotro(scene, { position: [100, 0, 83], rotY: PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
+      }
+      // ---- CAR DEALERSHIP (Makola, east) ----
+      { const cx = 35, cz = -35;
+        bld(cx, cz, 36, 22, "#e4ebf0", "#d9dde3", [[12, 6, .3, 8], [14.5, 2.2, 5, .3]], "ACCRA MOTORS \u00B7 CAR DEALERSHIP", "#17191c", "#fcd116", 8);
+        fl(cx, cz, 36, 22, "#e9eaee");
+        const car = (x, z, hex, ry) => {
+          D(4.6, .2, 6.4, x, .1, z, "#3a3d42");
+          const q = (w, h, d, px, py, pz, c) => { const m = D(w, h, d, x, py, z, c); m.position.x = x + px * Math.cos(ry) + pz * Math.sin(ry); m.position.z = z - px * Math.sin(ry) + pz * Math.cos(ry); m.rotation.y = ry; };
+          q(1.9, .55, 4.2, 0, .75, 0, hex); q(1.6, .55, 2.2, 0, 1.28, -.2, "#10202c"); q(1.7, .08, 1.9, 0, 1.58, -.2, hex);
+          q(.5, .14, .06, -.65, .85, 2.12, "#fff6d6"); q(.5, .14, .06, .65, .85, 2.12, "#fff6d6"); q(.5, .12, .06, -.65, .85, -2.12, "#ff2a2a"); q(.5, .12, .06, .65, .85, -2.12, "#ff2a2a");
+          [[-1, 1.3], [1, 1.3], [-1, -1.3], [1, -1.3]].forEach(w => q(.3, .8, .8, w[0] * 1.0, .55, w[1], "#151515"));
+        };
+        [["#f2f2f2", -10, -2], ["#b8bcc2", 0, -2], ["#1f4fa3", 10, -2], ["#17191c", -10, 5], ["#d11a2a", 0, 5], ["#f2c200", 10, 5]].forEach(c => car(cx + c[1], cz + c[2], c[0], PI));
+        SOLID(6, 1.1, 1.2, cx - 11, .55, cz + 9, "#5a4a3a");
+      }
+      const meshDec = mergeAsset(dec); if (meshDec) meshDec.isPickable = false;
       scene.onBeforeRenderObservable.add(() => { const p = player.position; roofs.forEach(r => r[0].setEnabled(!(Math.abs(p.x - r[1]) < r[3] + .5 && Math.abs(p.z - r[2]) < r[4] + .5))); });
-      window.ACCRA_PLACES = { pd: { x: 35, z: 97.4, ox: 35, oz: 84 }, hp: { x: 110, z: 89.2, ox: 110, oz: 82 } };
-    } catch (e) { banner("Police/Hospital: " + e.message); }
+      window.ACCRA_PLACES = {
+        pd: { x: 35, z: 94.4, ox: 35, oz: 84, depot: { x: 35, z: 83, h: Math.PI } },
+        hp: { x: 110, z: 89.5, ox: 110, oz: 82, depot: { x: 110, z: 81, h: Math.PI } },
+        dealer: { x: 24, z: -26, ox: 35, oz: -50 }
+      };
+    } catch (e) { banner("Police/Hospital/Dealership: " + e.message); }
 
     // ---------- 1. TIN ROOFS on low and mid-rise buildings ----------
     const roofSrc = {};
@@ -451,7 +494,7 @@
         if (engine.getFps() < 40 && lv < 1) engine.setHardwareScalingLevel(Math.min(1, lv + .17));
       });
     } catch (e) {}
-    window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ };
+    window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ, collider, tag, keep: () => { lock = true; } };
     const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
     console.log("Accra upgrade loaded:", n, "roofs");
   } catch (err) {
