@@ -52,7 +52,7 @@
  let net=null;
  // customization screens (wardrobe, fitting room, first join) live in accra-upgrade.js
  const ui=(id,txt,top,fn)=>{const b=document.createElement('button');b.id=id;b.textContent=txt;b.style.cssText='position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + '+top+'px);border:0;border-radius:14px;background:rgba(28,30,33,.78);color:#fff;font-size:20px;padding:4px 12px;z-index:5';b.onclick=fn;document.body.appendChild(b);return b};
- window.ACCRA_AVATAR={look,isNew,pose:null,apply:()=>{dress();if(net)net.emit('playerMove',snap())}};
+ window.ACCRA_AVATAR={look,isNew,pose:null,net:()=>net,apply:()=>{dress();if(net)net.emit('playerMove',snap())}};
  let lpx=player.position.x,lpz=player.position.z,smv=0,vyaw=player.rotation.y;
  const adiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
  scene.onBeforeRenderObservable.add(()=>{const dt=Math.max(engine.getDeltaTime()/1000,.001),src=driving?car:player;

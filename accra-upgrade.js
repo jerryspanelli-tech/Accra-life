@@ -2,6 +2,8 @@
  * It does not change your game logic. To undo, remove its <script> line.
  * Needs accra-assets.js loaded first. */
 (function () {
+  const banner = m => { try { const d = document.createElement("div"); d.style.cssText = "position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 110px);background:#8b1a1a;color:#fff;padding:8px 10px;border-radius:10px;font:12px system-ui;z-index:99;max-width:92vw"; d.textContent = "\u26A0 " + m + " (tap to hide)"; d.onclick = () => d.remove(); document.body.appendChild(d); } catch (e) {} };
+  let shown = 0; window.addEventListener("error", e => { if (shown < 2 && e.filename && /accra|online|phone/.test(e.filename)) { shown++; banner((e.filename.split("/").pop()) + ": " + e.message); } });
   try {
     const A = AccraAssets, B = BABYLON;
 
@@ -239,6 +241,7 @@
     });
 
 
+    try {
     // ===== AMOAMAH ESTATE: detached houses with red hip-tile roofs, lawns, wooden fences, pools; and the SPORTS STADIUM =====
     scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.x > 80 && m.position.x < 140 && Math.abs(m.position.z) > 10 && Math.abs(m.position.z) < 60).forEach(m => m.dispose());
     const hipSrc = {};
@@ -301,6 +304,45 @@
       const sn = B.MeshBuilder.CreatePlane("stsn", { width: 14, height: 3.5 }, scene); sn.position.set(SX, 6, SZ - 17.4); sn.isPickable = false;
       const mt = new B.StandardMaterial("stsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
     }
+    } catch (e) { banner("Amoamah/stadium: " + e.message); }
+
+    // ===== POLICE DEPARTMENT (Central Accra, west) and ACCRA HOSPITAL (Central Accra, east) =====
+    try {
+      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.z > 86 && m.position.z < 112 && ((m.position.x > 12 && m.position.x < 58) || (m.position.x > 82 && m.position.x < 138))).forEach(m => m.dispose());
+      const roofs = [];
+      function fac(cx, cz, W, D, wallCol, bandCol, title, bg, fg, floorCol) {
+        const H = 4.4, w = (x, z, sw, sd) => box(sw, H, sd, cx + x, H / 2, cz + z, wallCol);
+        w(0, D / 2, W, .4); w(-W / 2, 0, .4, D); w(W / 2, 0, .4, D);
+        const hw = W / 2 - 2.5; w(-(W / 2 + 2.5) / 2, -D / 2, hw, .4); w((W / 2 + 2.5) / 2, -D / 2, hw, .4);       // 5 m entrance
+        box(W + .2, .7, .6, cx, H - .35, cz - D / 2, bandCol, false);
+        box(W, .05, D, cx, .03, cz, floorCol, false);
+        const roof = box(W + .8, .4, D + .8, cx, H + .2, cz, "#8a8a84", false); roofs.push([roof, cx, cz, W / 2, D / 2]);
+        const dt = new B.DynamicTexture("fs", { width: 512, height: 128 }, scene, false), c = dt.getContext();
+        c.fillStyle = bg; c.fillRect(0, 0, 512, 128); c.fillStyle = fg; c.font = "bold 46px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(title, 256, 66, 490); dt.update();
+        const sn = B.MeshBuilder.CreatePlane("fsn", { width: 16, height: 4 }, scene); sn.position.set(cx, H + 2.4, cz - D / 2 - .5); sn.isPickable = false;
+        const mt = new B.StandardMaterial("fsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
+      }
+      // Police Department
+      fac(35, 98, 30, 18, "#dfe6ee", "#1d3b6b", "POLICE DEPARTMENT", "#1d3b6b", "#ffffff", "#b8c4d0");
+      box(7, 1.1, 1.2, 35, .55, 100, "#5a4a3a"); box(.6, .4, .05, 33.5, 1.3, 100, "#111", false);
+      [27, 29].forEach(x => item("chair", x, 93, 0, false, .9));
+      for (let i = 0; i < 9; i++) box(.08, 3, .08, 41 + i, 1.5, 101.9, "#555", false);
+      for (let j = 0; j < 5; j++) box(.08, 3, .08, 45, 1.5, 102 + j, "#555", false);
+      box(2, .5, .8, 43, .25, 106.4, "#777", false); box(2, .5, .8, 47, .25, 106.4, "#777", false);
+      A.createTrotro(scene, { position: [24, 0, 83], rotY: Math.PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
+      A.createTrotro(scene, { position: [46, 0, 83], rotY: Math.PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
+      box(.15, 8, .15, 18, 4, 86, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => box(1.8, .5, .05, 18.95, f[1], 86, f[0], false));
+      // Hospital
+      fac(110, 98, 44, 24, "#f4f7fa", "#c8102e", "ACCRA HOSPITAL", "#ffffff", "#c8102e", "#e6eef2");
+      box(4.4, 4.4, .3, 110, 9.4, 85.6, "#ffffff", false); box(1.2, 3.6, .4, 110, 9.4, 85.5, "#c8102e", false); box(3.6, 1.2, .4, 110, 9.4, 85.5, "#c8102e", false);   // red cross
+      box(8, 1.1, 1.2, 110, .55, 91, "#ffffff"); box(8.4, .1, 1.4, 110, 1.15, 91, "#c8102e", false);
+      for (let i = 0; i < 6; i++) item("bed1", 96 + i * 3.6, 108.5, Math.PI, false, 1);
+      for (let i = 0; i < 4; i++) item("chair", 92.5, 94.5 + i * 2.2, Math.PI / 2, false, .9);
+      A.createTrotro(scene, { position: [100, 0, 83], rotY: Math.PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
+      A.createTrotro(scene, { position: [120, 0, 83], rotY: Math.PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
+      scene.onBeforeRenderObservable.add(() => { const p = player.position; roofs.forEach(r => r[0].setEnabled(!(Math.abs(p.x - r[1]) < r[3] + .5 && Math.abs(p.z - r[2]) < r[4] + .5))); });
+      window.ACCRA_PLACES = { pd: { x: 35, z: 97.4, ox: 35, oz: 84 }, hp: { x: 110, z: 89.2, ox: 110, oz: 82 } };
+    } catch (e) { banner("Police/Hospital: " + e.message); }
 
     // ---------- 1. TIN ROOFS on low and mid-rise buildings ----------
     const roofSrc = {};
@@ -399,10 +441,20 @@
       trotros[(k + 1) % 2](c + lane, odd ? -35 : 105, lane > 0 ? 0 : Math.PI);
     });
 
+    // ---- smoothness: render fewer pixels when the phone struggles, refresh shadows every other frame ----
+    try {
+      const smap = sg.getShadowMap(); if (smap) smap.refreshRate = 2;
+      let fr = 0;
+      scene.onBeforeRenderObservable.add(() => {
+        if (++fr % 120) return;
+        const lv = engine.getHardwareScalingLevel();
+        if (engine.getFps() < 40 && lv < 1) engine.setHardwareScalingLevel(Math.min(1, lv + .17));
+      });
+    } catch (e) {}
     window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ };
-    const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; document.body.appendChild(lifeJs);
+    const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
     console.log("Accra upgrade loaded:", n, "roofs");
   } catch (err) {
-    console.error("accra-upgrade failed (game still runs):", err);
+    console.error("accra-upgrade failed (game still runs):", err); banner("Upgrade stopped: " + (err && err.message));
   }
 })();

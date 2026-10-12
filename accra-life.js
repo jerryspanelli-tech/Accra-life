@@ -2,6 +2,7 @@
  * Vitals (health, energy, hunger, hygiene, mood), sitting, sleeping, fridge, cooking, laptop,
  * food kiosks, and homes you can rent or buy (towers, houses, a mansion) with real interiors. */
 (function () {
+  const K0 = window.ACCRA_KIT;
   try {
     const K = window.ACCRA_KIT, AV = window.ACCRA_AVATAR;
     if (!K || !AV) { console.log("accra-life: needs accra-upgrade.js and online.js"); return; }
@@ -30,7 +31,7 @@
 
     // ---------- slow down when exhausted, freeze when seated or busy ----------
     const mwc = player.moveWithCollisions.bind(player);
-    player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (st.en < 12 ? .6 : 1); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
+    player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (st.en < 12 ? .8 : 1.3); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
 
     // ---------- seating and sleeping ----------
     function sit(x, z, ry) { seated = { x, z, out: [Math.sin(ry) * 1.1, Math.cos(ry) * 1.1] }; player.position.set(x, .91, z); player.rotation.y = ry; AV.pose = "sit"; }
@@ -94,11 +95,6 @@
         else if (d.a === "homes") myHomes();
       });
     }
-    function myHomes() {
-      const ids = Object.keys(st.keys);
-      show(ttl("My homes") + (ids.length ? ids.map(id => { const k = st.keys[id], u = UNITS[id]; return u ? '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" + (k.t === "own" ? "Owned" : "Rent GH\u00A2" + u.rent + "/wk \u00B7 next payment in " + Math.max(0, Math.ceil((k.due - st.play) / 60)) + " min") + "</small></div>" : ""; }).join("") : '<div style="padding:6px 0">You do not rent or own any extra homes yet. Your villa is yours already.</div>') + CLOSE, hide);
-    }
-
     // ---------- furniture that does things (villa + every home) ----------
     function reg(list, ox, oz, ok, skipWard) {
       list.forEach(f => {
@@ -188,21 +184,50 @@
       const u = UNITS[h[0]] = { id: h[0], name: h[1], tpl: h[5], rent: h[6], buy: h[7], dist: h[2] };
       LISTS.push({ name: h[1], units: [u], door: door(b, h[1], "Rent GH\u00A2" + h[6] + "/wk \u00B7 Buy GH\u00A2" + h[7].toLocaleString(), "#2a7ab8") });
     });
+    // ---- ownership + marketplace: owners can list their homes for sale or rent; everyone sees the listings ----
+    const ME = localStorage.getItem("accra-name") || "You";
+    const mk = ls("accra-market", {});
+    const saveMk = () => sv("accra-market", mk);
+    const NET = () => (AV.net ? AV.net() : null);
+    const bcast = () => { const n = NET(); if (n) n.emit("propMarket", mk); };
+    { const n = NET(); if (n) { n.on("propMarket", d => { Object.keys(d || {}).forEach(id => { if (d[id] && d[id].owner !== ME) mk[id] = d[id]; }); saveMk(); }); n.on("adminGift", d => { earn(d.amount, "Gift from admin"); note("Admin sent you GH\u00A2" + d.amount); }); } }
+    const priceOf = u => { const m = mk[u.id]; return { buy: m && m.mode === "sale" ? m.price : u.buy, rent: m && m.mode === "rent" ? m.price : u.rent }; };
     function unitRow(u, atDoor) {
-      const k = st.keys[u.id];
-      return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" + u.dist + " \u00B7 rent GH\u00A2" + u.rent + "/wk \u00B7 buy GH\u00A2" + u.buy.toLocaleString() + "</small>" +
-        (k ? '<br><small style="color:#69f0ae">' + (k.t === "own" ? "You own this" : "You rent this") + "</small>" : "") + "<br>" +
-        (!k ? '<button data-r="' + u.id + '" style="' + SB + '">Rent</button>' : "") + (k && k.t === "own" ? "" : '<button data-b="' + u.id + '" style="' + SB + '">Buy</button>') +
+      const k = st.keys[u.id], m = mk[u.id], p = priceOf(u), sale = m && m.mode === "sale", rl = m && m.mode === "rent";
+      let status = "Available now", col = "#c9d1d9";
+      if (k && k.t === "own") { status = "You own this" + (m ? " \u00B7 listed for " + (sale ? "sale" : "rent") + " GH\u00A2" + m.price.toLocaleString() : ""); col = "#69f0ae"; }
+      else if (k) { status = "You rent this"; col = "#69f0ae"; }
+      else if (m) { status = (m.owner === ME ? "Your listing" : "Listed by " + m.owner) + " \u00B7 " + (sale ? "FOR SALE" : "FOR RENT"); col = "#ffd24a"; }
+      return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" + u.dist + " \u00B7 rent GH\u00A2" + p.rent + "/wk \u00B7 buy GH\u00A2" + p.buy.toLocaleString() + '</small><br><small style="color:' + col + '">' + status + "</small><br>" +
+        (!k && !sale ? '<button data-r="' + u.id + '" style="' + SB + '">Rent</button>' : "") + (!(k && k.t === "own") && !rl ? '<button data-b="' + u.id + '" style="' + SB + '">Buy</button>' : "") +
         (k && atDoor ? '<button data-e="' + u.id + '" style="' + SB + '">Enter</button>' : "") + "</div>";
     }
     const propClick = (redraw, door) => d => {
       if (d.x) return hide();
       const id = d.r || d.b || d.e, u = UNITS[id]; if (!u) return;
       if (d.e) { hide(); return enter(u, door); }
-      if (d.r) { if (cash() < u.rent) return note("Not enough cash. First week costs GH\u00A2" + u.rent); pay(u.rent, "Rent: " + u.name); st.keys[id] = { t: "rent", due: st.play + WEEK }; note("Rented! Rent is charged every 10 minutes of play."); }
-      else { if (cash() < u.buy) return note("Not enough cash. Price GH\u00A2" + u.buy.toLocaleString()); pay(u.buy, "Bought: " + u.name); st.keys[id] = { t: "own" }; note("Congratulations, you own " + u.name + "!"); }
+      const p = priceOf(u), m = mk[id];
+      if (d.r) { if (cash() < p.rent) return note("Not enough cash. First week costs GH\u00A2" + p.rent); pay(p.rent, "Rent: " + u.name); st.keys[id] = { t: "rent", due: st.play + WEEK }; note("Rented! Rent is charged every 10 minutes of play."); }
+      else { if (cash() < p.buy) return note("Not enough cash. Price GH\u00A2" + p.buy.toLocaleString()); pay(p.buy, "Bought: " + u.name); st.keys[id] = { t: "own" }; if (m && m.mode === "sale") { delete mk[id]; saveMk(); bcast(); } note("Congratulations, you own " + u.name + "!"); }
       redraw();
     };
+    function myHomes() {
+      const draw = () => show(ttl("My homes") + (Object.keys(st.keys).filter(id => UNITS[id]).map(id => {
+        const k = st.keys[id], u = UNITS[id], m = mk[id];
+        return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" +
+          (k.t === "own" ? (m ? "Owned \u00B7 listed for " + (m.mode === "sale" ? "sale" : "rent") + " GH\u00A2" + m.price.toLocaleString() : "Owned") : "Rent GH\u00A2" + u.rent + "/wk \u00B7 next payment in " + Math.max(0, Math.ceil((k.due - st.play) / 60)) + " min") + "</small><br>" +
+          (k.t === "own" ? (m ? '<button data-lx="' + id + '" style="' + SB + '">Remove listing</button>' : '<button data-ls="' + id + '" style="' + SB + '">List for sale</button><button data-lr="' + id + '" style="' + SB + '">List for rent</button>') : '<button data-mo="' + id + '" style="' + SB + '">Move out</button>') + "</div>";
+      }).join("") || '<div style="padding:6px 0">You do not rent or own any extra homes yet. Your villa is yours already.</div>') + CLOSE, d => {
+        if (d.x) return hide();
+        const id = d.ls || d.lr || d.lx || d.mo, u = UNITS[id]; if (!u) return;
+        if (d.ls) { const v = Math.round(+prompt("Asking price in GH\u00A2", u.buy)); if (!(v > 0)) return; mk[id] = { owner: ME, mode: "sale", price: v }; }
+        else if (d.lr) { const v = Math.round(+prompt("Weekly rent in GH\u00A2", u.rent)); if (!(v > 0)) return; mk[id] = { owner: ME, mode: "rent", price: v }; }
+        else if (d.lx) delete mk[id];
+        else if (d.mo) { delete st.keys[id]; if (inside === id) leave(); }
+        saveMk(); bcast(); draw();
+      });
+      draw();
+    }
     function listing(l, door) { const draw = () => show(ttl(l.name) + "<small>Cash: GH\u00A2" + cash() + "</small>" + l.units.map(u => unitRow(u, true)).join("") + CLOSE, propClick(draw, door)); draw(); }
     function allListings() { const draw = () => show(ttl("Property listings") + "<small>Rent or buy online, then go to the building's door to enter.</small>" + Object.values(UNITS).map(u => unitRow(u, false)).join("") + CLOSE, propClick(draw, null)); draw(); }
     LISTS.forEach(l => points.push({ x: l.door.x, z: l.door.z, r: 3.4, t: () => l.units.some(u => st.keys[u.id]) ? "\uD83D\uDD11 " + l.name : "\uD83C\uDFE0 View, rent or buy", ok: () => !busy && !seated, f: () => listing(l, l.door) }));
@@ -219,7 +244,8 @@
       st.hp = 30; st.hu = Math.max(st.hu, 40); st.en = Math.max(st.en, 40);
       const fine = Math.min(50, Math.floor(cash() * .1)); if (fine) pay(fine, "Hospital bill");
       if (seated) stand(); AV.pose = null;
-      fade(800, () => { inside = null; tp(VX, VZ + 12); }, () => note("You passed out and woke up at home. Hospital bill GH\u00A2" + fine));
+      const HP = window.ACCRA_PLACES && window.ACCRA_PLACES.hp;
+      fade(800, () => { inside = null; if (HP) tp(HP.ox, HP.oz); else tp(VX, VZ + 12); }, () => note("You passed out and woke up " + (HP ? "at Accra Hospital" : "at home") + ". Bill GH\u00A2" + fine));
     }
     let lx = player.position.x, lz = player.position.z, acc = 0, saveT = 0, rentT = 0;
     scene.onBeforeRenderObservable.add(() => {
@@ -237,7 +263,52 @@
       saveT += dt; if (saveT > 5) { saveT = 0; sv("accra-life", st); }
       rentT += dt; if (rentT > 2) { rentT = 0; rentCheck(); }
     });
+    // ---------- Hospital (HP) and Police Department (PD) ----------
+    const PL = window.ACCRA_PLACES || {};
+    let freeAt = 0;
+    function hospital() {
+      show(ttl("\uD83C\uDFE5 Accra Hospital") + "<small>Health " + Math.round(st.hp) + "% \u00B7 Cash GH\u00A2" + cash() + "</small>" +
+        '<button data-h="30" style="' + BS + '">Check-up \u00B7 GH\u00A230 \u00B7 +40 health</button><button data-h="80" style="' + BS + '">Full treatment \u00B7 GH\u00A280 \u00B7 full health, +25 energy</button><button data-h="0" style="' + BS + '">Emergency care (free if you cannot pay)</button>' + CLOSE, d => {
+        if (d.x) return hide();
+        const f = +d.h;
+        if (f === 0) { if (cash() >= 30) return note("Free care is only for people who cannot pay."); if (st.play < freeAt) return note("Please wait a few minutes before free care again."); freeAt = st.play + 180; st.hp = clamp(st.hp + 25); return note("A nurse treated you. +25 health"); }
+        if (cash() < f) return note("Not enough cash.");
+        pay(f, "Hospital"); if (f === 30) st.hp = clamp(st.hp + 40); else { st.hp = 100; st.en = clamp(st.en + 25); }
+        note("Treated. Health " + Math.round(st.hp) + "%"); hospital();
+      });
+    }
+    const TIPS = ["Keep your phone safe in busy markets like Makola.", "Always lock your door when you leave home.", "Do not drive when you are exhausted.", "Eat and rest: low health makes you pass out."];
+    function police() {
+      show(ttl("\uD83D\uDE93 Police Department") + '<button data-j="patrol" style="' + BS + '">Patrol shift \u00B7 +GH\u00A290 \u00B7 uses 25 energy</button><button data-j="comm" style="' + BS + '">Community service \u00B7 +GH\u00A245 \u00B7 uses 12 energy</button><button data-j="tip" style="' + BS + '">Safety tip</button>' + CLOSE, d => {
+        if (d.x) return hide();
+        if (d.j === "tip") return note(TIPS[Math.floor(Math.random() * TIPS.length)]);
+        const patrol = d.j === "patrol", cost = patrol ? 25 : 12, gain = patrol ? 90 : 45;
+        if (st.en < cost) return note("Too tired for this shift."); if (st.hu < 10) return note("Eat something first.");
+        hide(); busy = true; note(patrol ? "On patrol\u2026" : "Community service\u2026");
+        setTimeout(() => { earn(gain, patrol ? "Police patrol" : "Community service"); st.en = clamp(st.en - cost); st.hu = clamp(st.hu - 8); st.md = clamp(st.md + 3); busy = false; note("Shift done. +GH\u00A2" + gain); }, 4000);
+      });
+    }
+    if (PL.hp) points.push({ x: PL.hp.x, z: PL.hp.z, r: 3.2, t: "\uD83C\uDFE5 Hospital desk", ok: () => !busy && !seated, f: hospital });
+    if (PL.pd) points.push({ x: PL.pd.x, z: PL.pd.z, r: 3.2, t: "\uD83D\uDE93 Police desk", ok: () => !busy && !seated, f: police });
+
+    // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
+    const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
+    const TELE = { mall: [35, 12], stadium: [110, 12], hospital: [110, 80], police: [35, 80], villa: [VX, VZ + 12], airport: [-60, -66] };
+    function adminPanel() {
+      show(ttl("\uD83D\uDD27 Admin") + "<small>Play-money and test tools</small>" + [500, 5000, 50000, 500000].map(a => '<button data-m="' + a + '" style="' + BS + '">Give myself GH\u00A2' + a.toLocaleString() + "</button>").join("") +
+        '<button data-p="1" style="' + BS + '">Give play money to an online player\u2026</button><button data-v="1" style="' + BS + '">Refill my health, energy, hunger</button>' +
+        Object.keys(TELE).map(t => '<button data-t="' + t + '" style="' + BS + '">Go to: ' + t + "</button>").join("") + CLOSE, d => {
+        if (d.x) return hide();
+        if (d.m) { earn(+d.m, "Admin grant"); note("You received GH\u00A2" + (+d.m).toLocaleString()); }
+        else if (d.v) { st.hp = st.en = st.hu = st.hy = st.md = 100; note("Refilled"); }
+        else if (d.t) { hide(); tp(TELE[d.t][0], TELE[d.t][1]); }
+        else if (d.p) { const to = prompt("Player name"), amount = Math.round(+prompt("Amount in GH\u00A2")), n = NET(); if (!to || !(amount > 0)) return; if (!n) return note("Not online: no server connection."); n.emit("adminGive", { to, amount, code: ADMIN_CODE }); note("Request sent. The server must support adminGive."); }
+      });
+    }
+    { const pill = document.querySelector(".pill"); let taps = 0, tt = 0;
+      if (pill) pill.addEventListener("click", () => { const t = Date.now(); taps = t - tt < 900 ? taps + 1 : 1; tt = t; if (taps >= 5) { taps = 0; if (prompt("Admin code") === ADMIN_CODE) adminPanel(); else note("Wrong code"); } }); }
+
     console.log("Accra life loaded:", LISTS.length, "property doors");
     note("Life systems on \u2014 watch your health, energy and hunger");
-  } catch (err) { console.error("accra-life failed (game still runs):", err); }
+  } catch (err) { console.error("accra-life failed (game still runs):", err); try { K0 && K0.note("\u26A0 Life: " + err.message); } catch (e) {} }
 })();
