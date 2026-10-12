@@ -90,7 +90,8 @@
       counter: ["Kitchen counter", 0, [[5,.9,.7,0,.45,0,"#e9edf0"],[5,.05,.75,0,.92,0,"#3a3a3e"],[.8,.06,.5,-1.2,.95,.02,"#aab4bc"],[.05,.28,.05,-1.2,1.08,-.2,"#ccc"],[.45,.03,.45,1,.96,0,"#222"],[.45,.03,.45,1.8,.96,0,"#222"]]],
       island: ["Kitchen island", 0, [[1,.9,3,0,.45,0,"#f4f1ea"],[1.1,.05,3.1,0,.92,0,"#8a8a8a"],[.4,.5,.4,-.85,.25,-.9,"#6d4c2f"],[.4,.5,.4,-.85,.25,.9,"#6d4c2f"]]],
       bath: ["Bathtub", 0, [[1.6,.6,.8,0,.3,0,"#f4f7fa"],[1.4,.05,.6,0,.58,0,"#9fd0e8"],[.05,.2,.05,.7,.7,0,"#ccc"]]],
-      vanity: ["Vanity", 0, [[.6,.8,1.6,0,.4,0,"#e3eef4"],[.5,.06,.9,0,.82,0,"#ffffff"],[.04,.25,.04,0,.95,-.3,"#ccc"]]]
+      vanity: ["Vanity", 0, [[.6,.8,1.6,0,.4,0,"#e3eef4"],[.5,.06,.9,0,.82,0,"#ffffff"],[.04,.25,.04,0,.95,-.3,"#ccc"]]],
+      kit2: ["Kitchenette", 0, [[2,.9,.65,0,.45,0,"#e9edf0"],[2,.05,.7,0,.92,0,"#3a3a3e"],[.5,.06,.45,-.5,.95,.02,"#aab4bc"],[.05,.25,.05,-.5,1.07,-.2,"#ccc"],[.4,.03,.4,.35,.96,0,"#222"],[.4,.03,.4,.75,.96,0,"#222"]]]
     };
     const APPL = ["fridge", "tv", "cooker", "washer", "micro", "fan"], FURN = ["bed1", "bed2", "sofa", "dining", "wardrobe", "shelf"];
     function item(id, x, z, ry, lbl, sc, parent) {
@@ -193,11 +194,13 @@
      ["Cinema sofa", 8.5, -3.2, .6], ["Cinema screen", 8.5, -8.4, 1.1]].forEach(o => tag(o[0], VX + o[1], o[3] + .7, VZ + o[2], 1.6));
     {
       const vdec = new B.TransformNode("villaDeco", scene), P = Math.PI;
-      [[-8.5, .7, "tv", 0, 1.7], [-8.5, 3, "sofa", P, 1.5], [-6.9, 6.2, "sofa", P, 1.5], [-11.6, 7.2, "chair", P / 2, 1.1], [-4.9, 8, "coffee", 0, 1.5],
+      const VF = [[-8.5, .7, "tv", 0, 1.7], [-8.5, 3, "sofa", P, 1.5], [-6.9, 6.2, "sofa", P, 1.5], [-11.6, 7.2, "chair", P / 2, 1.1], [-4.9, 8, "coffee", 0, 1.5],
        [12.5, 4, "counter", -P / 2, 1], [9.2, 4, "island", 0, 1], [12.4, 7.9, "fridge", -P / 2, 1.1], [6.3, 7.2, "dining", 0, 1.5],
        [0, -6.2, "desk", 0, 1.4], [-2.6, -8.55, "shelf", 0, 1.25], [2.6, -8.55, "shelf", 0, 1.25],
        [-6.5, -6.8, "bed2", 0, 1.4], [-5, -.55, "wardrobe", P, 1.3], [-11.4, -8.2, "bath", 0, 1], [-10, -7.2, "vanity", 0, 1],
-       [8.5, -3.2, "sofa", P, 1.5], [8.5, -8.4, "tv", 0, 1.7]].forEach(f => {
+       [8.5, -3.2, "sofa", P, 1.5], [8.5, -8.4, "tv", 0, 1.7]];
+      window.ACCRA_VILLA = VF;
+      VF.forEach(f => {
         const old = scene.meshes.find(m => m.name === "b" && Math.abs(m.position.x - (VX + f[0])) < .01 && Math.abs(m.position.z - (VZ + f[1])) < .01);
         if (old) { old.isVisible = false; sg.removeShadowCaster(old); }
         item(f[2], VX + f[0], VZ + f[1], f[3], false, f[4], vdec);
@@ -230,11 +233,74 @@
       if (ft++ % 6) return;
       const p = player.position; cp = null;
       if (!driving && !document.body.classList.contains("po")) { let bd = 1e9; POINTS.forEach(q => { const d = Math.hypot(q.x - p.x, q.z - p.z); if (d < q.r && d < bd && (!q.ok || q.ok(p))) { bd = d; cp = q; } }); }
-      ab.style.display = cp ? "block" : "none"; if (cp) ab.textContent = cp.t;
+      ab.style.display = cp ? "block" : "none"; if (cp) ab.textContent = typeof cp.t === "function" ? cp.t() : cp.t;
       if (!cp && pan.style.display === "block" && !lock) hide();
       mroof.setEnabled(!(Math.abs(p.x - MX) < 20.5 && Math.abs(p.z - MZ) < 18.5));
     });
 
+
+    // ===== AMOAMAH ESTATE: detached houses with red hip-tile roofs, lawns, wooden fences, pools; and the SPORTS STADIUM =====
+    scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.x > 80 && m.position.x < 140 && Math.abs(m.position.z) > 10 && Math.abs(m.position.z) < 60).forEach(m => m.dispose());
+    const hipSrc = {};
+    function hip(hex) {   // hip roof: a ridge with four sloping faces
+      if (hipSrc[hex]) return hipSrc[hex];
+      const a = 1, b = .75, c = .25, h = 1, pos = [], idx = [];
+      [[[-a, 0, -b], [a, 0, -b], [c, h, 0], [-c, h, 0]], [[a, 0, b], [-a, 0, b], [-c, h, 0], [c, h, 0]], [[a, 0, -b], [a, 0, b], [c, h, 0]], [[-a, 0, b], [-a, 0, -b], [-c, h, 0]]].forEach(f => {
+        const o = pos.length / 3; f.forEach(v => pos.push(v[0], v[1], v[2]));
+        idx.push(o, o + 1, o + 2); if (f.length === 4) idx.push(o, o + 2, o + 3);
+      });
+      const nrm = []; B.VertexData.ComputeNormals(pos, idx, nrm);
+      const m = new B.Mesh("hip", scene), vd = new B.VertexData(); vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(m);
+      const mt = new B.StandardMaterial("hipm" + hex, scene); mt.diffuseColor = B.Color3.FromHexString(hex); mt.specularColor = new B.Color3(.05, .05, .05); mt.backFaceCulling = false; mt.twoSidedLighting = true;
+      m.material = mt; m.isVisible = false; m.isPickable = false; return (hipSrc[hex] = m);
+    }
+    function amoPlot(cx, cz, s, k) {   // s = 1: front faces -z (south), s = -1: front faces +z
+      const bx = (w, h, d, lx, y, lz, col, solid) => box(w, h, d, cx + s * lx, y, cz + s * lz, col, solid);
+      bx(26, .06, 21, 0, .04, 0, "#62b04b", false);                                            // lawn
+      bx(26, 1.3, .2, 0, .65, 10.4, "#7a4a2a"); bx(.2, 1.3, 21, -13, .65, 0, "#7a4a2a"); bx(.2, 1.3, 21, 13, .65, 0, "#7a4a2a");   // wooden fence
+      bx(11.5, 1.3, .2, -7.25, .65, -10.4, "#7a4a2a"); bx(11.5, 1.3, .2, 7.25, .65, -10.4, "#7a4a2a");                            // gate gap in front
+      bx(1.6, .05, 6.9, 0, .07, -6.95, "#d8c9a0", false);                                      // stone path
+      const wall = ["#d9d2c3", "#e8ddc6", "#cfd8d6", "#e6cbb0"][k % 4];
+      const body = bx(11, 3.4, 8, 0, 1.7, .5, wall); body.name = "amh";
+      const gp = [cx, cz - s * 10.4]; body.metadata = { gate: gp, n: [0, -s] };
+      [-3.6, 3.6].forEach(x => { bx(1.5, 1.3, .08, x, 1.9, -3.52, "#e8e2d0", false); bx(1.3, 1.1, .1, x, 1.9, -3.54, "#1d3042", false); });
+      bx(1.4, 2.4, .1, 0, 1.2, -3.53, "#e8e2d0", false); bx(1.2, 2.2, .12, 0, 1.1, -3.56, "#5a3a22", false);
+      [-1, 1].forEach(q => bx(.1, 1.1, 1.3, q * 5.54, 1.9, .5, "#1d3042", false)); bx(1.3, 1.1, .1, 0, 1.9, 4.54, "#1d3042", false);
+      const r = hip(k % 2 ? "#c65a2e" : "#b5472c").createInstance("hipi"); r.scaling.set(6.1, 2.6, 6.13); r.position.set(cx + s * 0, 3.4, cz + s * .5); r.isPickable = false;
+      if (k % 2 === 0) { bx(10, .06, 4.8, 0, .07, 7.5, "#e6e0d0", false); bx(8.6, .08, 3.4, 0, .1, 7.5, "#46b6d9", false); }        // swimming pool
+      else tree(cx + s * 9, cz + s * 7.5);
+      tree(cx - 10.2, cz - 7); tree(cx + 10.2, cz - 7);
+    }
+    [[96, 1], [124, 1]].forEach((p, i) => { [[-46.5, 1], [-23.5, -1]].forEach((q, j) => amoPlot(p[0], q[0], q[1], i * 2 + j)); });
+
+    // ---- sports stadium (block x 82..138, z 12..58) ----
+    {
+      const SX = 110, SZ = 35, g = (w, h, d, x, y, z, c, solid) => box(w, h, d, SX + x, y, SZ + z, c, solid);
+      g(44, .05, 36, 0, .03, 0, "#9a9a92", false);                                              // concrete apron
+      g(36, .06, 22, 0, .06, 0, "#3f9a3a", false);                                              // pitch
+      for (let i = 0; i < 6; i += 2) g(6, .02, 22, -15 + i * 6, .1, 0, "#388a34", false);       // mowing stripes
+      const ln = (w, d, x, z) => g(w, .02, d, x, .12, z, "#ffffff", false);
+      ln(36, .2, 0, 11); ln(36, .2, 0, -11); ln(.2, 22, -18, 0); ln(.2, 22, 18, 0); ln(.2, 22, 0, 0);       // outline + halfway line
+      [-1, 1].forEach(q => { ln(.2, 10, q * 13.5, 0); ln(4.5, .2, q * 15.75, 5); ln(4.5, .2, q * 15.75, -5); ln(.2, 10, q * 15.75, 0); g(.2, 2.4, .2, q * 18, 1.2, -1.8, "#ffffff", false); g(.2, 2.4, .2, q * 18, 1.2, 1.8, "#ffffff", false); g(.2, .2, 3.8, q * 18, 2.4, 0, "#ffffff", false); });
+      const ring = B.MeshBuilder.CreateTorus("cc", { diameter: 6, thickness: .2, tessellation: 24 }, scene); ring.scaling.y = .1; ring.position.set(SX, .13, SZ); ring.material = mat("#ffffff"); ring.isPickable = false;
+      const CL = ["#c8102e", "#fcd116", "#006b3f"];
+      const stand = (cx, cz, len, dir, tiers, tdepth) => {   // dir: 0 = long side along x, 1 = short side along z; outward step layout
+        for (let t = 0; t < tiers; t++) {
+          const hgt = 1.2 * (t + 1), off = (t + .5) * tdepth;
+          const px = dir ? cx + Math.sign(cx) * off : cx, pz = dir ? cz : cz + Math.sign(cz) * off;
+          g(dir ? tdepth : len, hgt, dir ? len : tdepth, px, hgt / 2, pz, "#8a8a8a");
+          for (let q = 0; q < 3; q++) g(dir ? .25 : len / 3, .06, dir ? len / 3 : .25, dir ? px - Math.sign(cx) * (tdepth / 2 - .35) : px - len / 3 + q * len / 3 + len / 3 - len / 3 + 0, hgt + .03, dir ? pz - len / 3 + q * len / 3 : pz - Math.sign(cz) * (tdepth / 2 - .35), CL[q], false);
+        }
+      };
+      stand(0, 14.5, 44, 0, 3, 2.3);                                                              // north stand
+      stand(-11.5, -14.5, 21, 0, 3, 2.3); stand(11.5, -14.5, 21, 0, 3, 2.3);                      // south stand with a 2 m entrance tunnel
+      stand(-20, 0, 22, 1, 2, 2); stand(20, 0, 22, 1, 2, 2);                                      // west and east ends
+      [[-23, -17], [23, -17], [-23, 17], [23, 17]].forEach(p => { g(.5, 14, .5, p[0], 7, p[1], "#555555"); g(2.4, .5, .9, p[0], 14.3, p[1], "#fffbe0", false); });   // floodlights
+      const dt = new B.DynamicTexture("stn", { width: 512, height: 128 }, scene, false), c = dt.getContext();
+      c.fillStyle = "#17191c"; c.fillRect(0, 0, 512, 128); c.fillStyle = "#fcd116"; c.font = "bold 44px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("ACCRA SPORTS STADIUM", 256, 66, 490); dt.update();
+      const sn = B.MeshBuilder.CreatePlane("stsn", { width: 14, height: 3.5 }, scene); sn.position.set(SX, 6, SZ - 17.4); sn.isPickable = false;
+      const mt = new B.StandardMaterial("stsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
+    }
 
     // ---------- 1. TIN ROOFS on low and mid-rise buildings ----------
     const roofSrc = {};
@@ -333,6 +399,8 @@
       trotros[(k + 1) % 2](c + lane, odd ? -35 : 105, lane > 0 ? 0 : Math.PI);
     });
 
+    window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ };
+    const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; document.body.appendChild(lifeJs);
     console.log("Accra upgrade loaded:", n, "roofs");
   } catch (err) {
     console.error("accra-upgrade failed (game still runs):", err);

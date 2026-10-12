@@ -37,8 +37,12 @@
    B(.3,.2,.42,0,-.78,.06,'#f0f0ec',q);return q};
   const al=arm(-1),ar=arm(1),ll=leg(-1),lr=leg(1);
   if(st==2)P('Cylinder',{height:.75,diameterTop:.75,diameterBottom:1.1,tessellation:8},0,.95,0,ts);
-  return{root,al,ar,ll,lr,ph:0}}
- function walk(h,sp,dt){h.ph+=dt*(2+sp*1.1);const k=Math.min(1,sp/3),s=Math.sin(h.ph)*.85*k;h.ll.rotation.x=s;h.lr.rotation.x=-s;h.al.rotation.x=-s;h.ar.rotation.x=s}
+  return{root,g,al,ar,ll,lr,ph:0}}
+ function walk(h,sp,dt){const k=Math.min(1,sp/1.1),run=Math.min(1,sp/5.5);h.ph+=sp*dt*2.3;   // stride follows real distance: no foot sliding
+  const s=Math.sin(h.ph)*(.5+.6*run)*k;
+  h.ll.rotation.x=s;h.lr.rotation.x=-s;h.al.rotation.x=-s*.9;h.ar.rotation.x=s*.9;
+  h.g.rotation.x=(.03+.17*run)*k;                                                            // lean into the run
+  h.g.position.y=Math.abs(Math.sin(h.ph))*.07*k+Math.sin(performance.now()/450)*.012*(1-k)} // step bounce + idle breathing
  let look;try{look=JSON.parse(localStorage.getItem('accra-look'))}catch(e){}
  const isNew=!look;
  look=look||{skin:1,hair:1,top:3,pants:0,style:0};
@@ -48,8 +52,17 @@
  let net=null;
  // customization screens (wardrobe, fitting room, first join) live in accra-upgrade.js
  const ui=(id,txt,top,fn)=>{const b=document.createElement('button');b.id=id;b.textContent=txt;b.style.cssText='position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + '+top+'px);border:0;border-radius:14px;background:rgba(28,30,33,.78);color:#fff;font-size:20px;padding:4px 12px;z-index:5';b.onclick=fn;document.body.appendChild(b);return b};
- window.ACCRA_AVATAR={look,isNew,apply:()=>{dress();if(net)net.emit('playerMove',snap())}};
- scene.onBeforeRenderObservable.add(()=>{const dt=engine.getDeltaTime()/1000;walk(mine,driving?0:cur.sp,dt)});
+ window.ACCRA_AVATAR={look,isNew,pose:null,apply:()=>{dress();if(net)net.emit('playerMove',snap())}};
+ let lpx=player.position.x,lpz=player.position.z,smv=0,vyaw=player.rotation.y;
+ const adiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+ scene.onBeforeRenderObservable.add(()=>{const dt=Math.max(engine.getDeltaTime()/1000,.001),src=driving?car:player;
+  const raw=Math.hypot(src.position.x-lpx,src.position.z-lpz)/dt;lpx=src.position.x;lpz=src.position.z;
+  smv+=(Math.min(raw,9)-smv)*Math.min(1,dt*9);cur.sp=smv;
+  vyaw+=adiff(player.rotation.y,vyaw)*Math.min(1,dt*12);mine.root.rotation.y=vyaw-player.rotation.y;   // smooth turning
+  const r=mine.root,pose=window.ACCRA_AVATAR&&window.ACCRA_AVATAR.pose;
+  if(pose==='sit'){r.rotation.x=0;r.position.set(0,-1.21,0);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=-1.5;mine.al.rotation.x=mine.ar.rotation.x=-.7}
+  else if(pose==='sleep'){r.rotation.x=-Math.PI/2;r.position.set(0,-.29,.95);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=mine.al.rotation.x=mine.ar.rotation.x=0}
+  else{r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
  // ---------- online ----------
  const URL_=window.ACCRA_SERVER||'PASTE_SERVER_URL_HERE';
  const cur={sp:0};let px=0,pz=0;
@@ -76,7 +89,7 @@
  net.on('connect_error',()=>{hud.textContent='Offline (server not reachable)'});
  scene.onBeforeRenderObservable.add(()=>{const dt=engine.getDeltaTime()/1000;
   others.forEach(o=>{const r=o.h.root,k=Math.min(1,dt*10);r.position.x+=(o.tx-r.position.x)*k;r.position.z+=(o.tz-r.position.z)*k;let d=o.ry-r.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));r.rotation.y+=d*k;walk(o.h,o.sp,dt)})});
- setInterval(()=>{const o=driving?car:player,dx=o.position.x-px,dz=o.position.z-pz;cur.sp=Math.hypot(dx,dz)/.1;px=o.position.x;pz=o.position.z;net.emit('playerMove',snap())},100);
+ setInterval(()=>{net.emit('playerMove',snap())},100);
  // real-world location is OPT-IN. The server turns it into an area name (like "Osu") and forgets the coordinates.
  ui('locbtn','\uD83D\uDCCD',134,()=>{
   if(area){net.emit('clearLocation');return}
