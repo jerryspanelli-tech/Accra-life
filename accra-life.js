@@ -16,7 +16,7 @@
     window.addEventListener("pagehide", save); document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
     const SB = "border:0;border-radius:9px;background:#c9a54a;color:#17191c;font:700 12px system-ui;padding:6px 10px;margin:4px 4px 0 0";
     const CLOSE = '<button data-x="1" style="' + BS + ';text-align:center">Close</button>';
-    let seated = null, busy = false, inside = null, ret = null;
+    let seated = null, busy = false, inside = null, ret = null, swimming = false;
     const tp = (x, z) => player.position.set(x, .91, z);
 
     // ---------- fade helper ----------
@@ -35,7 +35,7 @@
 
     // ---------- slow down when exhausted, freeze when seated or busy ----------
     const mwc = player.moveWithCollisions.bind(player);
-    player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (st.en < 12 ? .8 : 1.3); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
+    player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (swimming ? .55 : (st.en < 12 ? .8 : 1.3)); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
 
     // ---------- seating and sleeping ----------
     function sit(x, z, ry, sh, m) {   // sh = seat height, m = how you get up: 1 forward, -1 backward, 0 sideways
@@ -275,6 +275,9 @@
       st.hu = clamp(st.hu - dt * .035); st.hy = clamp(st.hy - dt * .012);
       st.en = clamp(st.en - dt * (.012 + (driving || mv > 40 ? 0 : mv * .0045)));
       if (seated) { st.en = clamp(st.en + dt * .6); st.md = clamp(st.md + dt * .15); }
+      { const Wt = window.ACCRA_WATER, sw = !!(Wt && !driving && !inside && !seated && Wt.contains(player.position));
+        if (sw !== swimming) { swimming = sw; if (sw && !AV.pose) AV.pose = "swim"; else if (!sw && AV.pose === "swim") AV.pose = null; }
+        if (swimming) { st.en = clamp(st.en - dt * .08); st.hy = clamp(st.hy + dt * .6); } }
       const bad = st.hu < 8 || st.en < 4;
       st.hp = clamp(st.hp + dt * (bad ? -.25 : (st.hu > 40 && st.en > 25 ? .04 : 0)));
       if (st.hu < 20 || st.hy < 20) st.md = clamp(st.md - dt * .05); else st.md = clamp(st.md + (60 - st.md) * dt * .002);

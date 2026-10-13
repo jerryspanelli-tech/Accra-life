@@ -64,6 +64,8 @@
   else if(pose==='sleep'){r.rotation.x=-Math.PI/2;r.position.set(0,-.29,.95);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=mine.al.rotation.x=mine.ar.rotation.x=0}
   else if(pose==='dance'){const t=performance.now()/1000,w=Math.sin(t*8);r.rotation.x=0;r.position.set(0,-.91,0);mine.g.position.y=Math.abs(w)*.11;mine.g.rotation.x=0;mine.g.rotation.z=Math.sin(t*4)*.12;
     mine.ll.rotation.x=w*.55;mine.lr.rotation.x=-w*.55;mine.al.rotation.x=-2.3+Math.sin(t*8)*.5;mine.ar.rotation.x=-2.3-Math.sin(t*8)*.5}
+  else if(pose==='swim'){mine.ph+=dt*(3+smv*1.4);const w=Math.sin(mine.ph);mine.g.rotation.z=0;mine.g.rotation.x=0;mine.g.position.y=0;r.rotation.x=1.25;r.position.set(0,-.55,0);
+    mine.al.rotation.x=-2.5+w*.9;mine.ar.rotation.x=-2.5-w*.9;mine.ll.rotation.x=Math.sin(mine.ph*2)*.4;mine.lr.rotation.x=-Math.sin(mine.ph*2)*.4}
   else{mine.g.rotation.z=0;r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
  // ---------- online ----------
  const URL_=window.ACCRA_SERVER||'PASTE_SERVER_URL_HERE';

@@ -583,6 +583,9 @@
     } catch (e) {}
     window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ, collider, tag, keep: () => { lock = true; } };
     const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
+    const locJs = document.createElement("script"); locJs.src = "AccraLocations.js";
+    locJs.onload = () => { try { window.ACCRA_LOC = new window.AccraLocations(scene); window.ACCRA_LOC.buildFullAccraMap(); } catch (e) { banner("AccraLocations: " + e.message); } };
+    document.body.appendChild(locJs);
     console.log("Accra upgrade loaded:", n, "roofs");
   } catch (err) {
     console.error("accra-upgrade failed (game still runs):", err); banner("Upgrade stopped: " + (err && err.message));
