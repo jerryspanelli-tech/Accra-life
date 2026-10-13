@@ -62,7 +62,9 @@
   const r=mine.root,pose=window.ACCRA_AVATAR&&window.ACCRA_AVATAR.pose;
   if(pose==='sit'){r.rotation.x=0;r.position.set(0,-.91+((window.ACCRA_AVATAR.sitH||.45)+.05-.748),0);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=-1.5;mine.al.rotation.x=mine.ar.rotation.x=-.7}
   else if(pose==='sleep'){r.rotation.x=-Math.PI/2;r.position.set(0,-.29,.95);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=mine.al.rotation.x=mine.ar.rotation.x=0}
-  else{r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
+  else if(pose==='dance'){const t=performance.now()/1000,w=Math.sin(t*8);r.rotation.x=0;r.position.set(0,-.91,0);mine.g.position.y=Math.abs(w)*.11;mine.g.rotation.x=0;mine.g.rotation.z=Math.sin(t*4)*.12;
+    mine.ll.rotation.x=w*.55;mine.lr.rotation.x=-w*.55;mine.al.rotation.x=-2.3+Math.sin(t*8)*.5;mine.ar.rotation.x=-2.3-Math.sin(t*8)*.5}
+  else{mine.g.rotation.z=0;r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
  // ---------- online ----------
  const URL_=window.ACCRA_SERVER||'PASTE_SERVER_URL_HERE';
  const cur={sp:0};let px=0,pz=0;

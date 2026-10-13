@@ -20,15 +20,20 @@
     })();
     // shared panel
     const pan = document.createElement("div");
-    pan.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 50px);transform:translateX(-50%);width:min(64vw,330px);max-height:72vh;overflow:auto;background:rgba(28,30,33,.95);border:2px solid #c9a54a;border-radius:18px;padding:12px;z-index:40;color:#fff;font:14px system-ui;display:none;touch-action:pan-y";
+    pan.className = "apn";
+    { const ps = document.createElement("style");
+      ps.textContent = ".apn{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);width:min(64vw,440px);max-height:min(48vh,230px);overflow:auto;background:rgba(28,30,33,.93);border:2px solid #c9a54a;border-radius:16px;padding:6px 8px 8px;z-index:40;color:#fff;font:12.5px system-ui;display:none;grid-template-columns:1fr 1fr;gap:0 6px;align-content:start;touch-action:pan-y;-webkit-overflow-scrolling:touch}.apn.min{max-height:42px;overflow:hidden}.apn>*{grid-column:1/-1}.apn>button{grid-column:auto}@media (orientation:portrait){.apn{width:min(94vw,420px);max-height:min(44vh,320px)}}";
+      document.head.appendChild(ps); }
     document.body.appendChild(pan);
-    const BS = "display:block;width:100%;margin:5px 0;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font:600 14px system-ui;padding:9px 12px;text-align:left";
+    const BS = "display:block;width:100%;margin:3px 0;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font:600 13px system-ui;padding:7px 10px;text-align:left";
     const GOLD = BS + ";background:#c9a54a;color:#17191c;text-align:center;font-weight:800";
     const ttl = t => '<div style="font-weight:800;font-size:16px;color:#c9a54a;margin-bottom:4px">' + t + "</div>";
-    let onPan = null, lock = false;
-    pan.onclick = e => { const b = e.target.closest("button"); if (b && onPan) onPan(b.dataset); };
-    const show = (html, fn) => { pan.innerHTML = html; onPan = fn; pan.style.display = "block"; };
-    const hide = () => { pan.style.display = "none"; onPan = null; lock = false; };
+    let onPan = null, lock = false, ptOpen = false;
+    { const jy = document.getElementById("joy"); if (jy) jy.addEventListener("pointerdown", () => { if (pan.style.display !== "none") pan.classList.add("min"); }); }
+    pan.onclick = e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.m) { pan.classList.toggle("min"); return; } if (onPan) onPan(b.dataset); };
+    const XB = '<div style="position:sticky;top:-8px;text-align:right;height:0;z-index:2"><button data-m="1" style="border:0;border-radius:50%;width:26px;height:26px;background:#555;color:#fff;font:800 14px system-ui;margin:-2px 6px 0 0">\u25BE</button><button data-x="1" style="border:0;border-radius:50%;width:26px;height:26px;background:#c9a54a;color:#17191c;font:800 14px system-ui;margin:-2px -4px 0 0">\u2715</button></div>';
+    const show = (html, fn) => { pan.innerHTML = XB + html; onPan = fn; pan.classList.remove("min"); pan.style.display = "grid"; };
+    const hide = () => { pan.classList.remove("min"); pan.style.display = "none"; onPan = null; lock = false; ptOpen = false; };
 
     // ---- clothes: wardrobe (owned only), fitting room (buy), first join (free) ----
     const OPT = [["Outfit", "style", 4], ["Hair", "hair", 5], ["Top colour", "top", 8], ["Skin", "skin", 6], ["Trousers", "pants", 6]];
@@ -239,13 +244,13 @@
     ab.style.cssText = "position:fixed;right:calc(env(safe-area-inset-right,0px) + 174px);bottom:calc(env(safe-area-inset-bottom,0px) + 28px);height:50px;padding:0 18px;border:0;border-radius:25px;background:#c9a54a;color:#17191c;font:800 15px system-ui;z-index:8;display:none;touch-action:none";
     document.body.appendChild(ab);
     let cp = null, ft = 0;
-    ab.onclick = () => { if (cp) cp.f(); };
+    ab.onclick = () => { if (cp) { ptOpen = true; cp.f(); } };
     scene.onBeforeRenderObservable.add(() => {
       if (ft++ % 6) return;
       const p = player.position; cp = null;
       if (!driving && !document.body.classList.contains("po")) { let bd = 1e9; POINTS.forEach(q => { const d = Math.hypot(q.x - p.x, q.z - p.z); if (d < q.r && d < bd && (!q.ok || q.ok(p))) { bd = d; cp = q; } }); }
       ab.style.display = cp ? "block" : "none"; if (cp) ab.textContent = typeof cp.t === "function" ? cp.t() : cp.t;
-      if (!cp && pan.style.display === "block" && !lock) hide();
+      if (!cp && pan.style.display === "grid" && ptOpen && !lock) hide();
       mroof.setEnabled(!(Math.abs(p.x - MX) < 20.5 && Math.abs(p.z - MZ) < 18.5));
     });
 
@@ -387,6 +392,88 @@
       };
     } catch (e) { banner("Police/Hospital/Dealership: " + e.message); }
 
+    // ===== THE ACCRA VIBES PUB (Osu): glass front, bar, football TVs, dance floor, rooftop deck, patio and parking =====
+    try {
+      const PX = -110, PZ = -41, PH = 4.6;   // 34 x 18 m, front wall faces -z (the road)
+      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.x > -136 && m.position.x < -86 && m.position.z < -34 && m.position.z > -60).forEach(m => m.dispose());
+      ITEMS.pubchair = ["Pub chair", 0, [[.45, .06, .45, 0, .45, 0, "#6b4a2e"], [.45, .5, .05, 0, .72, -.2, "#6b4a2e"], [.05, .45, .05, -.18, .22, -.18, "#3a2a1c"], [.05, .45, .05, .18, .22, -.18, "#3a2a1c"], [.05, .45, .05, -.18, .22, .18, "#3a2a1c"], [.05, .45, .05, .18, .22, .18, "#3a2a1c"]]];
+      const dec = new B.TransformNode("pubDeco", scene), roofN = new B.TransformNode("pubRoof", scene), emc = {};
+      const em = hex => emc[hex] || (emc[hex] = Object.assign(new B.StandardMaterial("pem" + hex, scene), { emissiveColor: B.Color3.FromHexString(hex), disableLighting: true }));
+      const glass = Object.assign(new B.StandardMaterial("pubglass", scene), { diffuseColor: B.Color3.FromHexString("#8fc8e8"), alpha: .22, specularColor: new B.Color3(.6, .6, .6) });
+      const pb = (w, h, d, x, y, z, c, par, m) => { const q = B.MeshBuilder.CreateBox("pd", { width: w, height: h, depth: d }, scene); q.parent = par || dec; q.position.set(PX + x, y, PZ + z); q.material = m || mat(c); q.isPickable = false; return q; };
+      const solid = (w, h, d, x, y, z) => { const q = box(w, h, d, PX + x, y, PZ + z, "#000"); q.isVisible = false; sg.removeShadowCaster(q); return q; };
+      const wall = (x, z, w, d) => box(w, PH, d, PX + x, PH / 2, PZ + z, "#2b2b30");
+      wall(0, 9, 34, .4); wall(-17, 0, .4, 18); wall(17, 0, .4, 18);
+      [-10, 10].forEach(x => { const g = box(14, 3.2, .15, PX + x, 1.6, PZ - 9, "#8fc8e8"); g.material = glass; sg.removeShadowCaster(g); });   // glass shop-front, 6 m doorway between
+      [-17, -3, 3, 17].forEach(x => box(.5, PH, .5, PX + x, PH / 2, PZ - 9, "#17171a")); box(34, 1.4, .5, PX, 3.9, PZ - 9, "#141416");
+      // ---- signs ----
+      const sign = (w, h, x, y, z, draw) => { const t = new B.DynamicTexture("ps", { width: 512, height: Math.round(512 * h / w) }, scene, false), c = t.getContext(); draw(c, 512, Math.round(512 * h / w)); t.update();
+        const m = B.MeshBuilder.CreatePlane("psn", { width: w, height: h }, scene); m.position.set(PX + x, y, PZ + z); m.isPickable = false;
+        const mt = new B.StandardMaterial("psm", scene); mt.diffuseTexture = t; mt.emissiveTexture = t; mt.disableLighting = true; mt.backFaceCulling = false; m.material = mt; };
+      sign(15, 3.4, 0, 3.9, -9.4, (c, w, h) => { c.fillStyle = "#141416"; c.fillRect(0, 0, w, h); c.shadowColor = "#ffb000"; c.shadowBlur = 16; c.fillStyle = "#ffd23f"; c.textAlign = "center"; c.textBaseline = "middle"; c.font = "bold 62px system-ui"; c.fillText("The Accra Vibes", w / 2, h * .38, 490); c.fillStyle = "#ffffff"; c.font = "bold 44px system-ui"; c.fillText("PUB", w / 2, h * .78); });
+      sign(3, 5, -19.5, 3.2, -9.4, (c, w, h) => { c.fillStyle = "#141416"; c.fillRect(0, 0, w, h); c.strokeStyle = "#ffd23f"; c.lineWidth = 8; c.strokeRect(6, 6, w - 12, h - 12); c.fillStyle = "#ffd23f"; c.textAlign = "center"; c.font = "bold 46px system-ui"; ["BEERS", "COCKTAILS", "SPIRITS", "LOCAL", "DRINKS", "FOOD"].forEach((t, i) => c.fillText(t, w / 2, 90 + i * 120, 440)); });
+      sign(1.6, 2.2, 15.5, 1.15, -14.2, (c, w, h) => { c.fillStyle = "#1c2420"; c.fillRect(0, 0, w, h); c.fillStyle = "#ffffff"; c.textAlign = "center"; c.font = "bold 40px system-ui"; c.fillText("Today's Specials", w / 2, 60, 470); c.font = "34px system-ui"; ["Accra Lager", "Club Beer", "Star Beer", "Cocktails", "Grilled Chicken", "Jollof Rice", "Banku & Tilapia"].forEach((t, i) => c.fillText(t, w / 2, 130 + i * 58, 470)); });
+      [["#c8102e", 4.3], ["#fcd116", 4.0], ["#006b3f", 3.7]].forEach(f => pb(1.8, .3, .05, 14.5, f[1], -9.3, f[0]));
+      // ---- floors ----
+      pb(33.6, .05, 17.6, 0, .03, 0, "#5a3d2b"); pb(40, .05, 7, 0, .04, -12.5, "#8a7a6a");
+      pb(11, .06, 10, 10.5, .07, 3, null, null, ck("#2a1450", "#6a2fa0", 5, 5));
+      [[0, 8.3, 11, .3], [0, -2.3, 11, .3], [-5.3, 3, .3, 10.6], [5.3, 3, .3, 10.6]].forEach(e => { void e; });
+      const pm = new B.StandardMaterial("pubpulse", scene); pm.disableLighting = true;
+      [[10.5, -1.9, 11, .25], [10.5, 7.9, 11, .25], [5.1, 3, .25, 10], [15.9, 3, .25, 10]].forEach(e => { const q = pb(e[2], .04, e[3], e[0], .1, e[1], null, null, pm); q.parent = null; });
+      // ---- bar, shelves, fridge, stools ----
+      pb(14, 1.15, 1.1, -5.5, .575, 3.2, "#3a2418"); pb(14.4, .1, 1.3, -5.5, 1.2, 3.2, "#1c120c"); pb(14, .08, .05, -5.5, .45, 2.62, null, null, em("#ff9a3c")); solid(14, 1.2, 1.1, -5.5, .6, 3.2);
+      pb(14, 2.8, .5, -5.5, 1.4, 8.6, "#2a1a10"); solid(14, 2.8, .5, -5.5, 1.4, 8.6);
+      [.95, 1.65, 2.35].forEach((y, r) => { pb(14, .05, .45, -5.5, y, 8.3, "#4a3220"); pb(13.6, .04, .05, -5.5, y + .04, 8.0, null, null, em("#ffcf7a")); for (let i = 0; i < 14; i++) pb(.12, .32, .12, -11.7 + i * .93, y + .2, 8.35, ["#2f8f4a", "#c98a2e", "#d9e2e6", "#8a2a2a"][(i + r) % 4]); });
+      pb(1.6, 2.1, .7, 5.3, 1.05, 8.5, "#1f1f24"); pb(1.4, 1.8, .05, 5.3, 1.05, 8.12, null, null, em("#9fd8ff")); solid(1.6, 2.1, .7, 5.3, 1.05, 8.5);
+      const seats = [];
+      for (let i = 0; i < 6; i++) { const x = -10.5 + i * 2; pb(.45, .08, .45, x, .72, 1.9, "#1c1c1f"); pb(.08, .7, .08, x, .36, 1.9, "#555"); seats.push({ x: PX + x, z: PZ + 1.9, ry: Math.PI, sh: .75 }); }
+      // ---- tables and chairs ----
+      const table = (x, z, par, y0) => { pb(1.2, .06, 1.2, x, (y0 || 0) + .75, z, "#3a2a1c", par); pb(.14, .72, .14, x, (y0 || 0) + .36, z, "#222", par); };
+      const chairs3 = (x, z, par, y0, reg) => [[0, -1, 0], [0, 1, Math.PI], [1, 0, -Math.PI / 2]].forEach(c => { item("pubchair", PX + x + c[0], PZ + z + c[1], c[2], false, 1, par).position.y = y0 || 0; if (reg) seats.push({ x: PX + x + c[0], z: PZ + z + c[1], ry: c[2], sh: .46 }); });
+      [[-13, -6], [-8, -6], [-13, -1.5], [-8, -1.5], [7, -6.5], [13, -6.5]].forEach(t => { table(t[0], t[1]); solid(1.2, .8, 1.2, t[0], .4, t[1]); chairs3(t[0], t[1], dec, 0, true); });
+      [-12, -7, 7, 12].forEach(x => { table(x, -13); solid(1.2, .8, 1.2, x, .4, -13); chairs3(x, -13, dec, 0, true); });
+      // ---- football TVs ----
+      const pitch = new B.DynamicTexture("pitch", { width: 256, height: 144 }, scene, false), pc = pitch.getContext();
+      pc.fillStyle = "#2f8f3a"; pc.fillRect(0, 0, 256, 144); pc.strokeStyle = "#fff"; pc.lineWidth = 3; pc.strokeRect(12, 12, 232, 120); pc.beginPath(); pc.moveTo(128, 12); pc.lineTo(128, 132); pc.stroke(); pc.beginPath(); pc.arc(128, 72, 20, 0, 6.3); pc.stroke(); pc.fillStyle = "#fcd116"; pc.fillRect(8, 2, 60, 10); pitch.update();
+      const pitchM = Object.assign(new B.StandardMaterial("pitchm", scene), { emissiveTexture: pitch, disableLighting: true, backFaceCulling: false });
+      const tv = (x, y, z, ry, par) => { const n = new B.TransformNode("tv", scene); n.parent = par || dec; n.position.set(PX + x, y, PZ + z); n.rotation.y = ry;
+        const f = B.MeshBuilder.CreateBox("tvf", { width: 2.5, height: 1.45, depth: .12 }, scene); f.parent = n; f.position.z = -.07; f.material = mat("#0b0b0e");
+        const s = B.MeshBuilder.CreatePlane("tvs", { width: 2.3, height: 1.3 }, scene); s.parent = n; s.rotation.y = Math.PI; s.material = pitchM; };
+      tv(9.5, 2.9, 8.3, Math.PI); tv(-16.6, 2.7, -3, Math.PI / 2); tv(16.6, 2.7, -3, -Math.PI / 2);
+      // ---- speakers, DJ booth, lamps ----
+      [[15.7, 8.3], [15.7, -1.6], [-16, -8.2], [16, -8.2]].forEach(p => { pb(.7, 1.5, .6, p[0], .75, p[1], "#101012"); pb(.4, .4, .05, p[0], .45, p[1] + (p[1] > 0 ? -.33 : .33), "#333"); pb(.25, .25, .05, p[0], 1.1, p[1] + (p[1] > 0 ? -.33 : .33), "#333"); });
+      pb(3, 1.1, 1.2, 12.5, .55, 8, "#1a1a1f"); pb(2.6, .06, .8, 12.5, 1.13, 8, null, null, em("#7a5cff")); solid(3, 1.1, 1.2, 12.5, .55, 8);
+      for (let i = 0; i < 12; i++) { const x = -13 + (i % 6) * 5.2, z = i < 6 ? -5 : 1; pb(.05, .9, .05, x, 4.15, z, "#222"); pb(.45, .25, .45, x, 3.65, z, null, null, em("#ffcf7a")); }
+      for (let i = 0; i < 6; i++) pb(.8, .06, .8, -13.5 + i * 2.4 + 0, 0.1, 5.2, "#000", null, em("#3c2a14")).visibility = 0;
+      // ---- patio: railing, plants, parking, cars, street lamp ----
+      [[-10, 14], [10, 14]].forEach(r => { const q = box(r[1], 1, .06, PX + r[0], 1, PZ - 16, "#1a1a1d"); sg.removeShadowCaster(q); }); for (let i = 0; i < 18; i++) if (Math.abs(-16.5 + i * 2) > 3) pb(.08, 1, .08, -16.5 + i * 2, .5, -16, "#1a1a1d");
+      [[-16, -10], [-4.6, -10], [4.6, -10], [16, -10], [-16, -15], [16, -15]].forEach(p => { pb(.7, .7, .7, p[0], .35, p[1], "#3a3a3a"); const s = B.MeshBuilder.CreateSphere("pl", { diameter: 1.1, segments: 5 }, scene); s.convertToFlatShadedMesh(); s.parent = dec; s.position.set(PX + p[0], 1.25, PZ + p[1]); s.scaling.y = 1.4; s.material = mat("#2f8f4a"); s.isPickable = false; });
+      pb(40, .05, 5.2, 0, .045, -20.6, "#3a3a3e"); for (let i = 0; i < 9; i++) pb(.12, .02, 4.4, -18 + i * 4.5, .08, -20.6, "#ffffff");
+      const miniCar = (x, z, col) => { pb(1.9, .7, 4.2, x, .65, z, col); pb(1.6, .55, 2.2, x, 1.28, z - .1, "#1a2530"); pb(1.55, .06, 1.9, x, 1.58, z - .1, col); [-1, 1].forEach(a => [-1.4, 1.4].forEach(b => pb(.25, .6, .6, x + a * .95, .3, z + b, "#111"))); [-.6, .6].forEach(a => { pb(.4, .15, .05, x + a, .7, z + 2.12, null, null, em("#fff6d6")); pb(.4, .12, .05, x + a, .7, z - 2.12, null, null, em("#ff2a2a")); }); };
+      miniCar(-11, -20.6, "#e8e8e8"); miniCar(-6.5, -20.6, "#2f5fd0"); miniCar(6.5, -20.6, "#1d2f6b"); miniCar(11, -20.6, "#d8d8d8");
+      pb(.15, 6, .15, -19, 3, -17, "#333"); pb(.9, .2, .5, -18.5, 6, -17, null, null, em("#ffcf7a"));
+      // ---- rooftop deck (hides while you are inside) ----
+      const rb = (w, h, d, x, y, z, c, m) => pb(w, h, d, x, y, z, c, roofN, m);
+      rb(34.6, .4, 18.6, 0, PH + .2, 0, "#2a2a2e"); rb(33, .05, 17, 0, PH + .42, 0, "#6d5a46");
+      for (let i = 0; i < 12; i++) { rb(.08, 1.1, .08, -16.5 + i * 3, PH + 1, -8.7, "#1a1a1d"); rb(.08, 1.1, .08, -16.5 + i * 3, PH + 1, 8.7, "#1a1a1d"); } rb(33, .06, .06, 0, PH + 1.5, -8.7, "#1a1a1d"); rb(33, .06, .06, 0, PH + 1.5, 8.7, "#1a1a1d");
+      [[-12, -4], [-6, -4], [0, -4], [6, -4], [12, -4], [-9, 3], [3, 3], [11, 3]].forEach(t => { table(t[0], t[1], roofN, PH + .42); chairs3(t[0], t[1], roofN, PH + .42, false); });
+      for (let i = 0; i < 14; i++) rb(.14, .14, .14, -16 + i * 2.4, PH + 2.7, -8, null, em("#ffe9a0")); for (let i = 0; i < 14; i++) rb(.14, .14, .14, -16 + i * 2.4, PH + 2.7, 8, null, em("#ffe9a0"));
+      tv(-10, PH + 1.9, 8.4, Math.PI, roofN); tv(10, PH + 1.9, 8.4, Math.PI, roofN);
+      const roofM = mergeAsset(roofN); const decM = mergeAsset(dec); if (decM) decM.isPickable = false;
+      // ---- bartender, warm light, disco colours ----
+      const bt = A.createCharacter(scene, { shirt: "#1d1d22", pants: "#1d1d22", skin: "#6b4028", hair: "#0d0d0d", kente: false, scale: .85 }); bt.root.position.set(PX - 5.5, 0, PZ + 4.7); bt.root.rotation.y = Math.PI;
+      tag("Kwame \u00B7 Bartender", PX - 5.5, 2.5, PZ + 4.7, 2.4);
+      const pl = new B.PointLight("publight", new B.Vector3(PX, 3.2, PZ + 1), scene); pl.diffuse = B.Color3.FromHexString("#ffb066"); pl.intensity = .55; pl.range = 26;
+      const ball = B.MeshBuilder.CreateSphere("discoball", { diameter: .8, segments: 8 }, scene); ball.convertToFlatShadedMesh(); ball.position.set(PX + 10.5, 3.9, PZ + 3); ball.material = pm; ball.isPickable = false;
+      let phs = 0;
+      scene.onBeforeRenderObservable.add(() => {
+        const p = player.position, inside = Math.abs(p.x - PX) < 17.5 && Math.abs(p.z - PZ) < 9.5, near = Math.hypot(p.x - PX, p.z - PZ) < 48;
+        if (roofM) roofM.setEnabled(!inside); pl.setEnabled(near);
+        if (near) { phs += engine.getDeltaTime() / 1000; pm.emissiveColor = B.Color3.FromHSV((phs * 70) % 360, .85, 1); ball.rotation.y += .02; }
+      });
+      window.ACCRA_PLACES = Object.assign(window.ACCRA_PLACES || {}, { pub: { bar: { x: PX - 5.5, z: PZ + .6 }, dance: { x: PX + 10.5, z: PZ + 3 }, seats, ox: PX, oz: PZ - 23 } });
+    } catch (e) { banner("Pub: " + e.message); }
+
     // ---------- 1. TIN ROOFS on low and mid-rise buildings ----------
     const roofSrc = {};
     function prismSrc(hex) {
@@ -489,7 +576,7 @@
       const smap = sg.getShadowMap(); if (smap) smap.refreshRate = 2;
       let fr = 0;
       scene.onBeforeRenderObservable.add(() => {
-        if (++fr % 120) return;
+        if (++fr % 120 || fr > 2400) return;
         const lv = engine.getHardwareScalingLevel();
         if (engine.getFps() < 40 && lv < 1) engine.setHardwareScalingLevel(Math.min(1, lv + .17));
       });

@@ -8,6 +8,7 @@
     if (!K || !AV) { console.log("accra-life: needs accra-upgrade.js and online.js"); return; }
     const B = BABYLON, P = Math.PI, { item, note, show, hide, ttl, BS, GOLD, cash, ls, sv, points } = K;
     const clamp = v => Math.max(0, Math.min(100, v));
+    const notify = (m, a) => { if (window.ACCRA_NOTIFY) window.ACCRA_NOTIFY(m, a); };
     const earn = (n, why) => { if (window.ACCRA_ADD) window.ACCRA_ADD(n, why); save(); };
     const st = Object.assign({ hp: 100, en: 100, hu: 80, hy: 80, md: 70, food: {}, keys: {}, play: 0 }, ls("accra-life", {}));
     const save = () => sv("accra-life", st);
@@ -79,7 +80,7 @@
         Object.keys(FOOD).map(k => '<button data-g="' + k + '" style="' + BS + '">' + FOOD[k][0] + " \u00B7 GH\u00A2" + px(FOOD[k][1]) + " \u00B7 have " + (st.food[k] || 0) + "</button>").join("") + CLOSE, d => {
         if (d.x) return hide();
         if (d.s !== undefined) { const s = SNACKS[+d.s]; if (cash() < s[1]) return note("Not enough cash."); pay(s[1], s[0]); st.hu = clamp(st.hu + s[2]); st.md = clamp(st.md + s[3]); note("Yum! " + s[0]); }
-        else { const g = FOOD[d.g], c = px(g[1]); if (cash() < c) return note("Not enough cash."); pay(c, g[0]); st.food[d.g] = (st.food[d.g] || 0) + 1; note(g[0] + " added to your fridge"); }
+        else { const g = FOOD[d.g], c = px(g[1]); if (cash() < c) return note("Not enough cash."); pay(c, g[0]); st.food[d.g] = (st.food[d.g] || 0) + 1; save(); note(g[0] + " added to your fridge"); }
         draw();
       });
       draw();
@@ -130,15 +131,18 @@
     const built = {};
     function build(u) {
       if (built[u.id]) return built[u.id];
-      const T = TPL[u.tpl], n = Object.keys(built).length, sx = -285 + (n % 4) * 35, sz = -285 + Math.floor(n / 4) * 35, W = T.W, D = T.D, H = 3.2;
-      const wall = (x, z, w, d) => box(w, H, d, sx + x, H / 2, sz + z, "#efe7d2");
+      const T = TPL[u.tpl], s = u.sz || 1, n = Object.keys(built).length, sx = -285 + (n % 4) * 35, sz = -285 + Math.floor(n / 4) * 35, W = T.W * s, D = T.D * s, H = 3.2;
+      const hsh = [...u.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7) >>> 0;
+      const WALLS = ["#efe7d2", "#e8d9c0", "#dfe6ea", "#f0dcd0", "#e2e8d8"], FLOORS = ["#d8c9ad", "#cdb89a", "#c9d0d4", "#d6c2b4", "#bfc8b0"];
+      const wall = (x, z, w, d) => box(w, H, d, sx + x, H / 2, sz + z, WALLS[hsh % 5]);
       wall(0, D / 2, W, .3); wall(-W / 2, 0, .3, D); wall(W / 2, 0, .3, D);
       const hw = W / 2 - .9; wall(-(W / 2 + .9) / 2, -D / 2, hw, .3); wall((W / 2 + .9) / 2, -D / 2, hw, .3);   // 1.8 m doorway
-      T.p.forEach(p => wall(p[0], p[1], p[2], p[3]));
-      box(W, .05, D, sx, .03, sz, T.c, false);
-      T.f.forEach(f => { K.collider(f[2], sx + f[0], sz + f[1], f[3], f[4] || 1); item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1); });
+      T.p.forEach(p => wall(p[0] * s, p[1] * s, p[2] === .3 ? .3 : p[2] * s, p[3] === .3 ? .3 : p[3] * s));
+      box(W, .05, D, sx, .03, sz, FLOORS[(hsh >> 3) % 5], false);
+      const F = T.f.map(f => [f[0] * s, f[1] * s, f[2], f[3], f[4]]);
+      F.forEach(f => { K.collider(f[2], sx + f[0], sz + f[1], f[3], f[4] || 1); item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1); });
       const here = p => Math.abs(p.x - sx) < W / 2 && Math.abs(p.z - sz) < D / 2;
-      reg(T.f, sx, sz, here);
+      reg(F, sx, sz, here);
       points.push({ x: sx, z: sz - D / 2 + 1.1, r: 1.9, t: "\uD83D\uDEAA Leave", ok: () => !busy && !seated && here(player.position), f: leave });
       return (built[u.id] = { sx, sz, D, W });
     }
@@ -177,18 +181,26 @@
       const mt = new B.StandardMaterial("dsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
       return { x: b.position.x + ox * (half + 2.4), z: b.position.z + oz * (half + 2.4) };
     }
+    const BEDS = { room: "1 room", hall: "chamber & hall", studio: "studio", apt1: "1 bed", house: "2 bed", mansion: "3 bed" };
+    const RATE = { "Airport City": 165, Osu: 150, Makola: 62, "Central Accra": 105, Labadi: 140, "East Legon": 210, "Amoamah Estate": 135 };   // GH¢ per m²
+    const SZ = { osu1: 1, osu2: 1.05, mak1: .9, mak2: .95, cen1: 1, lab1: 1.2, eln1: 1.35, elm1: 1.25, amo1: 1, amo2: 1.12, amo3: 1.3 };
+    function mkUnit(id, name, dist, tpl, sz) {   // price follows the real floor area, the district and the quality
+      const T = TPL[tpl], area = Math.round(T.W * T.D * sz * sz), q = tpl === "mansion" ? 1.4 : tpl === "house" ? 1.1 : 1;
+      const buy = Math.round(area * RATE[dist] * q / 50) * 50, rent = Math.max(20, Math.round(buy / 160 / 5) * 5);
+      return { id, name, tpl, dist, sz, area, buy, rent };
+    }
     const TU = [["studio", "Studio apartment", "studio", 80, 8000], ["1bed", "1-bedroom apartment", "apt1", 140, 14000], ["2bed", "2-bedroom apartment", "house", 220, 24000], ["pent", "Penthouse", "mansion", 500, 80000]];
     ["Airport Heights", "Kotoka Residence", "Skyline Towers", "Runway View"].forEach((nm, n) => {
       const b = pick(n < 2 ? 0 : 1, 0, true); if (!b) return;
-      const units = TU.map(t => (UNITS["T" + n + t[0]] = { id: "T" + n + t[0], name: nm + " \u00B7 " + t[1], tpl: t[2], rent: Math.round(t[3] * (1 + .1 * n)), buy: Math.round(t[4] * (1 + .1 * n)), dist: "Airport City" }));
+      const units = TU.map(t => (UNITS["T" + n + t[0]] = mkUnit("T" + n + t[0], nm + " \u00B7 " + t[1], "Airport City", t[2], 1 + .08 * n + (t[2] === "mansion" ? .05 : 0))));
       LISTS.push({ name: nm + " \u2014 Apartments", units, door: door(b, nm, "Apartments \u00B7 studio to penthouse", "#c9a54a") });
     });
     [["osu1", "Osu 1-bed apartment", "Osu", 0, 1, "apt1", 150, 14000], ["osu2", "Osu 2-bed flat", "Osu", 0, 2, "house", 230, 24000], ["mak1", "Makola single room", "Makola", 1, 1, "room", 35, 2500],
      ["mak2", "Makola chamber & hall", "Makola", 1, 2, "hall", 60, 5000], ["cen1", "Central Accra studio", "Central Accra", 2, 3, "studio", 90, 8000], ["lab1", "Labadi beach house", "Labadi", 1, 3, "house", 320, 38000],
      ["eln1", "East Legon 4-bed house", "East Legon", 2, 0, "house", 380, 52000], ["elm1", "East Legon mansion", "East Legon", 3, 0, "mansion", 650, 120000], ["amo1", "Amoamah family house", "Amoamah Estate", 3, 1, "house", 200, 26000], ["amo2", "Amoamah garden house", "Amoamah Estate", 3, 1, "house", 240, 32000], ["amo3", "Amoamah poolside house", "Amoamah Estate", 3, 1, "mansion", 300, 42000]].forEach(h => {
       const b = pick(h[3], h[4], false); if (!b) return;
-      const u = UNITS[h[0]] = { id: h[0], name: h[1], tpl: h[5], rent: h[6], buy: h[7], dist: h[2] };
-      LISTS.push({ name: h[1], units: [u], gar: b.metadata && b.metadata.garage, door: door(b, h[1], "Rent GH\u00A2" + h[6] + "/wk \u00B7 Buy GH\u00A2" + h[7].toLocaleString(), "#2a7ab8") });
+      const u = UNITS[h[0]] = mkUnit(h[0], h[1], h[2], h[5], SZ[h[0]] || 1);
+      LISTS.push({ name: h[1], units: [u], gar: b.metadata && b.metadata.garage, door: door(b, h[1], u.area + " m\u00B2 \u00B7 Rent GH\u00A2" + u.rent + "/wk \u00B7 Buy GH\u00A2" + u.buy.toLocaleString(), "#2a7ab8") });
     });
     // ---- ownership + marketplace: owners can list their homes for sale or rent; everyone sees the listings ----
     const ME = localStorage.getItem("accra-name") || "You";
@@ -204,7 +216,7 @@
       if (k && k.t === "own") { status = "You own this" + (m ? " \u00B7 listed for " + (sale ? "sale" : "rent") + " GH\u00A2" + m.price.toLocaleString() : ""); col = "#69f0ae"; }
       else if (k) { status = "You rent this"; col = "#69f0ae"; }
       else if (m) { status = (m.owner === ME ? "Your listing" : "Listed by " + m.owner) + " \u00B7 " + (sale ? "FOR SALE" : "FOR RENT"); col = "#ffd24a"; }
-      return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" + u.dist + " \u00B7 rent GH\u00A2" + p.rent + "/wk \u00B7 buy GH\u00A2" + p.buy.toLocaleString() + '</small><br><small style="color:' + col + '">' + status + "</small><br>" +
+      return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" + u.dist + " \u00B7 " + u.area + " m\u00B2 \u00B7 " + BEDS[u.tpl] + " \u00B7 rent GH\u00A2" + p.rent + "/wk \u00B7 buy GH\u00A2" + p.buy.toLocaleString() + '</small><br><small style="color:' + col + '">' + status + "</small><br>" +
         (!k && !sale ? '<button data-r="' + u.id + '" style="' + SB + '">Rent</button>' : "") + (!(k && k.t === "own") && !rl ? '<button data-b="' + u.id + '" style="' + SB + '">Buy</button>' : "") +
         (k && atDoor ? '<button data-e="' + u.id + '" style="' + SB + '">Enter</button>' : "") + "</div>";
     }
@@ -215,17 +227,18 @@
       const p = priceOf(u), m = mk[id];
       if (d.r) { if (cash() < p.rent) return note("Not enough cash. First week costs GH\u00A2" + p.rent); pay(p.rent, "Rent: " + u.name); st.keys[id] = { t: "rent", due: st.play + WEEK }; note("Rented! Rent is charged every 10 minutes of play."); }
       else { if (cash() < p.buy) return note("Not enough cash. Price GH\u00A2" + p.buy.toLocaleString()); pay(p.buy, "Bought: " + u.name); st.keys[id] = { t: "own" }; if (m && m.mode === "sale") { delete mk[id]; saveMk(); bcast(); } note("Congratulations, you own " + u.name + "!"); }
-      redraw();
+      save(); redraw();
     };
     function myHomes() {
       const draw = () => show(ttl("My homes") + (Object.keys(st.keys).filter(id => UNITS[id]).map(id => {
         const k = st.keys[id], u = UNITS[id], m = mk[id];
         return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" +
           (k.t === "own" ? (m ? "Owned \u00B7 listed for " + (m.mode === "sale" ? "sale" : "rent") + " GH\u00A2" + m.price.toLocaleString() : "Owned") : "Rent GH\u00A2" + u.rent + "/wk \u00B7 next payment in " + Math.max(0, Math.ceil((k.due - st.play) / 60)) + " min") + "</small><br>" +
-          (k.t === "own" ? (m ? '<button data-lx="' + id + '" style="' + SB + '">Remove listing</button>' : '<button data-ls="' + id + '" style="' + SB + '">List for sale</button><button data-lr="' + id + '" style="' + SB + '">List for rent</button>') : '<button data-mo="' + id + '" style="' + SB + '">Move out</button>') + "</div>";
+          (k.t === "own" ? (m ? '<button data-lx="' + id + '" style="' + SB + '">Remove listing</button>' : '<button data-ls="' + id + '" style="' + SB + '">List for sale</button><button data-lr="' + id + '" style="' + SB + '">List for rent</button>') : '<button data-mo="' + id + '" style="' + SB + '">Move out</button>') + '<button data-en="' + id + '" style="' + SB + '">\uD83D\uDD11 Enter</button></div>';
       }).join("") || '<div style="padding:6px 0">You do not rent or own any extra homes yet. Your villa is yours already.</div>') + CLOSE, d => {
         if (d.x) return hide();
-        const id = d.ls || d.lr || d.lx || d.mo, u = UNITS[id]; if (!u) return;
+        const id = d.ls || d.lr || d.lx || d.mo || d.en, u = UNITS[id]; if (!u) return;
+        if (d.en) { const li = LISTS.find(q => q.units.some(y => y.id === id)); hide(); return enter(u, li ? li.door : null); }
         if (d.ls) { const v = Math.round(+prompt("Asking price in GH\u00A2", u.buy)); if (!(v > 0)) return; mk[id] = { owner: ME, mode: "sale", price: v }; }
         else if (d.lr) { const v = Math.round(+prompt("Weekly rent in GH\u00A2", u.rent)); if (!(v > 0)) return; mk[id] = { owner: ME, mode: "rent", price: v }; }
         else if (d.lx) delete mk[id];
@@ -242,8 +255,8 @@
     function rentCheck() {
       Object.keys(st.keys).forEach(id => {
         const k = st.keys[id], u = UNITS[id]; if (!u || k.t !== "rent" || st.play < k.due) return;
-        if (cash() >= u.rent) { pay(u.rent, "Rent: " + u.name); k.due += WEEK; note("Rent paid: " + u.name + " GH\u00A2" + u.rent); }
-        else { delete st.keys[id]; note("Evicted from " + u.name + " (rent unpaid)"); if (inside === id) leave(); }
+        if (cash() >= u.rent) { pay(u.rent, "Rent: " + u.name); k.due += WEEK; note("Rent paid: " + u.name + " GH\u00A2" + u.rent); notify("Rent paid for " + u.name + ": GH\u20B5" + u.rent, "msg"); }
+        else { delete st.keys[id]; note("Evicted from " + u.name + " (rent unpaid)"); notify("You were evicted from " + u.name + " because rent was unpaid.", "msg"); if (inside === id) leave(); }
       });
     }
     function passOut() {
@@ -253,6 +266,7 @@
       const HP = window.ACCRA_PLACES && window.ACCRA_PLACES.hp;
       fade(800, () => { inside = null; if (HP) tp(HP.ox, HP.oz); else tp(VX, VZ + 12); }, () => note("You passed out and woke up " + (HP ? "at Accra Hospital" : "at home") + ". Bill GH\u00A2" + fine));
     }
+    const W = {};
     let lx = player.position.x, lz = player.position.z, acc = 0, saveT = 0, rentT = 0;
     scene.onBeforeRenderObservable.add(() => {
       const dt = Math.min(engine.getDeltaTime() / 1000, .1);
@@ -265,9 +279,18 @@
       st.hp = clamp(st.hp + dt * (bad ? -.25 : (st.hu > 40 && st.en > 25 ? .04 : 0)));
       if (st.hu < 20 || st.hy < 20) st.md = clamp(st.md - dt * .05); else st.md = clamp(st.md + (60 - st.md) * dt * .002);
       if (st.hp <= 0 && !busy) passOut();
+      if (st.hu < 20 && !W.hu) { W.hu = 1; notify("You are very hungry. Eat something.", "msg"); } else if (st.hu > 35) W.hu = 0;
+      if (st.en < 15 && !W.en) { W.en = 1; notify("You are exhausted. Find a bed or a sofa to rest.", "msg"); } else if (st.en > 35) W.en = 0;
+      if (st.hp < 30 && !W.hp) { W.hp = 1; notify("Your health is low. Visit Accra Hospital.", "msg"); } else if (st.hp > 50) W.hp = 0;
       acc += dt; if (acc > .5) { acc = 0; paintHud(); }
       saveT += dt; if (saveT > 2) { saveT = 0; save(); }
       rentT += dt; if (rentT > 2) { rentT = 0; rentCheck(); }
+      { const p = player.position, PLs = window.ACCRA_PLACES || {}, d = PLs.dealer, ind = !!inside ||
+          (Math.abs(p.x - 35) < 21 && Math.abs(p.z - 35) < 19) || (Math.abs(p.x - VX) < 14 && Math.abs(p.z - VZ) < 10) ||
+          (Math.abs(p.x - 35) < 16 && Math.abs(p.z - 98) < 10) || (Math.abs(p.x - 110) < 23 && Math.abs(p.z - 98) < 13) ||
+          (Math.abs(p.x + 110) < 18 && Math.abs(p.z + 41) < 10) || (d && Math.abs(p.x - d.x) < 16 && Math.abs(p.z - d.z) < 12);
+        cam.checkCollisions = !ind;                       // walls no longer squeeze the camera in
+        if (ind && cam.radius < 8) cam.radius += (9 - cam.radius) * .12; }
     });
     // ---------- Hospital (HP), Police (PD), car dealership, garages and driving jobs ----------
     const PL = window.ACCRA_PLACES || {};
@@ -355,6 +378,11 @@
     A2(VX, VZ + 8.3, 3, "\uD83D\uDE97 My garage", () => garage({ x: VX, z: VZ + 14, h: 0 }));
     LISTS.forEach(l => { if (l.gar) points.push({ x: l.gar.x, z: l.gar.z, r: 3.8, t: "\uD83D\uDE97 My garage", ok: () => !busy && !seated && l.units.some(u => st.keys[u.id]), f: () => garage({ x: l.gar.x, z: l.gar.z, h: l.gar.h }) }); });
     window.ACCRA_SHOP = () => kiosk(true);
+    window.ACCRA_LIFE = {
+      food: FOOD, stock: () => st.food,
+      buy: (k, online) => { const g = FOOD[k]; if (!g) return "Unknown item"; const c = online ? Math.ceil(g[1] * 1.1) : g[1]; if (cash() < c) return "Not enough cash (need GH\u20B5" + c + ")"; pay(c, "JOLLY MART: " + g[0]); st.food[k] = (st.food[k] || 0) + 1; save(); return "ok"; },
+      rents: () => Object.keys(st.keys).filter(id => UNITS[id] && st.keys[id].t === "rent").map(id => ({ name: UNITS[id].name, rent: UNITS[id].rent, mins: Math.max(0, Math.ceil((st.keys[id].due - st.play) / 60)) }))
+    };
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
@@ -399,6 +427,7 @@
     cmdIn.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") runCmd(cmdIn.value); if (e.key === "Escape") closeCmd(); });
     window.addEventListener("keydown", e => { if (e.key === "/" && cmdBox.style.display !== "flex") { e.preventDefault(); openCmd(); } });
 
+    window.addEventListener("pagehide", save); document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
     console.log("Accra life loaded:", LISTS.length, "property doors");
     note("Life systems on \u2014 watch your health, energy and hunger");
   } catch (err) { console.error("accra-life failed (game still runs):", err); try { K0 && K0.note("\u26A0 Life: " + err.message); } catch (e) {} }
