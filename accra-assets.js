@@ -212,7 +212,14 @@
   }
 
   global.AccraAssets = { createCharacter, createHouse, createKiosk, createTrotro, createTree };
-})(window);
+})(window);global.AccraAssets = {
+  createCharacter,
+  createHouse,
+  createKiosk,
+  createTrotro,
+  createTree
+};
+  })(window);
 
   // ---------- ACCRA VIBES PUB ----------
   function createPub(scene, o) {
