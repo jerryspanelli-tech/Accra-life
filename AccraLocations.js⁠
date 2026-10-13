@@ -1,0 +1,82 @@
+// AccraLocations.js - Accra Mall, Accra Vibes Pub, Swimming Zones, and Landmarks
+import * as BABYLON from '@babylonjs/core';
+
+export class AccraLocations {
+    constructor(scene) {
+        this.scene = scene;
+        this.landmarks = [];
+        this.waterZones = [];
+    }
+
+    buildFullAccraMap() {
+        this.buildAccraMall();
+        this.buildSocialPubsAndNightlife();
+        this.buildLabadiBeachAndSwimming();
+        this.buildIndependenceSquareComplex();
+        this.buildAccraSportsStadium();
+    }
+
+    buildAccraMall() {
+        const mallMain = BABYLON.MeshBuilder.CreateBox("accraMall", { width: 140, height: 24, depth: 90 }, this.scene);
+        mallMain.position = new BABYLON.Vector3(-80, 12, 180);
+        this.landmarks.push({ name: "Accra Mall Complex", pos: new BABYLON.Vector3(-80, 0, 180) });
+    }
+
+    buildSocialPubsAndNightlife() {
+        // The Accra Vibes Pub & Lounge (Nightlife Amenity)
+        const pubBase = BABYLON.MeshBuilder.CreateBox("accraVibesPub", { width: 55, height: 18, depth: 40 }, this.scene);
+        pubBase.position = new BABYLON.Vector3(120, 9, -60);
+        
+        const pubMat = new BABYLON.StandardMaterial("pubMat", this.scene);
+        pubMat.diffuseColor = new BABYLON.Color3(0.12, 0.12, 0.15);
+        pubBase.material = pubMat;
+
+        // Rooftop Deck
+        const rooftop = BABYLON.MeshBuilder.CreateBox("pubRooftop", { width: 55, height: 2, depth: 40 }, this.scene);
+        rooftop.position = new BABYLON.Vector3(120, 19, -60);
+
+        // Outdoor Patio
+        const patioPlatform = BABYLON.MeshBuilder.CreateGround("patioPlatform", { width: 50, height: 20 }, this.scene);
+        patioPlatform.position = new BABYLON.Vector3(120, 0.1, -35);
+
+        // Glowing Neon Signage
+        const neonSign = BABYLON.MeshBuilder.CreateBox("neonSignBoard", { width: 25, height: 6, depth: 0.5 }, this.scene);
+        neonSign.position = new BABYLON.Vector3(120, 12, -39.5);
+        const neonMat = new BABYLON.StandardMaterial("neonMat", this.scene);
+        neonMat.emissiveColor = new BABYLON.Color3(1, 0.8, 0.2);
+        neonSign.material = neonMat;
+
+        this.landmarks.push({ name: "The Accra Vibes Pub & Lounge", pos: new BABYLON.Vector3(120, 0, -60) });
+    }
+
+    buildLabadiBeachAndSwimming() {
+        const oceanWater = BABYLON.MeshBuilder.CreateGround("oceanWater", { width: 400, height: 200 }, this.scene);
+        oceanWater.position = new BABYLON.Vector3(250, 0.0, -420);
+        
+        const waterMat = new BABYLON.StandardMaterial("waterMat", this.scene);
+        waterMat.diffuseColor = new BABYLON.Color3(0.1, 0.4, 0.65);
+        waterMat.alpha = 0.85;
+        oceanWater.material = waterMat;
+
+        this.waterZones.push({ center: new BABYLON.Vector3(250, 0, -420), radius: 180 });
+        this.landmarks.push({ name: "Labadi Beach Swimming Zone", pos: new BABYLON.Vector3(250, 0, -350) });
+    }
+
+    checkSwimming(p) {
+        for (let zone of this.waterZones) {
+            const dist = BABYLON.Vector3.Distance(p, zone.center);
+            if (dist < zone.radius) return true;
+        }
+        return false;
+    }
+
+    buildIndependenceSquareComplex() {
+        const arch = BABYLON.MeshBuilder.CreateBox("independenceArch", { width: 35, height: 22, depth: 12 }, this.scene);
+        arch.position = new BABYLON.Vector3(0, 11, -300);
+    }
+
+    buildAccraSportsStadium() {
+        const stadium = BABYLON.MeshBuilder.CreateCylinder("accraStadium", { diameterX: 160, diameterZ: 220, height: 28 }, this.scene);
+        stadium.position = new BABYLON.Vector3(180, 14, -200);
+    }
+}
