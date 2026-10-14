@@ -78,5 +78,5 @@ export class AccraLocations {
     buildAccraSportsStadium() {
         const stadium = BABYLON.MeshBuilder.CreateCylinder("accraStadium", { diameterX: 160, diameterZ: 220, height: 28 }, this.scene);
         stadium.position = new BABYLON.Vector3(180, 14, -200);
-    }
+    }})();,
 }
