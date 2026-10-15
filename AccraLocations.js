@@ -82,4 +82,5 @@
     buildAccraSportsStadium() { const s = BABYLON.MeshBuilder.CreateCylinder("accraStadiumOld", { diameter: 160, height: 28 }, this.scene); s.scaling.z = 220 / 160; s.position.set(180, 14, -200); }
   }
   window.AccraLocations = AccraLocations;
+  (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).locations = 1;
 })();

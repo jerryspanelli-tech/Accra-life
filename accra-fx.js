@@ -50,7 +50,7 @@
       emT -= dt; if (emT <= 0) { AV.pose = null; emPose = null; return; }
       const snd = EM[emPose][2]; emSnd -= dt;
       if (snd && emSnd <= 0) { emSnd = snd === "punch" ? .55 : .5; const a = AUD(); if (a.sfx) a.sfx(snd);
-        if (snd === "punch" && window.ACCRA_CRIME) window.ACCRA_CRIME.report && Math.random() < .25 && window.ACCRA_CRIME.report("assault"); }
+        const C = window.ACCRA_CRIME; if (snd === "punch" && C && C.nearestCop && C.nearestCop(player.position) < 20 && Math.random() < .3) C.report("assault"); }
     });
 
     // ---------- sector culling: hide meshes that are far away, a few hundred per frame ----------
@@ -69,6 +69,7 @@
         else if (!far && m._cullHid) { m._cullHid = 0; m.isVisible = true; }
       }
     });
+    (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).fx = 1;
     console.log("Accra fx ready");
   } catch (err) { console.error("accra-fx failed:", err); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note("\u26A0 Effects: " + err.message); }
 })();

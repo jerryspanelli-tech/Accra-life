@@ -114,8 +114,8 @@
         if (d.x) return hide();
         if (d.w) { const n = +d.w; if (!S || S.sav < n) return note("Not enough in your savings."); S.sav -= n; window.ACCRA_ADD(n, "ATM withdrawal"); note("Withdrew GH\u00A2" + n); draw(); }
         else if (d.b) {
-          hide(); L.busy = true; note("Smashing the ATM\u2026"); let hits = 0;
-          const iv = setInterval(() => { sfx("clang"); if (++hits >= 6) { clearInterval(iv); L.busy = false; loot(a); } }, 650);
+          hide(); L.busy = true; note("Smashing the ATM\u2026"); let hits = 0, iv = null;
+          iv = setInterval(() => { sfx("clang"); if (++hits >= 6) { clearInterval(iv); L.busy = false; loot(a); } }, 650);
         }
       });
       draw();
@@ -128,7 +128,8 @@
     }
     atms.forEach(a => points.push({ x: a.x, z: a.z, r: 2.3, t: () => brokenNow(a) ? "\uD83D\uDCB3 ATM (broken)" : "\uD83D\uDCB3 ATM", ok: () => !L.busy && !L.seated && !L.driving, f: () => atmMenu(a) }));
 
-    window.ACCRA_CRIME = { get wanted() { return W.level; }, setWanted, raise, get arrests() { return W.arrests; }, report: (kind) => { if (kind === "assault") raise(1, "Assault reported."); } };
+    window.ACCRA_CRIME = { get wanted() { return W.level; }, setWanted, raise, get arrests() { return W.arrests; }, nearestCop: p => nearestCop(p), report: (kind) => { if (kind === "assault") raise(1, "Assault reported."); } };
+    (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).crime = 1;
     console.log("Accra crime ready: " + atms.length + " ATMs, " + cops.length + " officers");
   } catch (err) { console.error("accra-crime failed:", err); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note("\u26A0 Crime: " + err.message); }
 })();

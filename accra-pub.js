@@ -77,6 +77,7 @@
       if (d < 30) { near = true; if (!AU.now() || AU.now() === "afro") { if (AU.now() !== "afro") AU.play("afro"); AU.volume(Math.max(.05, .55 * (1 - d / 30))); } }
       else if (near) { near = false; if (AU.now() === "afro") AU.stop(); }
     });
+    (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).pub = 1;
     console.log("Accra pub ready");
   } catch (err) { console.error("accra-pub failed:", err); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note("\u26A0 Pub: " + err.message); }
 })();

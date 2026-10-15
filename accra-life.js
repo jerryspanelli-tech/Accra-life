@@ -11,12 +11,20 @@
     const notify = (m, a) => { if (window.ACCRA_NOTIFY) window.ACCRA_NOTIFY(m, a); };
     const earn = (n, why) => { if (window.ACCRA_ADD) window.ACCRA_ADD(n, why); save(); };
     const st = Object.assign({ hp: 100, en: 100, hu: 80, hy: 80, md: 70, food: {}, keys: {}, play: 0 }, ls("accra-life", {}));
+    st.food = st.food || {}; st.inv = st.inv || {}; st.deco = st.deco || {}; st.drunk = st.drunk || 0;
+    window.playerInventory = { fridgeItems: st.food, items: st.inv };   // everything bought for the fridge lives here and is saved
     const save = () => sv("accra-life", st);
     const pay = (n, w) => { K.pay(n, w); save(); };
     window.addEventListener("pagehide", save); document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
     const SB = "border:0;border-radius:9px;background:#c9a54a;color:#17191c;font:700 12px system-ui;padding:6px 10px;margin:4px 4px 0 0";
     const CLOSE = '<button data-x="1" style="' + BS + ';text-align:center">Close</button>';
     let seated = null, busy = false, inside = null, ret = null, swimming = false;
+    const SP = { on: false }; window.ACCRA_MOVE = SP;
+    { const sb = document.createElement("button"); sb.textContent = "\u26A1"; sb.setAttribute("aria-label", "Sprint");
+      sb.style.cssText = "position:fixed;right:calc(env(safe-area-inset-right,0px) + 26px);bottom:calc(env(safe-area-inset-bottom,0px) + 94px);width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(28,30,33,.55);color:#fff;font-size:22px;z-index:6;touch-action:none;padding:0";
+      sb.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); SP.on = true; sb.style.background = "rgba(201,165,74,.9)"; });
+      ["pointerup", "pointercancel", "pointerleave"].forEach(t => sb.addEventListener(t, () => { SP.on = false; sb.style.background = "rgba(28,30,33,.55)"; }));
+      document.body.appendChild(sb); }
     const tp = (x, z) => player.position.set(x, .91, z);
 
     // ---------- fade helper ----------
@@ -35,7 +43,7 @@
 
     // ---------- slow down when exhausted, freeze when seated or busy ----------
     const mwc = player.moveWithCollisions.bind(player);
-    player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (swimming ? .55 : (st.en < 12 ? .8 : 1.3)); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
+    player.moveWithCollisions = v => { const f = (busy || seated) ? 0 : (swimming ? .55 : (st.en < 12 ? .8 : 1.3) * (SP.on && st.en > 6 ? 1.65 : 1) * (st.drunk > 6 ? .8 : 1)); return mwc(new B.Vector3(v.x * f, v.y, v.z * f)); };
 
     // ---------- seating and sleeping ----------
     function sit(x, z, ry, sh, m) {   // sh = seat height, m = how you get up: 1 forward, -1 backward, 0 sideways
@@ -57,8 +65,8 @@
     const SNACKS = [["Waakye plate", 20, 35, 4], ["Kelewele", 8, 14, 3], ["Sobolo drink", 5, 8, 2], ["Bottled water", 3, 4, 0]];
     const RECIPES = [["Jollof rice", { rice: 1, tomato: 1, oil: 1 }, 40, 10], ["Fried rice & chicken", { rice: 1, chicken: 1, oil: 1 }, 45, 10], ["Fried yam & fish", { yam: 1, fish: 1, oil: 1 }, 45, 10], ["Omelette & bread", { eggs: 1, bread: 1, oil: 1 }, 30, 6], ["Fried plantain", { plantain: 1, oil: 1 }, 25, 5]];
     function fridge() {
-      const ks = Object.keys(FOOD).filter(k => st.food[k] > 0);
-      show(ttl("Your fridge") + (ks.length ? ks.map(k => '<div style="padding:5px 2px">' + FOOD[k][0] + " \u00D7 " + st.food[k] + "</div>").join("") : '<div style="padding:6px 0">Empty. Buy groceries at a kiosk, in the mall, or on your laptop.</div>') + CLOSE, hide);
+      const inv = window.playerInventory.fridgeItems, ks = Object.keys(FOOD).filter(k => inv[k] > 0), total = ks.reduce((n, k) => n + inv[k], 0);
+      show(ttl("\uD83E\uDDCA Your fridge") + (ks.length ? '<div style="opacity:.7;padding:2px 0">' + total + " items stored</div>" + ks.map(k => '<div style="grid-column:auto;padding:7px 9px;margin:3px 0;background:rgba(255,255,255,.1);border-radius:10px">' + FOOD[k][0] + " \u00D7 " + inv[k] + "</div>").join("") : '<div style="padding:6px 0">Empty. Buy groceries at a kiosk, in the mall, or with JOLLY MART on your phone.</div>') + CLOSE, hide);
     }
     function cook() {
       const draw = () => show(ttl("Cooker") + RECIPES.map((r, i) => {
@@ -129,22 +137,64 @@
       mansion: { W: 18, D: 12, c: "#d6c9b0", p: [[-1.5, -4.25, .3, 3.5], [-1.5, 0, .3, 2], [-1.5, 4.25, .3, 3.5], [-5.325, 0, 7.35, .3]], f: [[-5.5, -5, "bed2", 0, 1.1], [-8.4, -1.5, "wardrobe", P / 2], [-5.5, 5, "bed2", P, 1.1], [-8.4, 2, "desk", P / 2], [-3.4, .9, "bath", 0], [3, -3.5, "sofa", 0, 1.2], [6, -3.5, "sofa", 0], [3, 5.7, "tv", P, 1.4], [5.5, 2.2, "dining", 0, 1.3], [8.65, -3, "kit2", -P / 2], [8.6, -1, "fridge", -P / 2], [7.5, 5.5, "shelf", P], [-.5, -2.5, "chair", 0]] }
     };
     const built = {};
+    // ---- interior designer for luxury homes (houses, mansions, penthouses): tiles, carpets, wallpaper ----
+    const LUX = ["house", "mansion"];
+    const FLOOR_OPT = [["marble", "Marble tiles", 1500], ["checker", "Black & white tiles", 1200], ["carpet_cream", "Cream carpet", 800], ["carpet_burg", "Burgundy carpet", 900], ["carpet_navy", "Navy carpet", 900], ["wood", "Hardwood planks", 1000]];
+    const WALL_OPT = [["cream", "Cream paint", 300], ["grey", "Grey paint", 300], ["stripes", "Gold stripe wallpaper", 600], ["damask", "Green damask wallpaper", 900], ["floral", "Blue floral wallpaper", 700], ["blackgold", "Black & gold wallpaper", 1200]];
+    const nz = (c, w, h, n, cols) => { for (let i = 0; i < n; i++) { c.fillStyle = cols[i % cols.length]; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } };
+    const DRAW = {
+      marble: (c, w, h) => { c.fillStyle = "#f2efe9"; c.fillRect(0, 0, w, h); c.strokeStyle = "rgba(120,120,130,.35)"; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(Math.random() * w, 0); c.bezierCurveTo(Math.random() * w, h / 3, Math.random() * w, h * 2 / 3, Math.random() * w, h); c.stroke(); } c.strokeStyle = "#b9b4aa"; c.lineWidth = 3; c.strokeRect(0, 0, w, h); },
+      checker: (c, w, h) => { c.fillStyle = "#f4f4f4"; c.fillRect(0, 0, w, h); c.fillStyle = "#17171a"; c.fillRect(0, 0, w / 2, h / 2); c.fillRect(w / 2, h / 2, w / 2, h / 2); },
+      carpet_cream: (c, w, h) => { c.fillStyle = "#e8dcc2"; c.fillRect(0, 0, w, h); nz(c, w, h, 1500, ["#d9cba9", "#f0e6cf"]); },
+      carpet_burg: (c, w, h) => { c.fillStyle = "#7a1f2b"; c.fillRect(0, 0, w, h); nz(c, w, h, 1500, ["#6a1a25", "#8d2a38"]); },
+      carpet_navy: (c, w, h) => { c.fillStyle = "#1f2f55"; c.fillRect(0, 0, w, h); nz(c, w, h, 1500, ["#18264a", "#2b3d6a"]); },
+      wood: (c, w, h) => { c.fillStyle = "#9a6b3f"; c.fillRect(0, 0, w, h); for (let i = 0; i < 4; i++) { c.fillStyle = i % 2 ? "#8c5f36" : "#a87649"; c.fillRect(0, i * h / 4, w, h / 4 - 2); } },
+      cream: (c, w, h) => { c.fillStyle = "#efe7d2"; c.fillRect(0, 0, w, h); }, grey: (c, w, h) => { c.fillStyle = "#cfd3d6"; c.fillRect(0, 0, w, h); },
+      stripes: (c, w, h) => { c.fillStyle = "#f3ecd8"; c.fillRect(0, 0, w, h); c.fillStyle = "#c9a54a"; for (let i = 0; i < 4; i++) c.fillRect(i * w / 4 + w / 8 - 3, 0, 6, h); },
+      damask: (c, w, h) => { c.fillStyle = "#2f5d4a"; c.fillRect(0, 0, w, h); c.fillStyle = "#4f8a6f"; [[w / 4, h / 4], [w * 3 / 4, h * 3 / 4]].forEach(p => { c.beginPath(); c.moveTo(p[0], p[1] - 26); c.quadraticCurveTo(p[0] + 22, p[1], p[0], p[1] + 26); c.quadraticCurveTo(p[0] - 22, p[1], p[0], p[1] - 26); c.fill(); }); },
+      floral: (c, w, h) => { c.fillStyle = "#3d5a80"; c.fillRect(0, 0, w, h); c.fillStyle = "#9fc0e8"; [[w / 4, h / 4], [w * 3 / 4, h * 3 / 4]].forEach(p => { for (let k = 0; k < 6; k++) { c.beginPath(); c.arc(p[0] + Math.cos(k * 1.05) * 12, p[1] + Math.sin(k * 1.05) * 12, 8, 0, 6.3); c.fill(); } c.fillStyle = "#f4d35e"; c.beginPath(); c.arc(p[0], p[1], 6, 0, 6.3); c.fill(); c.fillStyle = "#9fc0e8"; }); },
+      blackgold: (c, w, h) => { c.fillStyle = "#17191c"; c.fillRect(0, 0, w, h); c.strokeStyle = "#c9a54a"; c.lineWidth = 3; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(i * w / 4, 0); c.lineTo(i * w / 4 + w / 8, h / 2); c.lineTo(i * w / 4, h); c.stroke(); } }
+    };
+    const dmat = (kind, ru, rv) => { const t = new B.DynamicTexture("dz", { width: 128, height: 128 }, scene, true); DRAW[kind](t.getContext(), 128, 128); t.update(); t.uScale = ru; t.vScale = rv; t.wrapU = t.wrapV = B.Texture.WRAP_ADDRESSMODE; const m = new B.StandardMaterial("dzm", scene); m.diffuseTexture = t; m.specularColor = new B.Color3(.08, .08, .08); return m; };
+    function applyDeco(b, dc) {
+      if (dc.f) b.floorM.material = dmat(dc.f, b.W / (dc.f === "wood" ? 3 : dc.f.indexOf("carpet") === 0 ? 4 : 2.2), b.D / (dc.f === "wood" ? 3 : dc.f.indexOf("carpet") === 0 ? 4 : 2.2));
+      if (dc.w) b.walls.forEach(m => { const e = m.getBoundingInfo().boundingBox.extendSize; m.material = dmat(dc.w, Math.max(e.x, e.z) * 2 / 2.4, 1); });
+    }
+    function designer(u, b) {
+      if (!st.keys[u.id]) return note("Only the tenant or owner can redecorate.");
+      const cur = st.deco[u.id] || {};
+      show(ttl("\uD83C\uDFA8 Interior designer") + "<small>Cash: GH\u00A2" + cash() + "</small><div style=\"margin:6px 0;color:#c9a54a;font-weight:700\">Floors, tiles and carpets</div>" +
+        FLOOR_OPT.map(o => '<button data-f="' + o[0] + '" style="' + BS + '">' + o[1] + (cur.f === o[0] ? " \u00B7 current" : " \u00B7 GH\u00A2" + o[2]) + "</button>").join("") +
+        "<div style=\"margin:6px 0;color:#c9a54a;font-weight:700\">Walls and wallpaper</div>" + WALL_OPT.map(o => '<button data-w="' + o[0] + '" style="' + BS + '">' + o[1] + (cur.w === o[0] ? " \u00B7 current" : " \u00B7 GH\u00A2" + o[2]) + "</button>").join("") + CLOSE, d => {
+        if (d.x) return hide();
+        const kind = d.f ? "f" : "w", key = d.f || d.w, o = (d.f ? FLOOR_OPT : WALL_OPT).find(x => x[0] === key);
+        if ((st.deco[u.id] || {})[kind] === key) return note("Already installed.");
+        if (cash() < o[2]) return note("Not enough cash. It costs GH\u00A2" + o[2]);
+        pay(o[2], "Interior: " + o[1]); st.deco[u.id] = Object.assign(st.deco[u.id] || {}, { [kind]: key }); applyDeco(b, st.deco[u.id]); save(); note(o[1] + " installed.");
+        designer(u, b);
+      });
+    }
     function build(u) {
       if (built[u.id]) return built[u.id];
       const T = TPL[u.tpl], s = u.sz || 1, n = Object.keys(built).length, sx = -285 + (n % 4) * 35, sz = -285 + Math.floor(n / 4) * 35, W = T.W * s, D = T.D * s, H = 3.2;
       const hsh = [...u.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7) >>> 0;
       const WALLS = ["#efe7d2", "#e8d9c0", "#dfe6ea", "#f0dcd0", "#e2e8d8"], FLOORS = ["#d8c9ad", "#cdb89a", "#c9d0d4", "#d6c2b4", "#bfc8b0"];
-      const wall = (x, z, w, d) => box(w, H, d, sx + x, H / 2, sz + z, WALLS[hsh % 5]);
+      const walls = [], wall = (x, z, w, d) => { const m = box(w, H, d, sx + x, H / 2, sz + z, WALLS[hsh % 5]); walls.push(m); return m; };
       wall(0, D / 2, W, .3); wall(-W / 2, 0, .3, D); wall(W / 2, 0, .3, D);
       const hw = W / 2 - .9; wall(-(W / 2 + .9) / 2, -D / 2, hw, .3); wall((W / 2 + .9) / 2, -D / 2, hw, .3);   // 1.8 m doorway
       T.p.forEach(p => wall(p[0] * s, p[1] * s, p[2] === .3 ? .3 : p[2] * s, p[3] === .3 ? .3 : p[3] * s));
-      box(W, .05, D, sx, .03, sz, FLOORS[(hsh >> 3) % 5], false);
+      const floorM = box(W, .05, D, sx, .03, sz, FLOORS[(hsh >> 3) % 5], false);
       const F = T.f.map(f => [f[0] * s, f[1] * s, f[2], f[3], f[4]]);
       F.forEach(f => { K.collider(f[2], sx + f[0], sz + f[1], f[3], f[4] || 1); item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1); });
       const here = p => Math.abs(p.x - sx) < W / 2 && Math.abs(p.z - sz) < D / 2;
       reg(F, sx, sz, here);
       points.push({ x: sx, z: sz - D / 2 + 1.1, r: 1.9, t: "\uD83D\uDEAA Leave", ok: () => !busy && !seated && here(player.position), f: leave });
-      return (built[u.id] = { sx, sz, D, W });
+      const bb = (built[u.id] = { sx, sz, D, W, walls, floorM });
+      if (LUX.includes(u.tpl)) {
+        if (st.deco[u.id]) applyDeco(bb, st.deco[u.id]);
+        points.push({ x: sx + W / 2 - 1.3, z: sz - D / 2 + 2.2, r: 2.3, t: "\uD83C\uDFA8 Interior designer", ok: () => !busy && !seated && here(player.position), f: () => designer(u, bb) });
+      }
+      return bb;
     }
     function enter(u, door) {
       if (busy) return; const b = build(u);
@@ -274,7 +324,9 @@
       st.play += dt;
       st.hu = clamp(st.hu - dt * .035); st.hy = clamp(st.hy - dt * .012);
       st.en = clamp(st.en - dt * (.012 + (driving || mv > 40 ? 0 : mv * .0045)));
-      if (seated) { st.en = clamp(st.en + dt * .6); st.md = clamp(st.md + dt * .15); }
+      if (seated) { if (AV.pose === "dance") { st.en = clamp(st.en - dt * .25); st.md = clamp(st.md + dt * .5); } else { st.en = clamp(st.en + dt * .6); st.md = clamp(st.md + dt * .15); } }
+      if (SP.on && mv > 3 && !seated) st.en = clamp(st.en - dt * .12);
+      if (st.drunk > 0) st.drunk = Math.max(0, st.drunk - dt * .02);
       { const Wt = window.ACCRA_WATER, sw = !!(Wt && !driving && !inside && !seated && Wt.contains(player.position));
         if (sw !== swimming) { swimming = sw; if (sw && !AV.pose) AV.pose = "swim"; else if (!sw && AV.pose === "swim") AV.pose = null; }
         if (swimming) { st.en = clamp(st.en - dt * .08); st.hy = clamp(st.hy + dt * .6); } }
@@ -386,6 +438,14 @@
       buy: (k, online) => { const g = FOOD[k]; if (!g) return "Unknown item"; const c = online ? Math.ceil(g[1] * 1.1) : g[1]; if (cash() < c) return "Not enough cash (need GH\u20B5" + c + ")"; pay(c, "JOLLY MART: " + g[0]); st.food[k] = (st.food[k] || 0) + 1; save(); return "ok"; },
       rents: () => Object.keys(st.keys).filter(id => UNITS[id] && st.keys[id].t === "rent").map(id => ({ name: UNITS[id].name, rent: UNITS[id].rent, mins: Math.max(0, Math.ceil((st.keys[id].due - st.play) / 60)) }))
     };
+    // plugin API used by accra-pub.js, accra-crime.js and accra-fx.js
+    (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).life = 1;
+    window.ACCRA_LIFE.api = {
+      st, clamp, cash, pay, earn, save, notify, fade, tp, show, hide, ttl, BS, GOLD, SB, CLOSE, note, sit, stand, points, K, AV,
+      get busy() { return busy; }, set busy(v) { busy = v; }, get seated() { return seated; }, get inside() { return inside; }, get driving() { return driving; },
+      leaveHome: () => leave(), vitals: d => { Object.keys(d).forEach(k => { if (k in st) st[k] = clamp(st[k] + d[k]); }); save(); }
+    };
+    ["accra-crime.js", "accra-pub.js", "accra-fx.js"].forEach(f => { const s = document.createElement("script"); s.src = f; s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
@@ -416,13 +476,20 @@
     cmdBox.appendChild(cmdIn); cmdBox.appendChild(cmdGo); document.body.appendChild(cmdBox); document.body.appendChild(cmdOpen);
     const openCmd = () => { cmdBox.style.display = "flex"; cmdIn.value = "/"; cmdIn.focus(); };
     const closeCmd = () => { cmdBox.style.display = "none"; cmdIn.blur(); };
+    function bag() {
+      const ks = Object.keys(st.inv).filter(k => st.inv[k] > 0), fr = Object.values(window.playerInventory.fridgeItems).reduce((a, b) => a + b, 0);
+      show(ttl("\uD83C\uDF92 Bag") + (ks.length ? ks.map(k => '<button data-d="' + k + '" style="' + BS + '">Dump ' + k + " \u00D7 " + st.inv[k] + " (illegal)</button>").join("") : '<div style="padding:6px 0">Nothing illegal in your bag.</div>') + '<div style="opacity:.7;padding:4px 0">Fridge items: ' + fr + "</div>" + CLOSE, d => { if (d.x) return hide(); if (d.d) { delete st.inv[d.d]; save(); note("You dumped it."); bag(); } });
+    }
     function runCmd(raw) {
       const parts = raw.trim().replace(/^\//, "").split(/\s+/), k = (parts[0] || "").toUpperCase();
       if (k === ADMIN_CODE.toUpperCase()) { isAdmin = true; closeCmd(); adminPanel(); return K.keep(); }
       if (k === "HOMES") { closeCmd(); myHomes(); return K.keep(); }
       if (k === "LISTINGS") { closeCmd(); allListings(); return K.keep(); }
+      if (k === "GIVE" && isAdmin && /^[a-z]/i.test(parts[1] || "")) { const it = parts[1].toLowerCase(), n = Math.max(1, Math.round(+parts[2] || 1)); if (it === "weed" || it === "cocaine") { st.inv[it] = (st.inv[it] || 0) + n; save(); closeCmd(); return note("Added " + n + " " + it + " to your bag. It is illegal: police will search for it."); } return note("Items: weed, cocaine (test items)"); }
+      if (k === "WANTED" && isAdmin) { if (window.ACCRA_CRIME) window.ACCRA_CRIME.setWanted(Math.max(0, Math.min(5, Math.round(+parts[1] || 0)))); closeCmd(); return; }
+      if (k === "BAG") { closeCmd(); return bag(); }
       if (k === "GIVE" && isAdmin) { const a = Math.round(+parts[1]); if (!(a > 0)) return note("Use /give 5000"); earn(a, "Admin grant"); closeCmd(); return note("You received GH\u00A2" + a.toLocaleString()); }
-      if (k === "HELP") return note("/homes  /listings  /help" + (isAdmin ? "  /give 5000" : ""));
+      if (k === "HELP") return note("/homes  /listings  /bag  /help" + (isAdmin ? "  /give 5000  /give weed 2  /wanted 3" : ""));
       note("Unknown command. Try /help");
     }
     cmdOpen.onclick = () => (cmdBox.style.display === "flex" ? closeCmd() : openCmd());

@@ -3,6 +3,12 @@
  * Needs accra-assets.js loaded first. */
 (function () {
   const banner = m => { try { const d = document.createElement("div"); d.style.cssText = "position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 110px);background:#8b1a1a;color:#fff;padding:8px 10px;border-radius:10px;font:12px system-ui;z-index:99;max-width:92vw"; d.textContent = "\u26A0 " + m + " (tap to hide)"; d.onclick = () => d.remove(); document.body.appendChild(d); } catch (e) {} };
+  // touch: stop iOS page-zoom and accidental pinch, keep UI buttons independent of the canvas
+  ["gesturestart", "gesturechange", "gestureend"].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  document.addEventListener("touchmove", e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  { let lt = 0; document.addEventListener("touchend", e => { const n = Date.now(); if (n - lt < 300) e.preventDefault(); lt = n; }, { passive: false }); }
+  { const cv = document.getElementById("c"); if (cv) cv.style.touchAction = "none";
+    const us = document.createElement("style"); us.textContent = "#joy,#jump,#act,#knob,.pb,.p2,.apn,#pbtn2{touch-action:none;pointer-events:auto}"; document.head.appendChild(us); }
   let shown = 0; window.addEventListener("error", e => { if (shown < 2 && e.filename && /accra|online|phone/.test(e.filename)) { shown++; banner((e.filename.split("/").pop()) + ": " + e.message); } });
   try {
     const A = AccraAssets, B = BABYLON;
@@ -259,6 +265,12 @@
     // ===== AMOAMAH ESTATE: detached houses with red hip-tile roofs, lawns, wooden fences, pools; and the SPORTS STADIUM =====
     scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.x > 80 && m.position.x < 140 && Math.abs(m.position.z) > 10 && Math.abs(m.position.z) < 60).forEach(m => m.dispose());
     const hipSrc = {};
+    window.ACCRA_HIP = hex => hip(hex);
+    try {   // the villa gets a pitched hip roof instead of the flat box
+      const flat = scene.meshes.find(m => m.name === "b" && Math.abs(m.position.x - VX) < .01 && Math.abs(m.position.z - VZ) < .01 && Math.abs(m.position.y - 3.35) < .01);
+      if (flat) { flat.isVisible = false; const vr = hip("#8c3b2b").createInstance("villahip"); vr.scaling.set(13.9, 3.8, 13.2); vr.position.set(VX, 3.2, VZ); vr.isPickable = false;
+        scene.onBeforeRenderObservable.add(() => { const f = driving ? car.position : player.position; vr.setEnabled(!(Math.abs(f.x - VX) < 13.5 && Math.abs(f.z - VZ) < 9.5)); }); }
+    } catch (e) { banner("Villa roof: " + e.message); }
     function hip(hex) {   // hip roof: a ridge with four sloping faces
       if (hipSrc[hex]) return hipSrc[hex];
       const a = 1, b = .75, c = .25, h = 1, pos = [], idx = [];
@@ -336,7 +348,9 @@
         const hw = W / 2 - g / 2; w(-(W / 2 + g / 2) / 2, -D2 / 2, hw, .4); w((W / 2 + g / 2) / 2, -D2 / 2, hw, .4);
         inner.forEach(p => w(p[0], p[1], p[2], p[3]));
         box(W, .05, D2, cx, .03, cz, floorCol, false);
-        roofs.push([box(W + .8, .4, D2 + .8, cx, H + .2, cz, "#8a8a84", false), cx, cz, W / 2, D2 / 2]);
+        { const hr = window.ACCRA_HIP ? window.ACCRA_HIP(/POLICE/.test(title) ? "#26385e" : /HOSPITAL/.test(title) ? "#a83232" : "#5f6670").createInstance("bldhip") : null;
+          if (hr) { hr.scaling.set((W + 1.6) / 2, 3.4, (D2 + 1.6) / 2 / .75); hr.position.set(cx, H, cz); hr.isPickable = false; roofs.push([hr, cx, cz, W / 2, D2 / 2]); }
+          else roofs.push([box(W + .8, .4, D2 + .8, cx, H + .2, cz, "#8a8a84", false), cx, cz, W / 2, D2 / 2]); }
         const dt = new B.DynamicTexture("fs", { width: 512, height: 128 }, scene, false), c = dt.getContext();
         c.fillStyle = bg; c.fillRect(0, 0, 512, 128); c.fillStyle = fg; c.font = "bold 44px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(title, 256, 66, 490); dt.update();
         const sn = B.MeshBuilder.CreatePlane("fsn", { width: 16, height: 4 }, scene); sn.position.set(cx, H + 2.4, cz - D2 / 2 - .5); sn.isPickable = false;
@@ -403,7 +417,7 @@
       const pb = (w, h, d, x, y, z, c, par, m) => { const q = B.MeshBuilder.CreateBox("pd", { width: w, height: h, depth: d }, scene); q.parent = par || dec; q.position.set(PX + x, y, PZ + z); q.material = m || mat(c); q.isPickable = false; return q; };
       const solid = (w, h, d, x, y, z) => { const q = box(w, h, d, PX + x, y, PZ + z, "#000"); q.isVisible = false; sg.removeShadowCaster(q); return q; };
       const wall = (x, z, w, d) => box(w, PH, d, PX + x, PH / 2, PZ + z, "#2b2b30");
-      wall(0, 9, 34, .4); wall(-17, 0, .4, 18); wall(17, 0, .4, 18);
+      wall(-14.1, 9, 5.8, .4); wall(4.1, 9, 25.8, .4); wall(-17, 0, .4, 18); wall(17, 0, .4, 18);
       [-10, 10].forEach(x => { const g = box(14, 3.2, .15, PX + x, 1.6, PZ - 9, "#8fc8e8"); g.material = glass; sg.removeShadowCaster(g); });   // glass shop-front, 6 m doorway between
       [-17, -3, 3, 17].forEach(x => box(.5, PH, .5, PX + x, PH / 2, PZ - 9, "#17171a")); box(34, 1.4, .5, PX, 3.9, PZ - 9, "#141416");
       // ---- signs ----
@@ -452,6 +466,29 @@
       const miniCar = (x, z, col) => { pb(1.9, .7, 4.2, x, .65, z, col); pb(1.6, .55, 2.2, x, 1.28, z - .1, "#1a2530"); pb(1.55, .06, 1.9, x, 1.58, z - .1, col); [-1, 1].forEach(a => [-1.4, 1.4].forEach(b => pb(.25, .6, .6, x + a * .95, .3, z + b, "#111"))); [-.6, .6].forEach(a => { pb(.4, .15, .05, x + a, .7, z + 2.12, null, null, em("#fff6d6")); pb(.4, .12, .05, x + a, .7, z - 2.12, null, null, em("#ff2a2a")); }); };
       miniCar(-11, -20.6, "#e8e8e8"); miniCar(-6.5, -20.6, "#2f5fd0"); miniCar(6.5, -20.6, "#1d2f6b"); miniCar(11, -20.6, "#d8d8d8");
       pb(.15, 6, .15, -19, 3, -17, "#333"); pb(.9, .2, .5, -18.5, 6, -17, null, null, em("#ffcf7a"));
+      // ---- WINE & SPIRITS counter (back wall) ----
+      pb(5, 1.1, 1, 1.5, .55, 7.8, "#2a1a10"); solid(5, 1.1, 1, 1.5, .55, 7.8); pb(5.2, .06, 1.2, 1.5, 1.13, 7.8, "#c9a54a");
+      pb(5, 2.4, .4, 1.5, 1.4, 8.7, "#3a2514");
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 12; c++) pb(.14, .36, .14, -.6 + c * .37, 1.0 + r * .5, 8.45, ["#5a1224", "#2d5a2a", "#c8a02a", "#3a1a4a"][(r + c) % 4]);
+      sign(4, .8, 1.5, 3.2, 8.6, (c, w, h) => { c.fillStyle = "#141416"; c.fillRect(0, 0, w, h); c.fillStyle = "#e8c86a"; c.font = "bold 62px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("WINE & SPIRITS", w / 2, h / 2, w - 20); });
+      // ---- VIP LOUNGE: annex behind the pub, neon purple light, velvet seating, a bouncer on the door ----
+      ITEMS.vipsofa = ["VIP sofa", 0, [[2.2, .45, .9, 0, .25, 0, "#4b1d6e"], [2.2, .6, .25, 0, .75, -.35, "#5c2488"], [.25, .35, .9, -1, .5, 0, "#3d1759"], [.25, .35, .9, 1, .5, 0, "#3d1759"], [2.1, .05, .8, 0, .5, .02, "#6a2f9a"]]];
+      wall(-17, 13.6, .4, 8.8); wall(-4, 13.6, .4, 8.8); wall(-10.5, 18, 13.4, .4);
+      pb(13, .05, 8.8, -10.5, .04, 13.6, "#1b1026");
+      [[-10.5, 17.6, 12.6, .1], [-10.5, 9.6, 12.6, .1]].forEach(n => pb(n[2], n[3], .1, n[0], .18, n[1], null, null, em("#b04dff")));
+      [[-16.6, 13.6], [-4.4, 13.6]].forEach(n => pb(.1, .1, 8.4, n[0], .18, n[1], null, null, em("#b04dff")));
+      [-14, -10.5, -7].forEach(x => pb(.14, .06, 8, x, 3.95, 13.6, null, null, em("#c470ff")));
+      [[-10.5, 16.9, Math.PI], [-15.9, 13.6, Math.PI / 2], [-5.1, 13.6, -Math.PI / 2]].forEach(q => { item("vipsofa", PX + q[0], PZ + q[1], q[2], false, 1, dec); solid(2.2, .8, 1, q[0], .4, q[1]).rotation.y = q[2]; });
+      pb(1.5, .06, 1.5, -10.5, .58, 13.6, "#14081f"); pb(.18, .55, .18, -10.5, .28, 13.6, "#c9a54a"); solid(1.5, .6, 1.5, -10.5, .3, 13.6);
+      [[-10.9, 13.3, "#c9a54a"], [-10.1, 13.9, "#1d6b3a"], [-10.5, 14.3, "#b04dff"]].forEach(b => pb(.12, .34, .12, b[0], .78, b[1], b[2]));
+      sign(4.2, 1, -10.5, 3.3, 17.7, (c, w, h) => { c.fillStyle = "#12061c"; c.fillRect(0, 0, w, h); c.shadowColor = "#b04dff"; c.shadowBlur = 22; c.fillStyle = "#e6b8ff"; c.font = "bold 90px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("VIP LOUNGE", w / 2, h / 2, w - 30); });
+      sign(3.4, .8, -10, 3.4, 8.7, (c, w, h) => { c.fillStyle = "#12061c"; c.fillRect(0, 0, w, h); c.shadowColor = "#b04dff"; c.shadowBlur = 18; c.fillStyle = "#e6b8ff"; c.font = "bold 80px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("VIP \u2192", w / 2, h / 2, w - 20); });
+      const vipGate = solid(2.4, 2.6, .5, -10, 1.3, 9.1);   // the bouncer's rope: only solid while you have no VIP pass
+      const vipRoof = box(14.2, .4, 9.6, PX - 10.5, PH + .2, PZ + 13.6, "#2a2a2e", false);
+      const vlight = new B.PointLight("viplight", new B.Vector3(PX - 10.5, 3, PZ + 13.6), scene); vlight.diffuse = B.Color3.FromHexString("#b04dff"); vlight.intensity = .85; vlight.range = 13;
+      scene.onBeforeRenderObservable.add(() => { const p = player.position; vlight.setEnabled(Math.hypot(p.x - PX, p.z - PZ) < 40); vipRoof.setEnabled(!(Math.abs(p.x - (PX - 10.5)) < 7.2 && Math.abs(p.z - (PZ + 13.6)) < 5)); });
+      const bnc = A.createCharacter(scene, { shirt: "#0d0d0f", pants: "#0d0d0f", skin: "#4a2c1c", hair: "#0d0d0d", kente: false, scale: .9 }); bnc.root.position.set(PX - 8.6, 0, PZ + 8.4); bnc.root.rotation.y = Math.PI * 1.25;
+      tag("Bouncer \u00B7 VIP", PX - 8.6, 2.6, PZ + 8.4, 2.4);
       // ---- rooftop deck (hides while you are inside) ----
       const rb = (w, h, d, x, y, z, c, m) => pb(w, h, d, x, y, z, c, roofN, m);
       rb(34.6, .4, 18.6, 0, PH + .2, 0, "#2a2a2e"); rb(33, .05, 17, 0, PH + .42, 0, "#6d5a46");
@@ -472,6 +509,8 @@
         if (near) { phs += engine.getDeltaTime() / 1000; pm.emissiveColor = B.Color3.FromHSV((phs * 70) % 360, .85, 1); ball.rotation.y += .02; }
       });
       window.ACCRA_PLACES = Object.assign(window.ACCRA_PLACES || {}, { pub: { bar: { x: PX - 5.5, z: PZ + .6 }, dance: { x: PX + 10.5, z: PZ + 3 }, seats, ox: PX, oz: PZ - 23 } });
+      window.ACCRA_PLACES.pub.vip = { gate: vipGate, door: { x: PX - 8.9, z: PZ + 7.6 }, in: { x: PX - 10.5, z: PZ + 13.6, hw: 6.5, hd: 4.4 } };
+      window.ACCRA_PLACES.pub.wine = { x: PX + 1.5, z: PZ + 6.2 };
     } catch (e) { banner("Pub: " + e.message); }
 
     // ---------- 1. TIN ROOFS on low and mid-rise buildings ----------
@@ -582,6 +621,7 @@
       });
     } catch (e) {}
     window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ, collider, tag, keep: () => { lock = true; } };
+    (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).upgrade = 1;
     const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
     const locJs = document.createElement("script"); locJs.src = "AccraLocations.js";
     locJs.onload = () => { try { window.ACCRA_LOC = new window.AccraLocations(scene); window.ACCRA_LOC.buildFullAccraMap(); } catch (e) { banner("AccraLocations: " + e.message); } };
