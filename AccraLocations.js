@@ -1,4 +1,4 @@
-Import * as BABYLON from "@babylonjs/core";
+import * as BABYLON from "@babylonjs/core";
 
 export class AccraLocations {
     constructor(scene) {
@@ -828,6 +828,7 @@ export class AccraLocations {
     }
 }
 
+// Global window registration fix
 window.AccraLocations = AccraLocations;
 window.ACCRA_MODULES = window.ACCRA_MODULES || {};
 window.ACCRA_MODULES.locations = 1;
