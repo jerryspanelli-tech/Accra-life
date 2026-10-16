@@ -164,15 +164,15 @@ class AccraLocations {
 
     buildAccraNeighborhoods() {
         const districts = [
-            { name: "Makola Market", x: -500, z: -80, type: "market" },
-            { name: "Osu", x: 400, z: -60, type: "commercial" },
-            { name: "Nima", x: -500, z: 220, type: "dense" },
-            { name: "Achimota", x: -500, z: 450, type: "residential" },
-            { name: "Kasoa", x: -700, z: -450, type: "residential" },
-            { name: "East Legon", x: 500, z: 400, type: "luxury" },
-            { name: "Airport Residential Area", x: 700, z: -250, type: "modern" },
-            { name: "Tema", x: 700, z: 580, type: "industrial" },
-            { name: "Labadi", x: 400, z: -480, type: "residential" },
+            { name: "Makola Market", x: -650, z: -200, type: "market" },
+            { name: "Osu", x: 600, z: -100, type: "commercial" },
+            { name: "Nima", x: -650, z: 350, type: "dense" },
+            { name: "Achimota", x: -650, z: 650, type: "residential" },
+            { name: "Kasoa", x: -800, z: -600, type: "residential" },
+            { name: "East Legon", x: 650, z: 550, type: "luxury" },
+            { name: "Airport Residential Area", x: 800, z: -400, type: "modern" },
+            { name: "Tema", x: 800, z: 700, type: "industrial" },
+            { name: "Labadi", x: 600, z: -650, type: "residential" },
             { name: "Central Accra", x: 0, z: 80, type: "commercial" }
         ];
 
