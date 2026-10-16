@@ -1,5 +1,7 @@
-// Check if BABYLON is available globally, otherwise rely on the module import
 import * as BABYLON from "@babylonjs/core";
+
+// Safely map BABYLON_REF to either the imported module or the global window object
+const BABYLON_REF = typeof BABYLON !== 'undefined' ? BABYLON : window.BABYLON;
 
 export class AccraLocations {
     constructor(scene) {
