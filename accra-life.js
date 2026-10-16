@@ -452,7 +452,7 @@
       get busy() { return busy; }, set busy(v) { busy = v; }, get seated() { return seated; }, get inside() { return inside; }, get driving() { return driving; },
       leaveHome: () => leave(), vitals: d => { Object.keys(d).forEach(k => { if (k in st) st[k] = clamp(st[k] + d[k]); }); save(); }
     };
-    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js"].forEach(f => { const s = document.createElement("script"); s.src = f; s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
+    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js"].forEach(f => { const s = document.createElement("script"); s.src = f; s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
@@ -496,6 +496,7 @@
       if (k === "WANTED" && isAdmin) { if (window.ACCRA_CRIME) window.ACCRA_CRIME.setWanted(Math.max(0, Math.min(5, Math.round(+parts[1] || 0)))); closeCmd(); return; }
       if (k === "BAG") { closeCmd(); return bag(); }
       if (k === "GIVE" && isAdmin) { const a = Math.round(+parts[1]); if (!(a > 0)) return note("Use /give 5000"); earn(a, "Admin grant"); closeCmd(); return note("You received GH\u00A2" + a.toLocaleString()); }
+      if (k === "VIP") { const v = window.ACCRA_VIP; return note(v ? "VIP state: " + v.state + " \u00B7 " + Math.max(0, Math.ceil(((st.vip || 0) - st.play) / 60)) + " min left \u00B7 " + v.log.slice(-3).join(", ") : "VIP module not loaded"); }
       if (k === "HELP") return note("/homes  /listings  /bag  /help" + (isAdmin ? "  /give 5000  /give weed 2  /wanted 3" : ""));
       note("Unknown command. Try /help");
     }

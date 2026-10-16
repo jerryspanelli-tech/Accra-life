@@ -513,6 +513,18 @@
       window.ACCRA_PLACES.pub.wine = { x: PX + 1.5, z: PZ + 6.2 };
     } catch (e) { banner("Pub: " + e.message); }
 
+    // ===== LAYOUT GUARD: no older building may overlap or poke into anything new (runs before roofs are added) =====
+    try {
+      const FOOT = { mall: [14, 56, 16, 54], pub: [-128, -80, -61, -31], pubVIP: [-128, -113, -32, -21], police: [19, 51, 88, 108], hospital: [87, 133, 85, 111],
+        dealer: [17, 53, -46, -24], stadium: [85, 135, 13, 57], amoamah: [81, 139, -59, -11] };
+      let gone = 0;
+      scene.meshes.filter(m => m.name === "bd" || m.name === "rf").forEach(m => {
+        const e = m.getBoundingInfo().boundingBox.extendSize, x = m.position.x, z = m.position.z;
+        for (const k in FOOT) { const f = FOOT[k]; if (x + e.x > f[0] - 1.2 && x - e.x < f[1] + 1.2 && z + e.z > f[2] - 1.2 && z - e.z < f[3] + 1.2) { m.dispose(); gone++; break; } }
+      });
+      window.ACCRA_LAYOUT = { cleared: gone, footprints: FOOT };
+    } catch (e) { banner("Layout guard: " + e.message); }
+
     // ---------- 1. TIN ROOFS on low and mid-rise buildings ----------
     const roofSrc = {};
     function prismSrc(hex) {
@@ -623,8 +635,14 @@
     window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ, collider, tag, keep: () => { lock = true; } };
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).upgrade = 1;
     const lifeJs = document.createElement("script"); lifeJs.src = "accra-life.js"; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
-    const locJs = document.createElement("script"); locJs.src = "AccraLocations.js";
-    locJs.onload = () => { try { window.ACCRA_LOC = new window.AccraLocations(scene); window.ACCRA_LOC.buildFullAccraMap(); } catch (e) { banner("AccraLocations: " + e.message); } };
+    const locJs = document.createElement("script"); locJs.src = "AccraLocations.js?v=6";
+    locJs.onload = () => {
+      try {
+        if (typeof window.AccraLocations !== "function") { banner("AccraLocations.js on your site is the OLD module version (import/export), so it cannot run. Upload the fixed AccraLocations.js and reload."); return; }
+        window.ACCRA_LOC = new window.AccraLocations(scene); window.ACCRA_LOC.buildFullAccraMap();
+      } catch (e) { banner("AccraLocations: " + e.message); }
+    };
+    locJs.onerror = () => banner("AccraLocations.js was not found. Upload it to the same folder as babylon.html.");
     document.body.appendChild(locJs);
     console.log("Accra upgrade loaded:", n, "roofs");
   } catch (err) {

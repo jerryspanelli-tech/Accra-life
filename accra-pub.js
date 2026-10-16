@@ -54,20 +54,28 @@
           if (d.x) return hide();
           if (d.in) { hide(); L.tp(V.in.x, V.in.z - 2.8); note("Welcome to the VIP lounge"); return; }           // always works while the pass is active
           if (cash() < 150) return note("Not enough cash. The pass costs " + Z(150));
-          pay(150, "VIP pass"); st.vip = Math.max(st.vip || 0, st.play) + HOUR; L.save(); note("VIP pass active for 60 minutes"); hide();
+          const before = cash(); pay(150, "VIP pass");
+          if (cash() > before - 150) return note("Payment did not go through. You were not charged.");        // verification: the balance must drop by the price
+          st.vipTx = { id: Date.now().toString(36), amt: 150, at: Math.round(st.play) };                       // receipt
+          st.vip = Math.max(st.vip || 0, st.play) + HOUR; L.save(); note("VIP pass active for 60 minutes \u00B7 receipt " + st.vipTx.id); hide();
         });
       });
       A(V.in.x, V.in.z + 3.4, 2.6, "\uD83D\uDEAA Leave VIP", () => L.tp(V.door.x, V.door.z - 1.2));
       const seatsV = [[-10.5, 16.9, Math.PI], [-15.9, 13.6, Math.PI / 2], [-5.1, 13.6, -Math.PI / 2]];
       seatsV.forEach(s => A(PL.ox + s[0], PL.oz + 23 + s[1], 1.9, "\uD83D\uDECB\uFE0F VIP seat", () => sit(PL.ox + s[0], PL.oz + 23 + s[1], s[2], .5, 1), () => hasPass()));
       A(V.in.x, V.in.z, 2.6, "\uD83C\uDF7E Bottle service", () => menu("VIP bottle service", [["Premium", [["Champagne, bottle", 250, { m: 38, d: 2.6 }], ["Cognac, bottle", 320, { m: 40, d: 3.4 }], ["Sparkling water", 20, { m: 4 }]]]]), () => hasPass());
-      // rope: solid only without a pass; VIP perks while inside
+      // ---- VIP zone state machine: none -> active -> inside -> (pass expires) grace -> escorted out ----
+      const VS = { state: "none", grace: 0, log: [] }; window.ACCRA_VIP = VS;
+      const inVip = p => Math.abs(p.x - V.in.x) < V.in.hw + .4 && Math.abs(p.z - V.in.z) < V.in.hd + .4;
+      const go = s => { if (VS.state === s) return; VS.log.push(s + "@" + Math.round(st.play)); VS.log = VS.log.slice(-8); if (s === "grace") note("Your VIP pass expired. Please leave the lounge."); VS.state = s; };
       let t = 0;
       scene.onBeforeRenderObservable.add(() => {
-        if (V.gate) V.gate.checkCollisions = !hasPass();
+        const dt = Math.min(engine.getDeltaTime() / 1000, .1), p = player.position, has = hasPass(), inside = inVip(p);
+        if (V.gate) V.gate.checkCollisions = !has && !inside;            // the rope only stops outsiders without a pass; nobody is ever locked in
+        const s = inside ? (has ? "inside" : "grace") : (has ? "active" : "none"); go(s);
+        if (s === "grace") { VS.grace += dt; if (VS.grace > 12 && !L.busy) { VS.grace = 0; if (L.seated) L.stand(); L.tp(V.door.x, V.door.z - 1.2); note("A bouncer escorted you out."); } } else VS.grace = 0;
         if (++t % 30) return;
-        const p = player.position;
-        if (hasPass() && Math.abs(p.x - V.in.x) < V.in.hw && Math.abs(p.z - V.in.z) < V.in.hd) st.md = clamp(st.md + .25);
+        if (s === "inside") st.md = clamp(st.md + .25);
       });
     }
 

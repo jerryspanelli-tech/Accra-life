@@ -37,7 +37,8 @@
    B(.3,.2,.42,0,-.78,.06,'#f0f0ec',q);return q};
   const al=arm(-1),ar=arm(1),ll=leg(-1),lr=leg(1);
   if(st==2)P('Cylinder',{height:.75,diameterTop:.75,diameterBottom:1.1,tessellation:8},0,.95,0,ts);
-  return{root,g,al,ar,ll,lr,ph:0}}
+  const pk=[B(.07,1,.07,0,-.95,.14,'#6b4a2e',ar),B(.6,.1,.1,0,-1.45,.14,'#9aa0a8',ar)];pk.forEach(m=>m.setEnabled(false));   // pickaxe, only shown while mining
+  return{root,g,al,ar,ll,lr,pk,ph:0}}
  function walk(h,sp,dt){const k=Math.min(1,sp/1.1),run=Math.min(1,sp/5.5);h.ph+=sp*dt*2.3;   // stride follows real distance: no foot sliding
   const s=Math.sin(h.ph)*(.5+.6*run)*k;
   h.ll.rotation.x=s;h.lr.rotation.x=-s;h.al.rotation.x=-s*.9;h.ar.rotation.x=s*.9;
@@ -59,7 +60,7 @@
   const raw=Math.hypot(src.position.x-lpx,src.position.z-lpz)/dt;lpx=src.position.x;lpz=src.position.z;
   smv+=(Math.min(raw,9)-smv)*Math.min(1,dt*9);cur.sp=smv;
   vyaw+=adiff(player.rotation.y,vyaw)*Math.min(1,dt*12);mine.root.rotation.y=vyaw-player.rotation.y;   // smooth turning
-  const r=mine.root,pose=window.ACCRA_AVATAR&&window.ACCRA_AVATAR.pose;
+  const r=mine.root,pose=window.ACCRA_AVATAR&&window.ACCRA_AVATAR.pose;if(mine.pk)mine.pk.forEach(m=>m.setEnabled(pose==='mine'));
   if(pose==='sit'){r.rotation.x=0;r.position.set(0,-.91+((window.ACCRA_AVATAR.sitH||.45)+.05-.748),0);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=-1.5;mine.al.rotation.x=mine.ar.rotation.x=-.7}
   else if(pose==='sleep'){r.rotation.x=-Math.PI/2;r.position.set(0,-.29,.95);mine.g.rotation.x=0;mine.g.position.y=0;mine.ll.rotation.x=mine.lr.rotation.x=mine.al.rotation.x=mine.ar.rotation.x=0}
   else if(pose==='dance'){const t=performance.now()/1000,w=Math.sin(t*8);r.rotation.x=0;r.position.set(0,-.91,0);mine.g.position.y=Math.abs(w)*.11;mine.g.rotation.x=0;mine.g.rotation.z=Math.sin(t*4)*.12;
@@ -70,6 +71,8 @@
     else if(pose==='cheer'){mine.g.position.y=Math.abs(Math.sin(t*6))*.18;mine.al.rotation.x=mine.ar.rotation.x=-2.8}
     else if(pose==='handsup'){mine.al.rotation.x=mine.ar.rotation.x=-3;mine.al.rotation.z=.3;mine.ar.rotation.z=-.3}
     else{const p=Math.sin(t*10);mine.g.rotation.x=.1;mine.ar.rotation.x=-1.5+p*.5;mine.al.rotation.x=-1.2;mine.ll.rotation.x=.3;mine.lr.rotation.x=-.3}}
+  else if(pose==='mine'){const t=performance.now()/1000,c=(t*2.1)%1,a=c<.6?-.6-c/.6*2.2:c<.72?-2.8+(c-.6)/.12*2.6:-.2-(c-.72)/.28*.4;r.rotation.x=0;r.position.set(0,-.91,0);mine.g.position.y=0;mine.g.rotation.z=0;mine.g.rotation.x=c>.6&&c<.8?.28:.1;
+    mine.al.rotation.x=a;mine.ar.rotation.x=a;mine.al.rotation.z=-.15;mine.ar.rotation.z=.15;mine.ll.rotation.x=.25;mine.lr.rotation.x=-.25}
   else if(pose==='swim'){mine.ph+=dt*(3+smv*1.4);const w=Math.sin(mine.ph);mine.g.rotation.z=0;mine.g.rotation.x=0;mine.g.position.y=0;r.rotation.x=1.25;r.position.set(0,-.55,0);
     mine.al.rotation.x=-2.5+w*.9;mine.ar.rotation.x=-2.5-w*.9;mine.ll.rotation.x=Math.sin(mine.ph*2)*.4;mine.lr.rotation.x=-Math.sin(mine.ph*2)*.4}
   else{mine.al.rotation.z=mine.ar.rotation.z=0;mine.g.rotation.z=0;r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});

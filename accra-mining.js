@@ -50,7 +50,7 @@
     bx(6, 3, 4, QX - 19, 1.5, QZ - 10, "#e8e2d6", true); bx(6.6, .25, 4.6, QX - 19, 3.1, QZ - 10, "#8c3b2b");        // foreman cabin
     sign("ACCRA STONE QUARRY", QX - 21.4, 5, QZ - 10, -Math.PI / 2);
     for (let i = 0; i < 6; i++) bx(.15, 1.5, .15, QX - 22, .75, QZ - 17 + i * 5.4, "#7a4a2a");
-    bx(10, .06, 5, 175, .06, QZ, "#8a7a5a"); bx(20, .06, 5, 187, .06, QZ, "#8a7a5a");                                 // dirt access road to the city
+    bx(36, .06, 6, 182, .06, QZ, "#8a7a5a");                                 // dirt access road to the city
     // Gold mine
     const GX = 222, GZ = 120;
     bx(40, .1, 30, GX, .05, GZ, "#8f8672");
@@ -63,7 +63,7 @@
     [[-8, -2], [-12, 2], [-6, 6], [-14, -6], [-10, 8], [0, -9], [-3, -5]].forEach(p => node("gold", GX + p[0], GZ + p[1], .85 + Math.random() * .3));
     bx(6, 3, 4, GX - 18, 1.5, GZ - 6, "#e8e2d6", true); bx(6.6, .25, 4.6, GX - 18, 3.1, GZ - 6, "#2a3f6a");
     sign("ACCRA GOLD WORKS", GX - 20.4, 5, GZ - 6, -Math.PI / 2);
-    bx(10, .06, 5, 175, .06, GZ, "#8a7a5a"); bx(20, .06, 5, 190, .06, GZ, "#8a7a5a");
+    bx(48, .06, 6, 178, .06, GZ, "#8a7a5a");
 
     // ---------- mining ----------
     const best = () => st.tool.jack > 0 ? "jack" : st.tool.pick > 0 ? "pick" : null;
