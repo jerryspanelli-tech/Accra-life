@@ -823,7 +823,10 @@ export class AccraLocations {
 
         centerCircle.position.set(x, 0.4, z);
         centerCircle.material = this.materials.white;
-
+        );
+    
         this.addLandmark("Accra Sports Stadium", x, z);
-    }
-}
+        window.AccraLocations = AccraLocations;
+window.ACCRA_MODULES = window.ACCRA_MODULES || {};
+window.ACCRA_MODULES.locations = 1;
+})();
