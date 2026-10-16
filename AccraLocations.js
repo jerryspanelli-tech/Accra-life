@@ -790,8 +790,6 @@ buildAdditionalLandmarks() {
         "Accra Office Tower",
         370,
         270
-    );
-}
 
             z
         );
