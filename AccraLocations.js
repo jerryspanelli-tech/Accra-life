@@ -822,7 +822,7 @@ const centerCircle = BABYLON.MeshBuilder.CreateTorus(
 );
 
 centerCircle.position.set(x, 0.4, z);
-centerCircle.material = this.materialManager; // Adjust to your actual material reference
+centerCircle.material = this.materialManager;
 
 this.addLandmark("Accra Sports Stadium");
 window.AccraLocations = AccraLocations;
