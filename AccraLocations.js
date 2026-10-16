@@ -814,19 +814,18 @@ export class AccraLocations {
             this.materials.white
         );
 
-        // Center circle.
-        const centerCircle = BABYLON.MeshBuilder.CreateTorus(
-            "pitchCenterCircle",
-            { diameter: 22, thickness: 0.3, tessellation: 48 },
-            this.scene
-        );
+// Center circle.
+const centerCircle = BABYLON.MeshBuilder.CreateTorus(
+  "pitchCenterCircle",
+  { diameter: 22, thickness: 0.3 },
+  this.scene
+);
 
-        centerCircle.position.set(x, 0.4, z);
-        centerCircle.material = this.materials.white;
-        );
-    
-        this.addLandmark("Accra Sports Stadium", x, z);
-        window.AccraLocations = AccraLocations;
+centerCircle.position.set(x, 0.4, z);
+centerCircle.material = this.materialManager; // Adjust to your actual material reference
+
+this.addLandmark("Accra Sports Stadium");
+window.AccraLocations = AccraLocations;
 window.ACCRA_MODULES = window.ACCRA_MODULES || {};
 window.ACCRA_MODULES.locations = 1;
 })();
