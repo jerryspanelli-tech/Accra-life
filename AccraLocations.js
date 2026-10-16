@@ -1,402 +1,88 @@
-// Safely map BABYLON_REF to either the imported module or the global window object
-const BABYLON_REF = typeof BABYLON !== 'undefined' ? BABYLON : window.BABYLON;
-
-class AccraLocations {
-    constructor(scene) {
-        this.scene = scene;
-        this.landmarks = [];
-        this.waterZones = [];
-        this.built = false;
-        this.materials = {};
-
-        this.createMaterials();
+// AccraLocations.js - fixed so it runs as a normal browser script (no import / export).
+// Builds Independence Square with the Black Star Gate and the Labadi Beach swimming zone.
+// The old Accra Mall, Accra Vibes Pub and Sports Stadium blocks are kept below but switched OFF,
+// because the newer, enterable versions already live in accra-upgrade.js and must not be doubled.
+(function () {
+  class AccraLocations {
+    constructor(scene, opts) {
+      this.scene = scene; this.landmarks = []; this.waterZones = []; this.mats = {};
+      this.opts = Object.assign({ oldMall: false, oldPub: false, oldStadium: false }, opts);
     }
-
-    createMaterials() {
-        const make = (name, color, emissive = "#000000", alpha = 1) => {
-            const mat = new BABYLON.StandardMaterial(name, this.scene);
-            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
-            mat.emissiveColor = BABYLON.Color3.FromHexString(emissive);
-            mat.alpha = alpha;
-            if (alpha < 1) {
-                mat.backFaceCulling = false;
-            }
-            return mat;
-        };
-
-        this.materials = {
-            concrete: make("accraConcrete", "#888b90"),
-            glass: make("accraGlass", "#48a6c7", "#102c3b"),
-            dark: make("accraDark", "#292d35"),
-            gold: make("accraGold", "#f4bd32", "#8a5700"),
-            sand: make("accraSand", "#d7bd87"),
-            water: make("accraWater", "#167fa8", "#06445c", 0.82),
-            grass: make("accraGrass", "#378345"),
-            white: make("accraWhite", "#eeeeea"),
-            road: make("accraAsphalt", "#303238"),
-            roadLine: make("accraRoadLine", "#f0dca1"),
-            red: make("accraRed", "#b84c3b"),
-            orange: make("accraOrange", "#d78c43"),
-            cream: make("accraCream", "#e5d3ad"),
-            blue: make("accraBlue", "#5596b5"),
-            green: make("accraGreen", "#397d45"),
-            brown: make("accraBrown", "#805638")
-        };
+    mat(hex, extra) {
+      const k = hex + (extra ? "x" : "");
+      if (!this.mats[k]) { const m = new BABYLON.StandardMaterial("loc" + k, this.scene); m.diffuseColor = BABYLON.Color3.FromHexString(hex); m.specularColor = new BABYLON.Color3(.05, .05, .05); if (extra) Object.assign(m, extra); this.mats[k] = m; }
+      return this.mats[k];
     }
-
-    createBox(name, size, position, material) {
-        const mesh = BABYLON.MeshBuilder.CreateBox(
-            name,
-            size,
-            this.scene
-        );
-        mesh.position.copyFrom(position);
-        if (material) mesh.material = material;
-        return mesh;
+    box(w, h, d, x, y, z, hex, solid) {
+      const m = BABYLON.MeshBuilder.CreateBox("loc", { width: w, height: h, depth: d }, this.scene);
+      m.position.set(x, y, z); m.material = this.mat(hex); m.checkCollisions = !!solid;
+      if (typeof sg !== "undefined" && h > .2) sg.addShadowCaster(m);
+      return m;
     }
-
-    addLandmark(name, x, z) {
-        this.landmarks.push({
-            name,
-            pos: new BABYLON.Vector3(x, 0, z)
-        });
+    sign(text, x, y, z, w, h, bg, fg) {
+      const dt = new BABYLON.DynamicTexture("locsg", { width: 512, height: 128 }, this.scene, false), c = dt.getContext();
+      c.fillStyle = bg; c.fillRect(0, 0, 512, 128); c.fillStyle = fg; c.font = "bold 46px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, 256, 66, 490); dt.update();
+      const p = BABYLON.MeshBuilder.CreatePlane("locsn", { width: w, height: h }, this.scene); p.position.set(x, y, z); p.isPickable = false;
+      const mt = new BABYLON.StandardMaterial("locsm", this.scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; p.material = mt;
     }
 
     buildFullAccraMap() {
-        if (this.built) return this.landmarks;
-
-        this.buildExpandedTerrain();
-        this.buildAccraRoadNetwork();
-        this.buildAccraNeighborhoods();
-        this.buildAdditionalLandmarks();
-
-        this.buildAccraMall();
-        this.buildSocialPubsAndNightlife();
-        this.buildLabadiBeachAndSwimming();
-        this.buildIndependenceSquareComplex();
-        this.buildAccraSportsStadium();
-
-        this.built = true;
-        return this.landmarks;
+      if (this.opts.oldMall) this.buildAccraMall();
+      if (this.opts.oldPub) this.buildSocialPubsAndNightlife();
+      if (this.opts.oldStadium) this.buildAccraSportsStadium();
+      this.buildLabadiBeachAndSwimming();
+      this.buildIndependenceSquareComplex();
     }
 
-    buildExpandedTerrain() {
-        const terrain = BABYLON.MeshBuilder.CreateGround(
-            "expandedAccraTerrain",
-            { width: 1800, height: 1600 },
-            this.scene
-        );
-
-        terrain.position.y = -0.22;
-        terrain.material = this.materials.grass;
-    }
-
-    buildAccraRoadNetwork() {
-        const roadMat = this.materials.road;
-        const lineMat = this.materials.roadLine;
-
-        const horizontalRoads = [
-            { z: -650, width: 28 },
-            { z: -570, width: 12 },
-            { z: -380, width: 24 },
-            { z: -150, width: 24 },
-            { z: 80, width: 20 },
-            { z: 300, width: 24 },
-            { z: 520, width: 24 },
-            { z: 680, width: 16 }
-        ];
-
-        horizontalRoads.forEach((road, index) => {
-            this.createBox(
-                `accraEastWestRoad${index}`,
-                { width: 1500, height: 0.18, depth: road.width },
-                new BABYLON.Vector3(0, -0.04, road.z),
-                roadMat
-            );
-
-            for (let x = -720; x <= 720; x += 45) {
-                this.createBox(
-                    `accraRoadDash${index}_${x}`,
-                    { width: 18, height: 0.035, depth: 0.35 },
-                    new BABYLON.Vector3(x, 0.06, road.z),
-                    lineMat
-                );
-            }
-        });
-
-        const verticalRoads = [
-            { x: -700, width: 22 },
-            { x: -500, width: 18 },
-            { x: -300, width: 22 },
-            { x: 0, width: 24 },
-            { x: 300, width: 18 },
-            { x: 500, width: 22 },
-            { x: 700, width: 24 }
-        ];
-
-        verticalRoads.forEach((road, index) => {
-            this.createBox(
-                `accraNorthSouthRoad${index}`,
-                { width: road.width, height: 0.18, depth: 1400 },
-                new BABYLON.Vector3(road.x, -0.03, 0),
-                roadMat
-            );
-
-            for (let z = -660; z <= 660; z += 45) {
-                this.createBox(
-                    `accraVerticalDash${index}_${z}`,
-                    { width: 0.35, height: 0.035, depth: 18 },
-                    new BABYLON.Vector3(road.x, 0.065, z),
-                    lineMat
-                );
-            }
-        });
-
-        this.createBox(
-            "accraCentralConnector",
-            { width: 1000, height: 0.18, depth: 14 },
-            new BABYLON.Vector3(0, -0.015, 190),
-            roadMat
-        );
-
-        this.addLandmark("Accra Main Road Network", 0, 80);
-    }
-
-    buildAccraNeighborhoods() {
-        const districts = [
-            { name: "Makola Market", x: -650, z: -200, type: "market" },
-            { name: "Osu", x: 600, z: -100, type: "commercial" },
-            { name: "Nima", x: -650, z: 350, type: "dense" },
-            { name: "Achimota", x: -650, z: 650, type: "residential" },
-            { name: "Kasoa", x: -800, z: -600, type: "residential" },
-            { name: "East Legon", x: 650, z: 550, type: "luxury" },
-            { name: "Airport Residential Area", x: 800, z: -400, type: "modern" },
-            { name: "Tema", x: 800, z: 700, type: "industrial" },
-            { name: "Labadi", x: 600, z: -650, type: "residential" },
-            { name: "Central Accra", x: 0, z: 80, type: "commercial" }
-        ];
-
-        const colors = {
-            market: "#ad7045",
-            commercial: "#858d96",
-            dense: "#b58b60",
-            residential: "#d0b68b",
-            luxury: "#e4d7bd",
-            modern: "#7095a9",
-            industrial: "#777d80"
-        };
-
-        districts.forEach((district, districtIndex) => {
-            const buildingMat = new BABYLON.StandardMaterial(
-                `districtMaterial${districtIndex}`,
-                this.scene
-            );
-
-            buildingMat.diffuseColor = BABYLON.Color3.FromHexString(colors[district.type]);
-
-            const isDense = district.type === "dense";
-            const isLuxury = district.type === "luxury";
-            const isModern = district.type === "modern";
-            const isIndustrial = district.type === "industrial";
-            const isMarket = district.type === "market";
-
-            for (let row = 0; row < 4; row++) {
-                for (let col = 0; col < 5; col++) {
-                    const seed = districtIndex * 17 + row * 7 + col * 3;
-
-                    let width = 14 + (seed % 6);
-                    let depth = 14 + ((seed * 2) % 6);
-                    let height = 8 + ((seed * 5) % 12);
-
-                    if (isDense) {
-                        width = 11 + (seed % 4);
-                        depth = 11 + ((seed * 2) % 4);
-                        height = 6 + (seed % 5);
-                    }
-
-                    if (isLuxury) {
-                        width = 20 + (seed % 6);
-                        depth = 18 + (seed % 6);
-                        height = 8 + (seed % 8);
-                    }
-
-                    if (isModern) {
-                        width = 16 + (seed % 6);
-                        depth = 16 + (seed % 6);
-                        height = 18 + (seed % 20);
-                    }
-
-                    if (isIndustrial) {
-                        width = 24 + (seed % 8);
-                        depth = 22 + (seed % 6);
-                        height = 9 + (seed % 6);
-                    }
-
-                    if (isMarket) {
-                        width = 10 + (seed % 5);
-                        depth = 10 + ((seed * 2) % 5);
-                        height = 5 + (seed % 5);
-                    }
-
-                    const spacingX = 28;
-                    const spacingZ = 28;
-
-                    const buildingX = district.x + (col - 2) * spacingX;
-                    const buildingZ = district.z + (row - 1.5) * spacingZ;
-
-                    if (
-                        Math.abs(buildingX) < 22 ||
-                        [-650, -570, -380, -150, 80, 300, 520, 680]
-                            .some(z => Math.abs(buildingZ - z) < 22)
-                    ) {
-                        continue;
-                    }
-
-                    const building = this.createBox(
-                        `district${districtIndex}Building${row}_${col}`,
-                        { width, height, depth },
-                        new BABYLON.Vector3(buildingX, height / 2, buildingZ),
-                        buildingMat
-                    );
-
-                    building.checkCollisions = true;
-
-                    if (seed % 3 === 0) {
-                        this.createBox(
-                            `districtRoof${districtIndex}_${row}_${col}`,
-                            { width: width + 0.8, height: 0.6, depth: depth + 0.8 },
-                            new BABYLON.Vector3(buildingX, height + 0.3, buildingZ),
-                            this.materials.dark
-                        );
-                    }
-                }
-            }
-
-            this.addLandmark(district.name, district.x, district.z);
-        });
-    }
-
-    buildAdditionalLandmarks() {
-        const park = BABYLON.MeshBuilder.CreateGround(
-            "kwameNkrumahPark",
-            { width: 90, height: 75 },
-            this.scene
-        );
-        park.position.set(-250, 0.015, -300);
-        park.material = this.materials.grass;
-
-        this.addLandmark("Kwame Nkrumah Memorial Park", -250, -300);
-    }
-
-    buildAccraMall() {
-        const x = -80;
-        const z = 180;
-        const mall = this.createBox(
-            "accraMallMain",
-            { width: 140, height: 24, depth: 90 },
-            new BABYLON.Vector3(x, 12, z),
-            this.materials.concrete
-        );
-        mall.checkCollisions = true;
-        this.addLandmark("Accra Mall", x, z);
-    }
-
-    buildSocialPubsAndNightlife() {
-        const x = 120;
-        const z = -60;
-        const pub = this.createBox(
-            "accraVibesPub",
-            { width: 55, height: 18, depth: 40 },
-            new BABYLON.Vector3(x, 9, z),
-            this.materials.dark
-        );
-        pub.checkCollisions = true;
-        this.addLandmark("Accra Vibes Pub & Lounge", x, z);
-    }
-
+    // ---- Labadi Beach: uses the sea already in the game (z 203 to 332) instead of a second ocean ----
     buildLabadiBeachAndSwimming() {
-        const x = 250;
-        const beachZ = -280;
-        const waterZ = -420;
-
-        const beach = BABYLON.MeshBuilder.CreateGround(
-            "labadiBeachSand",
-            { width: 400, height: 80 },
-            this.scene
-        );
-        beach.position.set(x, 0.015, beachZ);
-        beach.material = this.materials.sand;
-
-        const ocean = BABYLON.MeshBuilder.CreateGround(
-            "labadiOcean",
-            { width: 400, height: 240 },
-            this.scene
-        );
-        ocean.position.set(x, 0.025, waterZ);
-        ocean.material = this.materials.water;
-
-        this.waterZones.push({
-            center: new BABYLON.Vector3(x, 0, waterZ),
-            halfWidth: 200,
-            halfDepth: 120
-        });
-
-        this.addLandmark("Labadi Beach", x, beachZ);
+      this.waterZones.push({ minX: -278, maxX: 278, minZ: 203.5, maxZ: 332 });
+      const wall = this.box(600, 6, 2, 0, 3, 335, "#000000", true); wall.isVisible = false;      // keeps swimmers inside the sea
+      for (let i = 0; i < 28; i++) { const b = BABYLON.MeshBuilder.CreateSphere("buoy", { diameter: .9, segments: 4 }, this.scene); b.position.set(-270 + i * 20, .3, 330); b.material = this.mat(i % 2 ? "#ff7a1a" : "#ffffff"); b.isPickable = false; }
+      [-120, -90, 44, 80, 120].forEach((x, i) => {                                          // beach umbrellas and loungers
+        this.box(.12, 3, .12, x, 1.5, 190, "#dddddd");
+        const u = BABYLON.MeshBuilder.CreateCylinder("umb", { diameterTop: .2, diameterBottom: 4, height: 1, tessellation: 8 }, this.scene);
+        u.position.set(x, 3.3, 190); u.material = this.mat(["#c8102e", "#fcd116", "#006b3f"][i % 3]); u.isPickable = false;
+        this.box(.9, .25, 2, x + 1.6, .2, 191, "#f3e8c8");
+      });
+      const LX = -62;   // lifeguard tower, well clear of Independence Square (x -32 to 32)
+      this.box(2.6, .25, 2.6, LX, 3.2, 196, "#ffffff"); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(c => this.box(.2, 3.2, .2, LX + c[0], 1.6, 196 + c[1], "#c8102e"));   // lifeguard tower
+      this.box(.1, 1.4, .1, LX, 4.2, 196, "#cccccc"); this.box(1, .6, .05, LX + .5, 4.6, 196, "#c8102e");
+      window.ACCRA_WATER = { contains: p => this.checkSwimming(p) };
+      this.landmarks.push({ name: "Labadi Beach Swimming Zone", pos: new BABYLON.Vector3(0, 0, 190) });
+    }
+    checkSwimming(p) {
+      for (const z of this.waterZones) if (p.x > z.minX && p.x < z.maxX && p.z > z.minZ && p.z < z.maxZ) return true;
+      return false;
     }
 
-    checkSwimming(position) {
-        return this.waterZones.some(zone => (
-            Math.abs(position.x - zone.center.x) <= zone.halfWidth &&
-            Math.abs(position.z - zone.center.z) <= zone.halfDepth
-        ));
-    }
-
+    // ---- Independence Square with the Black Star Gate, on the beach front south of the city ----
     buildIndependenceSquareComplex() {
-        const x = 0;
-        const z = -300;
-        this.createBox(
-            "independenceSquarePlatform",
-            { width: 100, height: 1, depth: 75 },
-            new BABYLON.Vector3(x, 0.5, z),
-            this.materials.concrete
-        );
-        this.addLandmark("Independence Square", x, z);
+      const Z = 186;
+      this.box(64, .12, 30, 0, .08, Z, "#d3ccbb");                                               // paved square
+      for (let i = 0; i < 3; i++) this.box(40 - i * 4, .5 + i * .5, 3, 0, .35 + i * .25, Z - 11 + i * 1.5, "#bdb5a2");   // ceremonial steps
+      [-9, 9].forEach(x => this.box(4, 15, 4, x, 7.5, Z, "#2b2b2b", true));                    // gate pillars
+      this.box(22, 4, 5, 0, 17, Z, "#2b2b2b", true);                                            // gate beam
+      this.box(22.4, .5, 5.4, 0, 19.2, Z, "#c9a54a");
+      this.sign("INDEPENDENCE SQUARE", 0, 17, Z - 2.6, 18, 2.6, "#111111", "#fcd116");
+      const pos = [0, 0, 0], idx = [];                                                          // black star on top
+      for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 1.1 : 2.8; pos.push(Math.cos(a) * r, Math.sin(a) * r, 0); }
+      for (let i = 1; i <= 10; i++) idx.push(0, i, i === 10 ? 1 : i + 1);
+      const nrm = []; BABYLON.VertexData.ComputeNormals(pos, idx, nrm);
+      const star = new BABYLON.Mesh("blackstar", this.scene), vd = new BABYLON.VertexData(); vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(star);
+      star.material = this.mat("#0a0a0a", { backFaceCulling: false, twoSidedLighting: true }); star.position.set(0, 22.4, Z); star.isPickable = false;
+      this.box(2.4, 1, 2.4, 0, .6, Z + 6, "#8a8a8a"); const fl = BABYLON.MeshBuilder.CreateCylinder("flame", { diameterTop: 0, diameterBottom: 1.2, height: 2, tessellation: 6 }, this.scene);
+      fl.position.set(0, 2.1, Z + 6); fl.isPickable = false; fl.material = this.mat("#ff9a1a", { emissiveColor: new BABYLON.Color3(1, .55, .1), disableLighting: true }); // eternal flame
+      for (let i = 0; i < 5; i++) { const x = -24 + i * 12; this.box(.2, 9, .2, x, 4.5, Z - 13, "#cccccc"); [["#c8102e", 8.4], ["#fcd116", 7.8], ["#006b3f", 7.2]].forEach(f => this.box(2.2, .6, .05, x + 1.2, f[1], Z - 13, f[0])); }   // Ghana flags
+      this.landmarks.push({ name: "Independence Square", pos: new BABYLON.Vector3(0, 0, Z) });
     }
 
-    buildAccraSportsStadium() {
-        const x = 180;
-        const z = -200;
-
-        const stadium = BABYLON.MeshBuilder.CreateCylinder(
-            "accraStadiumStructure",
-            { diameterTop: 180, diameterBottom: 200, height: 24, tessellation: 48, cap: BABYLON.Mesh.NO_CAP },
-            this.scene
-        );
-        stadium.scaling.z = 1.2;
-        stadium.position.set(x, 12, z);
-        stadium.material = this.materials.concrete;
-        stadium.checkCollisions = true;
-
-        const field = BABYLON.MeshBuilder.CreateGround(
-            "accraStadiumPitch",
-            { width: 105, height: 155 },
-            this.scene
-        );
-        field.position.set(x, 0.3, z);
-        field.material = this.materials.grass;
-
-        const centerCircle = BABYLON.MeshBuilder.CreateTorus(
-            "pitchCenterCircle",
-            { diameter: 22, thickness: 0.3 },
-            this.scene
-        );
-        centerCircle.position.set(x, 0.4, z);
-        centerCircle.material = this.materials.dark;
-
-        this.addLandmark("Accra Sports Stadium", x, z);
-    }
-}
-
-window.AccraLocations = AccraLocations;
-window.ACCRA_MODULES = window.ACCRA_MODULES || {};
-window.ACCRA_MODULES.locations = 1;
+    // ---- OLD blocks, switched off by default (the new enterable mall, pub and stadium replace them) ----
+    buildAccraMall() { const m = BABYLON.MeshBuilder.CreateBox("accraMallOld", { width: 140, height: 24, depth: 90 }, this.scene); m.position.set(-80, 12, 180); }
+    buildSocialPubsAndNightlife() { const m = BABYLON.MeshBuilder.CreateBox("accraVibesPubOld", { width: 55, height: 18, depth: 40 }, this.scene); m.position.set(120, 9, -60); }
+    buildAccraSportsStadium() { const s = BABYLON.MeshBuilder.CreateCylinder("accraStadiumOld", { diameter: 160, height: 28 }, this.scene); s.scaling.z = 220 / 160; s.position.set(180, 14, -200); }
+  }
+  AccraLocations.VERSION = 6;
+  window.AccraLocations = AccraLocations;
+  (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).locations = 1;
+})();
