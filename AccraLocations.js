@@ -1,5 +1,3 @@
-import * as BABYLON from "@babylonjs/core";
-
 export class AccraLocations {
     constructor(scene) {
         this.scene = scene;
