@@ -14,9 +14,9 @@ class AccraLocations {
 
     createMaterials() {
         const make = (name, color, emissive = "#000000", alpha = 1) => {
-            const mat = new BABYLON_REF.StandardMaterial(name, this.scene);
-            mat.diffuseColor = BABYLON_REF.Color3.FromHexString(color);
-            mat.emissiveColor = BABYLON_REF.Color3.FromHexString(emissive);
+            const mat = new BABYLON.StandardMaterial(name, this.scene);
+            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
+            mat.emissiveColor = BABYLON.Color3.FromHexString(emissive);
             mat.alpha = alpha;
             if (alpha < 1) {
                 mat.backFaceCulling = false;
@@ -45,7 +45,7 @@ class AccraLocations {
     }
 
     createBox(name, size, position, material) {
-        const mesh = BABYLON_REF.MeshBuilder.CreateBox(
+        const mesh = BABYLON.MeshBuilder.CreateBox(
             name,
             size,
             this.scene
@@ -58,7 +58,7 @@ class AccraLocations {
     addLandmark(name, x, z) {
         this.landmarks.push({
             name,
-            pos: new BABYLON_REF.Vector3(x, 0, z)
+            pos: new BABYLON.Vector3(x, 0, z)
         });
     }
 
@@ -81,7 +81,7 @@ class AccraLocations {
     }
 
     buildExpandedTerrain() {
-        const terrain = BABYLON_REF.MeshBuilder.CreateGround(
+        const terrain = BABYLON.MeshBuilder.CreateGround(
             "expandedAccraTerrain",
             { width: 1800, height: 1600 },
             this.scene
@@ -110,7 +110,7 @@ class AccraLocations {
             this.createBox(
                 `accraEastWestRoad${index}`,
                 { width: 1500, height: 0.18, depth: road.width },
-                new BABYLON_REF.Vector3(0, -0.04, road.z),
+                new BABYLON.Vector3(0, -0.04, road.z),
                 roadMat
             );
 
@@ -118,7 +118,7 @@ class AccraLocations {
                 this.createBox(
                     `accraRoadDash${index}_${x}`,
                     { width: 18, height: 0.035, depth: 0.35 },
-                    new BABYLON_REF.Vector3(x, 0.06, road.z),
+                    new BABYLON.Vector3(x, 0.06, road.z),
                     lineMat
                 );
             }
@@ -138,7 +138,7 @@ class AccraLocations {
             this.createBox(
                 `accraNorthSouthRoad${index}`,
                 { width: road.width, height: 0.18, depth: 1400 },
-                new BABYLON_REF.Vector3(road.x, -0.03, 0),
+                new BABYLON.Vector3(road.x, -0.03, 0),
                 roadMat
             );
 
@@ -146,7 +146,7 @@ class AccraLocations {
                 this.createBox(
                     `accraVerticalDash${index}_${z}`,
                     { width: 0.35, height: 0.035, depth: 18 },
-                    new BABYLON_REF.Vector3(road.x, 0.065, z),
+                    new BABYLON.Vector3(road.x, 0.065, z),
                     lineMat
                 );
             }
@@ -155,7 +155,7 @@ class AccraLocations {
         this.createBox(
             "accraCentralConnector",
             { width: 1000, height: 0.18, depth: 14 },
-            new BABYLON_REF.Vector3(0, -0.015, 190),
+            new BABYLON.Vector3(0, -0.015, 190),
             roadMat
         );
 
@@ -187,12 +187,12 @@ class AccraLocations {
         };
 
         districts.forEach((district, districtIndex) => {
-            const buildingMat = new BABYLON_REF.StandardMaterial(
+            const buildingMat = new BABYLON.StandardMaterial(
                 `districtMaterial${districtIndex}`,
                 this.scene
             );
 
-            buildingMat.diffuseColor = BABYLON_REF.Color3.FromHexString(colors[district.type]);
+            buildingMat.diffuseColor = BABYLON.Color3.FromHexString(colors[district.type]);
 
             const isDense = district.type === "dense";
             const isLuxury = district.type === "luxury";
@@ -204,50 +204,50 @@ class AccraLocations {
                 for (let col = 0; col < 5; col++) {
                     const seed = districtIndex * 17 + row * 7 + col * 3;
 
-                    let width = 17 + (seed % 9);
-                    let depth = 15 + ((seed * 2) % 8);
+                    let width = 14 + (seed % 6);
+                    let depth = 14 + ((seed * 2) % 6);
                     let height = 8 + ((seed * 5) % 12);
 
                     if (isDense) {
-                        width = 13 + (seed % 5);
-                        depth = 13 + ((seed * 2) % 5);
-                        height = 6 + (seed % 7);
+                        width = 11 + (seed % 4);
+                        depth = 11 + ((seed * 2) % 4);
+                        height = 6 + (seed % 5);
                     }
 
                     if (isLuxury) {
-                        width = 24 + (seed % 8);
-                        depth = 22 + (seed % 7);
+                        width = 20 + (seed % 6);
+                        depth = 18 + (seed % 6);
                         height = 8 + (seed % 8);
                     }
 
                     if (isModern) {
-                        width = 20 + (seed % 8);
-                        depth = 18 + (seed % 7);
-                        height = 20 + (seed % 30);
+                        width = 16 + (seed % 6);
+                        depth = 16 + (seed % 6);
+                        height = 18 + (seed % 20);
                     }
 
                     if (isIndustrial) {
-                        width = 30 + (seed % 10);
-                        depth = 26 + (seed % 8);
-                        height = 9 + (seed % 7);
+                        width = 24 + (seed % 8);
+                        depth = 22 + (seed % 6);
+                        height = 9 + (seed % 6);
                     }
 
                     if (isMarket) {
-                        width = 12 + (seed % 6);
-                        depth = 12 + ((seed * 2) % 6);
-                        height = 5 + (seed % 6);
+                        width = 10 + (seed % 5);
+                        depth = 10 + ((seed * 2) % 5);
+                        height = 5 + (seed % 5);
                     }
 
-                    const spacingX = isDense || isMarket ? 23 : 36;
-                    const spacingZ = isDense || isMarket ? 22 : 35;
+                    const spacingX = 28;
+                    const spacingZ = 28;
 
                     const buildingX = district.x + (col - 2) * spacingX;
                     const buildingZ = district.z + (row - 1.5) * spacingZ;
 
                     if (
-                        Math.abs(buildingX) < 18 ||
+                        Math.abs(buildingX) < 22 ||
                         [-650, -570, -380, -150, 80, 300, 520, 680]
-                            .some(z => Math.abs(buildingZ - z) < 17)
+                            .some(z => Math.abs(buildingZ - z) < 22)
                     ) {
                         continue;
                     }
@@ -255,7 +255,7 @@ class AccraLocations {
                     const building = this.createBox(
                         `district${districtIndex}Building${row}_${col}`,
                         { width, height, depth },
-                        new BABYLON_REF.Vector3(buildingX, height / 2, buildingZ),
+                        new BABYLON.Vector3(buildingX, height / 2, buildingZ),
                         buildingMat
                     );
 
@@ -264,8 +264,8 @@ class AccraLocations {
                     if (seed % 3 === 0) {
                         this.createBox(
                             `districtRoof${districtIndex}_${row}_${col}`,
-                            { width: width + 1, height: 0.7, depth: depth + 1 },
-                            new BABYLON_REF.Vector3(buildingX, height + 0.35, buildingZ),
+                            { width: width + 0.8, height: 0.6, depth: depth + 0.8 },
+                            new BABYLON.Vector3(buildingX, height + 0.3, buildingZ),
                             this.materials.dark
                         );
                     }
@@ -277,7 +277,7 @@ class AccraLocations {
     }
 
     buildAdditionalLandmarks() {
-        const park = BABYLON_REF.MeshBuilder.CreateGround(
+        const park = BABYLON.MeshBuilder.CreateGround(
             "kwameNkrumahPark",
             { width: 90, height: 75 },
             this.scene
@@ -294,7 +294,7 @@ class AccraLocations {
         const mall = this.createBox(
             "accraMallMain",
             { width: 140, height: 24, depth: 90 },
-            new BABYLON_REF.Vector3(x, 12, z),
+            new BABYLON.Vector3(x, 12, z),
             this.materials.concrete
         );
         mall.checkCollisions = true;
@@ -307,7 +307,7 @@ class AccraLocations {
         const pub = this.createBox(
             "accraVibesPub",
             { width: 55, height: 18, depth: 40 },
-            new BABYLON_REF.Vector3(x, 9, z),
+            new BABYLON.Vector3(x, 9, z),
             this.materials.dark
         );
         pub.checkCollisions = true;
@@ -319,7 +319,7 @@ class AccraLocations {
         const beachZ = -280;
         const waterZ = -420;
 
-        const beach = BABYLON_REF.MeshBuilder.CreateGround(
+        const beach = BABYLON.MeshBuilder.CreateGround(
             "labadiBeachSand",
             { width: 400, height: 80 },
             this.scene
@@ -327,7 +327,7 @@ class AccraLocations {
         beach.position.set(x, 0.015, beachZ);
         beach.material = this.materials.sand;
 
-        const ocean = BABYLON_REF.MeshBuilder.CreateGround(
+        const ocean = BABYLON.MeshBuilder.CreateGround(
             "labadiOcean",
             { width: 400, height: 240 },
             this.scene
@@ -336,7 +336,7 @@ class AccraLocations {
         ocean.material = this.materials.water;
 
         this.waterZones.push({
-            center: new BABYLON_REF.Vector3(x, 0, waterZ),
+            center: new BABYLON.Vector3(x, 0, waterZ),
             halfWidth: 200,
             halfDepth: 120
         });
@@ -357,7 +357,7 @@ class AccraLocations {
         this.createBox(
             "independenceSquarePlatform",
             { width: 100, height: 1, depth: 75 },
-            new BABYLON_REF.Vector3(x, 0.5, z),
+            new BABYLON.Vector3(x, 0.5, z),
             this.materials.concrete
         );
         this.addLandmark("Independence Square", x, z);
@@ -367,9 +367,9 @@ class AccraLocations {
         const x = 180;
         const z = -200;
 
-        const stadium = BABYLON_REF.MeshBuilder.CreateCylinder(
+        const stadium = BABYLON.MeshBuilder.CreateCylinder(
             "accraStadiumStructure",
-            { diameterTop: 180, diameterBottom: 200, height: 24, tessellation: 48, cap: BABYLON_REF.Mesh.NO_CAP },
+            { diameterTop: 180, diameterBottom: 200, height: 24, tessellation: 48, cap: BABYLON.Mesh.NO_CAP },
             this.scene
         );
         stadium.scaling.z = 1.2;
@@ -377,7 +377,7 @@ class AccraLocations {
         stadium.material = this.materials.concrete;
         stadium.checkCollisions = true;
 
-        const field = BABYLON_REF.MeshBuilder.CreateGround(
+        const field = BABYLON.MeshBuilder.CreateGround(
             "accraStadiumPitch",
             { width: 105, height: 155 },
             this.scene
@@ -385,7 +385,7 @@ class AccraLocations {
         field.position.set(x, 0.3, z);
         field.material = this.materials.grass;
 
-        const centerCircle = BABYLON_REF.MeshBuilder.CreateTorus(
+        const centerCircle = BABYLON.MeshBuilder.CreateTorus(
             "pitchCenterCircle",
             { diameter: 22, thickness: 0.3 },
             this.scene
@@ -397,9 +397,6 @@ class AccraLocations {
     }
 }
 
-// Attach to window safely for global script execution
-if (typeof window !== 'undefined') {
-    window.AccraLocations = AccraLocations;
-    window.ACCRA_MODULES = window.ACCRA_MODULES || {};
-    window.ACCRA_MODULES.locations = 1;
-}
+window.AccraLocations = AccraLocations;
+window.ACCRA_MODULES = window.ACCRA_MODULES || {};
+window.ACCRA_MODULES.locations = 1;
