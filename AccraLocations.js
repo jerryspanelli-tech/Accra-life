@@ -1,4 +1,4 @@
-import * as BABYLON from "@babylonjs/core";
+Import * as BABYLON from "@babylonjs/core";
 
 export class AccraLocations {
     constructor(scene) {
@@ -814,18 +814,20 @@ export class AccraLocations {
             this.materials.white
         );
 
-// Center circle.
-const centerCircle = BABYLON.MeshBuilder.CreateTorus(
-  "pitchCenterCircle",
-  { diameter: 22, thickness: 0.3 },
-  this.scene
-);
+        // Center circle.
+        const centerCircle = BABYLON.MeshBuilder.CreateTorus(
+            "pitchCenterCircle",
+            { diameter: 22, thickness: 0.3 },
+            this.scene
+        );
 
-centerCircle.position.set(x, 0.4, z);
-centerCircle.material = this.materialManager;
+        centerCircle.position.set(x, 0.4, z);
+        centerCircle.material = this.materials.dark;
 
-this.addLandmark("Accra Sports Stadium");
+        this.addLandmark("Accra Sports Stadium", x, z);
+    }
+}
+
 window.AccraLocations = AccraLocations;
 window.ACCRA_MODULES = window.ACCRA_MODULES || {};
 window.ACCRA_MODULES.locations = 1;
-})();
