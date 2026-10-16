@@ -49,11 +49,15 @@
       A(V.door.x, V.door.z, 2.6, () => hasPass() ? "\uD83E\uDD42 VIP pass active" : "\uD83D\uDC8E VIP pass", () => {
         const left = Math.max(0, Math.ceil(((st.vip || 0) - st.play) / 60));
         show(ttl("\uD83D\uDC8E VIP Lounge") + "<small>" + (hasPass() ? "Your pass lasts " + left + " more minutes." : "Members only. A pass lasts 60 minutes of play.") + "</small>" +
-          '<button data-p="1" style="' + BS + '">Buy VIP pass \u00B7 ' + Z(150) + "</button>" + CLOSE, d => {
-          if (d.x) return hide(); if (cash() < 150) return note("Not enough cash. The pass costs " + Z(150));
-          pay(150, "VIP pass"); st.vip = st.play + HOUR; L.save(); note("Welcome to the VIP lounge!"); hide();
+          (hasPass() ? '<button data-in="1" style="' + BS + ';background:#c9a54a;color:#17191c;font-weight:800">\uD83E\uDD42 Enter the VIP lounge</button>' : "") +
+          '<button data-p="1" style="' + BS + '">' + (hasPass() ? "Extend pass" : "Buy VIP pass") + " \u00B7 " + Z(150) + "</button>" + CLOSE, d => {
+          if (d.x) return hide();
+          if (d.in) { hide(); L.tp(V.in.x, V.in.z - 2.8); note("Welcome to the VIP lounge"); return; }           // always works while the pass is active
+          if (cash() < 150) return note("Not enough cash. The pass costs " + Z(150));
+          pay(150, "VIP pass"); st.vip = Math.max(st.vip || 0, st.play) + HOUR; L.save(); note("VIP pass active for 60 minutes"); hide();
         });
       });
+      A(V.in.x, V.in.z + 3.4, 2.6, "\uD83D\uDEAA Leave VIP", () => L.tp(V.door.x, V.door.z - 1.2));
       const seatsV = [[-10.5, 16.9, Math.PI], [-15.9, 13.6, Math.PI / 2], [-5.1, 13.6, -Math.PI / 2]];
       seatsV.forEach(s => A(PL.ox + s[0], PL.oz + 23 + s[1], 1.9, "\uD83D\uDECB\uFE0F VIP seat", () => sit(PL.ox + s[0], PL.oz + 23 + s[1], s[2], .5, 1), () => hasPass()));
       A(V.in.x, V.in.z, 2.6, "\uD83C\uDF7E Bottle service", () => menu("VIP bottle service", [["Premium", [["Champagne, bottle", 250, { m: 38, d: 2.6 }], ["Cognac, bottle", 320, { m: 40, d: 3.4 }], ["Sparkling water", 20, { m: 4 }]]]]), () => hasPass());

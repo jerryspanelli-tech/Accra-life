@@ -107,7 +107,7 @@
   mart:()=>{const L=window.ACCRA_LIFE;if(!L)return '<div class="cd">Groceries are not ready yet. Reload the game.</div>';return '<div class="cd"><small>Groceries delivered straight to your fridge (10% fee). Cash: GH₵'+S.money.toLocaleString()+'</small></div>'+Object.keys(L.food).map(k=>'<div class="cd tx"><span>'+L.food[k][0]+'<br><small>GH₵'+Math.ceil(L.food[k][1]*1.1)+' · in fridge '+(L.stock()[k]||0)+'</small></span><button class="bt" data-buy="'+k+'">Buy</button></div>').join('')+'<div class="cd"><small>Furniture, appliances and clothes are sold at Accra Mall.</small></div>'},
   jam:()=>'<div class="cd"><small>Generated music, not licensed songs. You can add real tracks later.</small></div>'+Object.keys(STN).map(k=>'<div class="cd tx"><span>'+STN[k].n+'<br><small>'+STN[k].bpm+' BPM</small></span><button class="bt" data-st="'+k+'">'+(AU.key===k?'■ Stop':'▶ Play')+'</button></div>').join('')+'<div class="cd"><small>Volume</small><input type="range" min="0" max="100" value="'+Math.round(AU.vol*100)+'" data-vol="1"></div>',
   bet:()=>betScreen(),date:()=>dateScreen(),
-  set:()=>'<div class="cd tx"><span>Shadows</span><button class="bt" data-do="shd">'+(sun.shadowEnabled?'On':'Off')+'</button></div><div class="cd"><small>Progress (cash, savings, alerts) saves on this device.</small></div><div class="cd"><b>Build 5</b><br><small>'+['upgrade','life','pub','crime','fx','locations'].map(k=>k+' '+((window.ACCRA_MODULES||{})[k]?'✔':'✘')).join(' · ')+'</small></div>'};
+  set:()=>'<div class="cd tx"><span>Shadows</span><button class="bt" data-do="shd">'+(sun.shadowEnabled?'On':'Off')+'</button></div><div class="cd tx"><span>Hide far-away buildings<br><small>Turn off if anything looks missing</small></span><button class="bt" data-do="cull">'+((window.ACCRA_CULL||{on:true}).on?'On':'Off')+'</button></div><div class="cd"><small>Progress (cash, savings, alerts) saves on this device.</small></div><div class="cd"><b>Build 5</b><br><small>'+['upgrade','life','pub','crime','fx','locations'].map(k=>k+' '+((window.ACCRA_MODULES||{})[k]?'✔':'✘')).join(' · ')+'</small></div>'};
  
  // ---------- AccraBet: play-money betting on made-up matches ----------
  const rng=seed=>{let s=seed>>>0;return()=>((s=(s*1664525+1013904223)>>>0)/4294967296)};
@@ -185,6 +185,7 @@
   else if(d.do==='shot'){BABYLON.Tools.CreateScreenshot(engine,cam,{precision:.6},data=>{shots.unshift(data);shots.length=Math.min(shots.length,4);if(tab==='cam'||tab==='vyba')render();toast('Photo saved to your phone')})}
   else if(d.do==='clr'){AL=[];saveAl();badges()}
   else if(d.do==='shd')sun.shadowEnabled=!sun.shadowEnabled;
+  else if(d.do==='cull'){window.ACCRA_CULL=window.ACCRA_CULL||{on:true};window.ACCRA_CULL.on=!window.ACCRA_CULL.on}
   render()});
  badges();render();
 })();

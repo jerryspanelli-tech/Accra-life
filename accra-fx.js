@@ -53,21 +53,31 @@
         const C = window.ACCRA_CRIME; if (snd === "punch" && C && C.nearestCop && C.nearestCop(player.position) < 20 && Math.random() < .3) C.report("assault"); }
     });
 
-    // ---------- sector culling: hide meshes that are far away, a few hundred per frame ----------
+    // ---------- sector culling: hide meshes far from the PLAYER. Centre = camT (never the old camera target) ----------
+    window.ACCRA_CULL = window.ACCRA_CULL || { on: true };
     const RADIUS = 170, SKIP = /^(ground|road|sea|beach|cloud|cl$|bc$|mallbeam|dr$|player|ct$)/;
-    let idx = 0;
-    scene.onBeforeRenderObservable.add(() => {
+    let idx = 0, lcx = 1e9, lcz = 1e9, wasIn = false;
+    const centre = () => (typeof camT !== "undefined" && camT ? camT.position : player.position);
+    function cullSome(count, off) {
       const ms = scene.meshes, n = ms.length; if (!n) return;
-      const t = cam.target, r2 = RADIUS * RADIUS; let done = 0;
-      while (done < 450) {
+      const t = centre(), r2 = RADIUS * RADIUS;
+      for (let k = 0; k < count; k++) {
         if (idx >= n) idx = 0;
-        const m = ms[idx++]; done++;
+        const m = ms[idx++];
         if (!m || m.isDisposed() || SKIP.test(m.name) || m === player || m.parent === car || m.parent === player) continue;
-        const bi = m.getBoundingInfo && m.getBoundingInfo(); if (bi && bi.boundingSphere.radiusWorld > 45) continue;       // big meshes (ground, roads, sea) always draw
-        const p = m.getAbsolutePosition(), far = (p.x - t.x) * (p.x - t.x) + (p.z - t.z) * (p.z - t.z) > r2;
+        if (!off) { const bi = m.getBoundingInfo && m.getBoundingInfo(); if (bi && bi.boundingSphere.radiusWorld > 45) continue; }
+        const p = m.getAbsolutePosition(), far = !off && ((p.x - t.x) * (p.x - t.x) + (p.z - t.z) * (p.z - t.z) > r2);
         if (far && m.isVisible && !m._cullHid) { m._cullHid = 1; m.isVisible = false; }
         else if (!far && m._cullHid) { m._cullHid = 0; m.isVisible = true; }
       }
+    }
+    scene.onBeforeRenderObservable.add(() => {
+      const t = centre(), jump = Math.hypot(t.x - lcx, t.z - lcz) > 60, nowIn = !!L.inside, entering = nowIn !== wasIn;
+      lcx = t.x; lcz = t.z; wasIn = nowIn;
+      const C = window.ACCRA_CULL;
+      if (!C.on) { if (!C._restored) { cullSome(scene.meshes.length, true); C._restored = true; } return; }
+      C._restored = false;
+      cullSome(jump || entering ? scene.meshes.length : 450, false);   // a teleport or entering a home refreshes every mesh at once
     });
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).fx = 1;
     console.log("Accra fx ready");

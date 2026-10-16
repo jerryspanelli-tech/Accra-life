@@ -180,16 +180,21 @@
       const hsh = [...u.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7) >>> 0;
       const WALLS = ["#efe7d2", "#e8d9c0", "#dfe6ea", "#f0dcd0", "#e2e8d8"], FLOORS = ["#d8c9ad", "#cdb89a", "#c9d0d4", "#d6c2b4", "#bfc8b0"];
       const walls = [], wall = (x, z, w, d) => { const m = box(w, H, d, sx + x, H / 2, sz + z, WALLS[hsh % 5]); walls.push(m); return m; };
-      wall(0, D / 2, W, .3); wall(-W / 2, 0, .3, D); wall(W / 2, 0, .3, D);
+      wall(0, D / 2, W, .3); wall(-W / 2, 0, .3, D);
+      const lux4 = u.tier === 4, gz = D / 4;
+      if (lux4) { wall(W / 2, (-D / 2 + gz - 1.3) / 2, .3, gz - 1.3 + D / 2); wall(W / 2, (gz + 1.3 + D / 2) / 2, .3, D / 2 - gz - 1.3); }   // east wall with a 2.6 m door to the garage
+      else wall(W / 2, 0, .3, D);
       const hw = W / 2 - .9; wall(-(W / 2 + .9) / 2, -D / 2, hw, .3); wall((W / 2 + .9) / 2, -D / 2, hw, .3);   // 1.8 m doorway
       T.p.forEach(p => wall(p[0] * s, p[1] * s, p[2] === .3 ? .3 : p[2] * s, p[3] === .3 ? .3 : p[3] * s));
       const floorM = box(W, .05, D, sx, .03, sz, FLOORS[(hsh >> 3) % 5], false);
       const F = T.f.map(f => [f[0] * s, f[1] * s, f[2], f[3], f[4]]);
-      F.forEach(f => { K.collider(f[2], sx + f[0], sz + f[1], f[3], f[4] || 1); item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1); });
+      const nds = F.map(f => { K.collider(f[2], sx + f[0], sz + f[1], f[3], f[4] || 1); return item(f[2], sx + f[0], sz + f[1], f[3], false, f[4] || 1); });
       const here = p => Math.abs(p.x - sx) < W / 2 && Math.abs(p.z - sz) < D / 2;
       reg(F, sx, sz, here);
       points.push({ x: sx, z: sz - D / 2 + 1.1, r: 1.9, t: "\uD83D\uDEAA Leave", ok: () => !busy && !seated && here(player.position), f: leave });
       const bb = (built[u.id] = { sx, sz, D, W, walls, floorM });
+      try { if (window.ACCRA_DECOR) window.ACCRA_DECOR.apply({ u, T: { p: T.p }, s, sx, sz, W, D, H, hsh, walls, floorM, nds, F, tier: u.tier || 1, box, mat, item, ITEMS: K.ITEMS }); }
+      catch (e) { note("\u26A0 Interior style: " + e.message); }
       if (LUX.includes(u.tpl)) {
         if (st.deco[u.id]) applyDeco(bb, st.deco[u.id]);
         points.push({ x: sx + W / 2 - 1.3, z: sz - D / 2 + 2.2, r: 2.3, t: "\uD83C\uDFA8 Interior designer", ok: () => !busy && !seated && here(player.position), f: () => designer(u, bb) });
@@ -237,7 +242,8 @@
     function mkUnit(id, name, dist, tpl, sz) {   // price follows the real floor area, the district and the quality
       const T = TPL[tpl], area = Math.round(T.W * T.D * sz * sz), q = tpl === "mansion" ? 1.4 : tpl === "house" ? 1.1 : 1;
       const buy = Math.round(area * RATE[dist] * q / 50) * 50, rent = Math.max(20, Math.round(buy / 160 / 5) * 5);
-      return { id, name, tpl, dist, sz, area, buy, rent };
+      const tier = tpl === "mansion" ? 4 : buy < 6000 ? 1 : buy < 22000 ? 2 : 3;   // 1 Basic, 2 Comfort, 3 Premium, 4 Luxury
+      return { id, name, tpl, dist, sz, area, buy, rent, tier };
     }
     const TU = [["studio", "Studio apartment", "studio", 80, 8000], ["1bed", "1-bedroom apartment", "apt1", 140, 14000], ["2bed", "2-bedroom apartment", "house", 220, 24000], ["pent", "Penthouse", "mansion", 500, 80000]];
     ["Airport Heights", "Kotoka Residence", "Skyline Towers", "Runway View"].forEach((nm, n) => {
@@ -260,13 +266,14 @@
     const bcast = () => { const n = NET(); if (n) n.emit("propMarket", mk); };
     { const n = NET(); if (n) { n.on("propMarket", d => { Object.keys(d || {}).forEach(id => { if (d[id] && d[id].owner !== ME) mk[id] = d[id]; }); saveMk(); }); n.on("adminGift", d => { earn(d.amount, "Gift from admin"); note("Admin sent you GH\u00A2" + d.amount); }); } }
     const priceOf = u => { const m = mk[u.id]; return { buy: m && m.mode === "sale" ? m.price : u.buy, rent: m && m.mode === "rent" ? m.price : u.rent }; };
+    const TIERN = ["", "Basic finish", "Comfort finish", "Premium finish", "Luxury finish"];
     function unitRow(u, atDoor) {
       const k = st.keys[u.id], m = mk[u.id], p = priceOf(u), sale = m && m.mode === "sale", rl = m && m.mode === "rent";
       let status = "Available now", col = "#c9d1d9";
       if (k && k.t === "own") { status = "You own this" + (m ? " \u00B7 listed for " + (sale ? "sale" : "rent") + " GH\u00A2" + m.price.toLocaleString() : ""); col = "#69f0ae"; }
       else if (k) { status = "You rent this"; col = "#69f0ae"; }
       else if (m) { status = (m.owner === ME ? "Your listing" : "Listed by " + m.owner) + " \u00B7 " + (sale ? "FOR SALE" : "FOR RENT"); col = "#ffd24a"; }
-      return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + "</b><br><small>" + u.dist + " \u00B7 " + u.area + " m\u00B2 \u00B7 " + BEDS[u.tpl] + " \u00B7 rent GH\u00A2" + p.rent + "/wk \u00B7 buy GH\u00A2" + p.buy.toLocaleString() + '</small><br><small style="color:' + col + '">' + status + "</small><br>" +
+      return '<div style="margin:6px 0;padding:7px;background:rgba(255,255,255,.1);border-radius:10px"><b>' + u.name + '</b> <span style="color:#c9a54a">' + "\u2605".repeat(u.tier || 1) + "</span><br><small>" + TIERN[u.tier || 1] + " \u00B7 " + u.dist + " \u00B7 " + u.area + " m\u00B2 \u00B7 " + BEDS[u.tpl] + " \u00B7 rent GH\u00A2" + p.rent + "/wk \u00B7 buy GH\u00A2" + p.buy.toLocaleString() + '</small><br><small style="color:' + col + '">' + status + "</small><br>" +
         (!k && !sale ? '<button data-r="' + u.id + '" style="' + SB + '">Rent</button>' : "") + (!(k && k.t === "own") && !rl ? '<button data-b="' + u.id + '" style="' + SB + '">Buy</button>' : "") +
         (k && atDoor ? '<button data-e="' + u.id + '" style="' + SB + '">Enter</button>' : "") + "</div>";
     }
@@ -445,7 +452,7 @@
       get busy() { return busy; }, set busy(v) { busy = v; }, get seated() { return seated; }, get inside() { return inside; }, get driving() { return driving; },
       leaveHome: () => leave(), vitals: d => { Object.keys(d).forEach(k => { if (k in st) st[k] = clamp(st[k] + d[k]); }); save(); }
     };
-    ["accra-crime.js", "accra-pub.js", "accra-fx.js"].forEach(f => { const s = document.createElement("script"); s.src = f; s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
+    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js"].forEach(f => { const s = document.createElement("script"); s.src = f; s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
