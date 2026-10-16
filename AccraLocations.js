@@ -1,7 +1,7 @@
 // Safely map BABYLON_REF to either the imported module or the global window object
 const BABYLON_REF = typeof BABYLON !== 'undefined' ? BABYLON : window.BABYLON;
 
-export class AccraLocations {
+class AccraLocations {
     constructor(scene) {
         this.scene = scene;
         this.landmarks = [];
