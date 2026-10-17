@@ -14,7 +14,7 @@
   const sk=SK[l.skin%8],st=l.style%8,ts=st==1?'#1c1e21':st==5?'#f4f4f0':TP[l.top%8],pn=PN[l.pants%6],hc=HC[l.hcol%4],h=l.hair%10,ac=l.acc%6,shc=SH[l.shoe%4];
   // torso and outfit
   if(st==4){B(.8,1.15,.44,0,1.2,0,ts);B(.82,.1,.46,0,.66,0,'#c9a54a');B(.82,.1,.46,0,1.68,0,'#c9a54a')}
-  else B(.56,.78,.32,0,1.3,0,ts);
+  else P('Sphere',{diameter:1,segments:10},0,1.3,0,ts).scaling.set(.56,.78,.34);
   if(st==0){B(.74,.1,.42,0,1.02,0,'#c8102e');B(.74,.1,.42,0,.92,0,'#006b3f')}
   if(st==1)B(.1,.5,.02,0,1.3,.21,'#b5473d');
   if(st==3)B(.5,.22,.16,0,1.72,-.2,ts);
@@ -45,14 +45,14 @@
   B(.17,.035,.04,0,1.77,.255,'#7a2a2a');B(.05,.035,.04,-.09,1.79,.25,'#7a2a2a');B(.05,.035,.04,.09,1.79,.25,'#7a2a2a');   // mouth + smile
   // arms (pivot at shoulder)
   const arm=s=>{const a=piv(s*.36,1.62);
-   if(st==0||st==2||st==5||st==6){B(.15,.32,.16,0,-.16,0,st==5?'#f4f4f0':ts,a);B(.13,.4,.14,0,-.52,0,sk,a)}
-   else{B(.15,.6,.16,0,-.3,0,ts,a);B(.13,.14,.14,0,-.66,0,sk,a)}
+   if(st==0||st==2||st==5||st==6){P('Capsule',{height:.46,radius:.078,tessellation:8},0,-.2,0,st==5?'#f4f4f0':ts,a);P('Capsule',{height:.36,radius:.064,tessellation:8},0,-.56,0,sk,a)}
+   else{P('Capsule',{height:.5,radius:.08,tessellation:8},0,-.26,0,ts,a);P('Sphere',{diameter:.14,segments:6},0,-.6,0,sk,a)}
    return a};
   // legs (pivot at hip)
   const leg=s=>{const q=piv(s*.12,.88);
    if(st==2)B(.2,.62,.2,0,-.31,0,sk,q);
    else if(st==3){B(.22,.3,.24,0,-.15,0,pn,q);B(.2,.34,.2,0,-.45,0,sk,q)}
-   else B(.22,.62,.24,0,-.31,0,pn,q);
+   else P('Capsule',{height:.56,radius:.105,tessellation:8},0,-.31,0,pn,q);
    B(.24,.2,.38,0,-.78,.06,shc,q);return q};
   const al=arm(-1),ar=arm(1),ll=leg(-1),lr=leg(1);
   if(st==2)P('Cylinder',{height:.75,diameterTop:.75,diameterBottom:1.1,tessellation:8},0,.95,0,ts);

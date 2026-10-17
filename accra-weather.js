@@ -9,8 +9,8 @@
     const T = {
       sunny:  { sky: "#8fc7ec", fog: 900, sun: 1.25, sky2: .75, rain: 0 },
       cloudy: { sky: "#9aa6b0", fog: 620, sun: .95,  sky2: .7,  rain: 0 },
-      rain:   { sky: "#6b7884", fog: 380, sun: .7,   sky2: .6,  rain: 900 },
-      storm:  { sky: "#3f4a55", fog: 240, sun: .5,   sky2: .5,  rain: 1400 },
+      rain:   { sky: "#6b7884", fog: 380, sun: .7,   sky2: .6,  rain: 420 },
+      storm:  { sky: "#3f4a55", fog: 240, sun: .5,   sky2: .5,  rain: 650 },
       haze:   { sky: "#c9b48a", fog: 460, sun: .9,   sky2: .8,  rain: 0 }
     };
     const LABEL = { sunny: "Sunny", cloudy: "Cloudy", rain: "Rain", storm: "Thunderstorm", haze: "Harmattan haze" };
@@ -23,13 +23,13 @@
     // a small white dot texture so the rain particles actually draw
     const dot = new B.DynamicTexture("raindot", { width: 16, height: 16 }, scene, false);
     const dc = dot.getContext(); dc.fillStyle = "rgba(0,0,0,0)"; dc.fillRect(0, 0, 16, 16);
-    dc.fillStyle = "#e8f2ff"; dc.beginPath(); dc.arc(8, 8, 6, 0, Math.PI * 2); dc.fill(); dot.update(); dot.hasAlpha = true;
+    dc.fillStyle = "#e8f2ff"; dc.fillRect(6, 0, 4, 16); dot.update(); dot.hasAlpha = true;
     const rain = new B.ParticleSystem("rain", 1400, scene);
     rain.particleTexture = dot;
-    rain.emitter = new B.Vector3(0, 30, 0);
-    rain.minEmitBox = new B.Vector3(-40, 0, -40); rain.maxEmitBox = new B.Vector3(40, 0, 40);
-    rain.color1 = new B.Color4(.8, .88, 1, .55); rain.color2 = new B.Color4(.75, .83, .95, .4);
-    rain.minScaleX = rain.minScaleY = .5; rain.maxScaleX = rain.maxScaleY = .8;
+    rain.emitter = new B.Vector3(0, 16, 0);
+    rain.minEmitBox = new B.Vector3(-22, 0, -22); rain.maxEmitBox = new B.Vector3(22, 0, 22);
+    rain.color1 = new B.Color4(.8, .88, 1, .28); rain.color2 = new B.Color4(.75, .83, .95, .18);
+    rain.minScaleX = .18; rain.maxScaleX = .26; rain.minScaleY = 1.6; rain.maxScaleY = 2.4;
     rain.minLifeTime = .7; rain.maxLifeTime = 1.0;
     rain.direction1 = new B.Vector3(-.5, -22, -.5); rain.direction2 = new B.Vector3(.5, -26, .5);
     rain.minEmitPower = 1; rain.maxEmitPower = 2; rain.emitRate = 0; rain.updateSpeed = .02;
@@ -58,7 +58,7 @@
         // rain: particles follow the player
         rain.emitRate = lerp(a.rain, b.rain, m);
         rain.emitter.x = player.position.x; rain.emitter.z = player.position.z;
-        rain.emitter.y = 30;
+        rain.emitter.y = 16;
         // thunderstorm lightning: a short sky flash, nothing more
         if (W.now === "storm" && W.clock > W.flashAt) { W.flashAt = W.clock + 14 + Math.random() * 18; W.flash = .25; }
         if (W.flash > 0) { W.flash -= dt; const f = Math.max(0, W.flash) / .25; scene.clearColor = new B.Color4(Math.min(1, sky.r + f * .35), Math.min(1, sky.g + f * .35), Math.min(1, sky.b + f * .4), 1); }
