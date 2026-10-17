@@ -25,6 +25,7 @@
       group = r.animationGroups && r.animationGroups.length ? r.animationGroups[0] : null;
       if (group) group.stop();
       console.log("Accra model ready:", r.meshes.length, "parts");
+      if (window.ACCRA_LIFE) window.ACCRA_LIFE.api.note("Character model loaded (X Bot)");
     }
     scene.onBeforeRenderObservable.add(() => {
       if (!model) return;
@@ -38,7 +39,7 @@
         if (moving) group.start(true, 1.0); else group.stop();
       }
     });
-    start().catch(() => console.log("accra-model: X_Bot.glb not found, using the built-in figure"));
+    start().catch(() => { console.log("accra-model: X_Bot.glb not found, using the built-in figure"); if (window.ACCRA_LIFE) window.ACCRA_LIFE.api.note("X_Bot.glb not found in the repo. Upload it next to babylon.html."); });
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).model = 1;
   } catch (err) { console.error("accra-model failed:", err); }
 })();
