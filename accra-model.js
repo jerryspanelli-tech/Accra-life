@@ -13,7 +13,12 @@
     };
     async function start() {
       await loadScript("https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js");
-      const r = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "X_Bot.glb", scene);
+      // accept the file under either name: X_Bot.glb or X Bot.glb (GitHub and phones sometimes change the underscore)
+      let r = null;
+      for (const name of ["X_Bot.glb", "X Bot.glb", "X%20Bot.glb"]) {
+        try { r = await BABYLON.SceneLoader.ImportMeshAsync("", "./", name, scene); if (r && r.meshes.length) break; } catch (e) { r = null; }
+      }
+      if (!r || !r.meshes.length) throw new Error("X_Bot.glb not found");
       if (!r || !r.meshes.length) throw new Error("empty model");
       const root = r.meshes[0];
       const bb = root.getHierarchyBoundingVectors(true);
