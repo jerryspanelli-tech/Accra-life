@@ -38,7 +38,7 @@
       root.position.set(0, -.91 - bb.min.y * s, 0);
       model = r;
       group = r.animationGroups && r.animationGroups.length ? r.animationGroups[0] : null;
-      if (group) { group.start(true, 1.0); group.pause(); }   // rest in the clip's first pose, not the T-pose
+      if (group) group.start(true, .3);   // always playing: slow when still, full speed when walking
       say("Character model loaded (X Bot)");
     }
 
@@ -51,7 +51,7 @@
       const nowMoving = sp > .6 && !(window.ACCRA_AVATAR && window.ACCRA_AVATAR.pose);
       if (group && nowMoving !== moving) {
         moving = nowMoving;
-        if (moving) group.play(true); else group.pause();
+        group.speedRatio = moving ? 1.0 : .3;
       }
     });
 
