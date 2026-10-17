@@ -11,9 +11,11 @@
       const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("glTF loader script blocked")); document.head.appendChild(s);
     });
     let model = null, group = null, lx = player.position.x, lz = player.position.z, moving = false;
+    let failed = false;
+    // the old blocky figure stays hidden from the first frame, and only comes back if the model fails to load
     const hideFigure = () => {
-      if (!model) return;
-      player.getChildMeshes().forEach(m => { if (!model.meshes.includes(m)) m.isVisible = false; });
+      const keep = model ? model.meshes : [];
+      player.getChildMeshes().forEach(m => { if (!keep.includes(m)) m.isVisible = !!failed; });
     };
     // the folder that babylon.html is in, so the model is found wherever the game is hosted
     const folder = new URL("./", window.location.href).href;
@@ -39,15 +41,18 @@
       model = r;
       group = r.animationGroups && r.animationGroups.length ? r.animationGroups[0] : null;
       if (group) group.start(true, .3);   // always playing: slow when still, full speed when walking
-      say("Character model loaded (X Bot)");
+      const bones = r.skeletons && r.skeletons.length ? r.skeletons[0].bones.length : 0;
+      const clips = r.animationGroups ? r.animationGroups.length : 0;
+      const names = r.skeletons && r.skeletons.length ? r.skeletons[0].bones.slice(0, 40).map(b => b.name).filter(n => /Arm|Leg|Hips/.test(n)).length : 0;
+      say("Character model loaded: " + bones + " bones, " + clips + " animation(s), " + names + " limb bones");
     }
 
     scene.onBeforeRenderObservable.add(() => {
+      hideFigure();
       if (!model) return;
       const dt = Math.max(engine.getDeltaTime() / 1000, .001);
       const sp = Math.hypot(player.position.x - lx, player.position.z - lz) / dt;
       lx = player.position.x; lz = player.position.z;
-      hideFigure();
       const nowMoving = sp > .6 && !(window.ACCRA_AVATAR && window.ACCRA_AVATAR.pose);
       if (group && nowMoving !== moving) {
         moving = nowMoving;
@@ -55,7 +60,7 @@
       }
     });
 
-    start().catch(e => say("Character model: " + (e && e.message ? e.message : e) + ". Using the built-in figure."));
+    start().catch(e => { failed = true; hideFigure(); say("Character model: " + (e && e.message ? e.message : e) + ". Using the built-in figure."); });
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).model = 1;
   } catch (err) { console.error("accra-model failed:", err); }
 })();
