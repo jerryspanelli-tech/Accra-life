@@ -1,25 +1,35 @@
-/* accra-model.js - uses a real humanoid model (X_Bot.glb, placed in the same repo folder as babylon.html) for the player.
- * If the file is missing, the game keeps its built-in figure. The model plays its walk animation while you move.
- * The model is scaled to 1.8 m and stands on the ground. Outfit colours from the wardrobe do not apply to this model. */
+/* accra-model.js - the player uses the real humanoid model X_Bot.glb (or "X Bot.glb") from the same repo folder as babylon.html.
+ * If it can't be loaded, the game keeps its built-in figure and shows the real reason on screen.
+ * The model is scaled to 1.8 m, stands on the ground and plays its walk animation while you move. */
 (function () {
   try {
     const AV = window.ACCRA_AVATAR;
     if (!AV) { console.log("accra-model: avatar not ready"); return; }
-    const loadScript = src => new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    const say = m => { console.log(m); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note(m); };
+    const loadScript = src => new Promise((res, rej) => {
+      if (BABYLON.SceneLoader && BABYLON.SceneLoader.IsPluginForExtensionAvailable && BABYLON.SceneLoader.IsPluginForExtensionAvailable(".glb")) return res();
+      const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("glTF loader script blocked")); document.head.appendChild(s);
+    });
     let model = null, group = null, lx = player.position.x, lz = player.position.z, moving = false;
     const hideFigure = () => {
       if (!model) return;
       player.getChildMeshes().forEach(m => { if (!model.meshes.includes(m)) m.isVisible = false; });
     };
+    // the folder that babylon.html is in, so the model is found wherever the game is hosted
+    const folder = new URL("./", window.location.href).href;
+
     async function start() {
       await loadScript("https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js");
-      // accept the file under either name: X_Bot.glb or X Bot.glb (GitHub and phones sometimes change the underscore)
-      let r = null;
-      for (const name of ["X_Bot.glb", "X Bot.glb", "X%20Bot.glb"]) {
-        try { r = await BABYLON.SceneLoader.ImportMeshAsync("", "./", name, scene); if (r && r.meshes.length) break; } catch (e) { r = null; }
+      let r = null, lastErr = "";
+      for (const name of ["X_Bot.glb", "X Bot.glb"]) {
+        try {
+          const got = await BABYLON.SceneLoader.ImportMeshAsync("", folder, name, scene);
+          if (got && got.meshes && got.meshes.length) { r = got; break; }
+          lastErr = name + ": no meshes";
+        } catch (e) { lastErr = name + ": " + (e && e.message ? e.message : e); }
       }
-      if (!r || !r.meshes.length) throw new Error("X_Bot.glb not found");
-      if (!r || !r.meshes.length) throw new Error("empty model");
+      if (!r) throw new Error("model not loaded (" + lastErr + ")");
+
       const root = r.meshes[0];
       const bb = root.getHierarchyBoundingVectors(true);
       const h = bb.max.y - bb.min.y, s = 1.8 / Math.max(h, .001);
@@ -29,9 +39,9 @@
       model = r;
       group = r.animationGroups && r.animationGroups.length ? r.animationGroups[0] : null;
       if (group) group.stop();
-      console.log("Accra model ready:", r.meshes.length, "parts");
-      if (window.ACCRA_LIFE) window.ACCRA_LIFE.api.note("Character model loaded (X Bot)");
+      say("Character model loaded (X Bot)");
     }
+
     scene.onBeforeRenderObservable.add(() => {
       if (!model) return;
       const dt = Math.max(engine.getDeltaTime() / 1000, .001);
@@ -44,7 +54,8 @@
         if (moving) group.start(true, 1.0); else group.stop();
       }
     });
-    start().catch(() => { console.log("accra-model: X_Bot.glb not found, using the built-in figure"); if (window.ACCRA_LIFE) window.ACCRA_LIFE.api.note("X_Bot.glb not found in the repo. Upload it next to babylon.html."); });
+
+    start().catch(e => say("Character model: " + (e && e.message ? e.message : e) + ". Using the built-in figure."));
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).model = 1;
   } catch (err) { console.error("accra-model failed:", err); }
 })();
