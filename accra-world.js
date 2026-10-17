@@ -119,6 +119,18 @@
         P.arms.forEach(a => { const up = P.until > st.play; a.position.y += ((up ? 5 : 1.2) - a.position.y) * .12; a.checkCollisions = !up; }); });
     });
 
+    // ---------- 3. intercity buses (fast travel): the stop list and fares ----------
+    const STOPS = [["Accra", 14, -185]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
+    const FARE = { Accra: 0, Nsawam: 25, Suhum: 40, Nkawkaw: 70, Konongo: 90, Ejisu: 110, Kumasi: 130 };
+    function bus(here) {
+      const draw = () => show(ttl("\uD83D\uDE8C Intercity buses") + "<small>You are in " + here + " \u00B7 cash GH\u00A2" + cash() + "</small>" + STOPS.filter(s => s[0] !== here).map(s => '<button data-d="' + s[0] + '" style="' + BS + '">' + s[0] + " \u00B7 GH\u00A2" + Math.max(FARE[s[0]], FARE[here]) + "</button>").join("") + CLOSE, d => {
+        if (d.x) return hide();
+        if (window.ACCRA_CRIME && window.ACCRA_CRIME.wanted >= 2) return note("Police are watching the bus station.");
+        const s = STOPS.find(q => q[0] === d.d), f = Math.max(FARE[d.d], FARE[here]);
+        if (cash() < f) return note("Not enough cash for the ticket (GH\u00A2" + f + ").");
+        hide(); pay(f, "Bus to " + d.d); fade(3000, () => { tp(s[1], s[2]); L.vitals({ hu: -15, hy: -8, en: 15 }); }, () => note("Arrived in " + d.d + ". Long ride, you feel rested but hungry."));
+      }); draw();
+    }
     // ---------- 3b. Ayalolo: the shared bus between Accra and Kumasi, one bus per direction ----------
     const AYA = { line: "Ayalolo 5 \u00B7 Accra \u2194 Kumasi", fare: 35 };
     const aStops = STOPS.map(s => ({ n: s[0], x: s[1], z: s[2] }));

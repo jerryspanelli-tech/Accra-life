@@ -1,32 +1,51 @@
 // Accra Life (Babylon.js): low-poly 3D characters + online multiplayer + opt-in area location
 (function(){
- const SK=['#c68a5e','#8d5a3b','#6b4028','#4a2c1c','#a8754f','#3a2216'],HC=['#0d0d0d','#2a1a10','#5a3b22','#9a7b3c'],TP=['#9a4a42','#c9a54a','#56705a','#4d6a8a','#e8e6df','#2a2c30','#7a6a8a','#c08a5a'],PN=['#1f2a44','#111111','#5b4630','#6b6b6b','#2f5d3a','#b8a27a'];
- // outfit styles: 0 tee + trousers, 1 suit + tie, 2 dress, 3 hoodie + shorts. Hair: 0 bald, 1 fade, 2 afro, 3 dreads, 4 braids
+ const SK=['#c68a5e','#8d5a3b','#6b4028','#4a2c1c','#a8754f','#3a2216','#f1c9a5','#e0a878'],HC=['#0d0d0d','#2a1a10','#5a3b22','#9a7b3c'],TP=['#9a4a42','#c9a54a','#56705a','#4d6a8a','#e8e6df','#2a2c30','#7a6a8a','#c08a5a'],PN=['#1f2a44','#111111','#5b4630','#6b6b6b','#2f5d3a','#b8a27a'],SH=['#f0f0ec','#111111','#5a3a22','#b5182c'];window.ACCRA_LOOKDATA={SK,HC,TP,PN,SH};
+ // outfit: 0 tee+trousers, 1 suit+tie, 2 dress, 3 hoodie+shorts, 4 kaftan (batik), 5 Ghana jersey, 6 kente shirt, 7 leather jacket
+ // hair: 0 bald, 1 fade, 2 afro, 3 dreads, 4 braids, 5 cornrows, 6 locs, 7 mohawk, 8 low cut, 9 twists
+ // accessories: 0 none, 1 gold chain, 2 cap, 3 beanie, 4 sunglasses, 5 kente headwrap
  function human(l){
+  l=Object.assign({skin:1,hair:1,hcol:0,top:3,pants:0,style:0,acc:0,shoe:0},l||{});
   const root=new BABYLON.TransformNode('hu',scene);
   const g=new BABYLON.TransformNode('hg',scene);g.parent=root;g.scaling.setAll(.85);
   const P=(k,o,x,y,z,c,par)=>{const m=BABYLON.MeshBuilder['Create'+k]('hp',o,scene);if(k!=='Box')m.convertToFlatShadedMesh();m.parent=par||g;m.position.set(x,y,z);m.material=mat(c);m.checkCollisions=false;m.isPickable=false;if(typeof sg!=='undefined')sg.addShadowCaster(m);return m};
   const B=(w,h,d,x,y,z,c,par)=>P('Box',{width:w,height:h,depth:d},x,y,z,c,par);
   const piv=(x,y)=>{const t=new BABYLON.TransformNode('pv',scene);t.parent=g;t.position.set(x,y,0);return t};
-  const sk=SK[l.skin%6],st=l.style%4,ts=st==1?'#1c1e21':TP[l.top%8],pn=PN[l.pants%6],hc=HC[l.hair%4],h=l.hair%5;
-  // torso
-  B(.72,.78,.4,0,1.3,0,ts);
+  const sk=SK[l.skin%8],st=l.style%8,ts=st==1?'#1c1e21':st==5?'#f4f4f0':TP[l.top%8],pn=PN[l.pants%6],hc=HC[l.hcol%4],h=l.hair%10,ac=l.acc%6,shc=SH[l.shoe%4];
+  // torso and outfit
+  if(st==4){B(.8,1.15,.44,0,1.2,0,ts);B(.82,.1,.46,0,.66,0,'#c9a54a');B(.82,.1,.46,0,1.68,0,'#c9a54a')}
+  else B(.72,.78,.4,0,1.3,0,ts);
   if(st==0){B(.74,.1,.42,0,1.02,0,'#c8102e');B(.74,.1,.42,0,.92,0,'#006b3f')}
   if(st==1)B(.1,.5,.02,0,1.3,.21,'#b5473d');
   if(st==3)B(.5,.22,.16,0,1.72,-.2,ts);
-  // head, hair, eyes
+  if(st==5){B(.74,.14,.42,0,1.52,0,'#c8102e');B(.74,.14,.42,0,1.36,0,'#fcd116');B(.74,.14,.42,0,1.2,0,'#006b3f');B(.22,.22,.02,0,1.3,.21,'#111111')}
+  if(st==6){[[-.16,'#c8102e'],[-.02,'#fcd116'],[.12,'#006b3f']].forEach(q=>B(.1,.7,.03,q[0],1.3,.215,q[1]));B(.76,.07,.43,0,1.0,0,'#fcd116')}
+  if(st==7){B(.76,.8,.44,0,1.3,0,'#3b2a1e');B(.3,.72,.02,0,1.3,.225,'#e8e6df');[-1,1].forEach(s=>B(.08,.5,.03,s*.15,1.36,.235,'#2a1c14'))}
+  // head and hair
   const hd=P('Sphere',{diameter:.52,segments:6},0,1.9,0,sk);hd.scaling.y=1.05;
-  if(h==1||h==3||h==4){const c=P('Sphere',{diameter:.56,segments:6},0,2.03,-.02,hc);c.scaling.y=.55}
+  if(h==1||h==4){const c=P('Sphere',{diameter:.56,segments:6},0,2.03,-.02,hc);c.scaling.y=.55}
   if(h==2)P('Sphere',{diameter:.84,segments:6},0,2.02,-.04,hc);
   if(h==3)for(let i=0;i<8;i++){const a=i/8*Math.PI*2;P('Cylinder',{height:.45,diameter:.06,tessellation:5},Math.sin(a)*.26,1.78,Math.cos(a)*.26-.04,hc)}
   if(h==4)[-.18,.18].forEach(x=>P('Cylinder',{height:.7,diameter:.07,tessellation:5},x,1.62,-.22,hc));
+  if(h==5)[-.09,-.03,.03,.09].forEach(x=>B(.04,.03,.46,x,2.07,-.03,hc));
+  if(h==6){const c=P('Sphere',{diameter:.56,segments:6},0,2.03,-.02,hc);c.scaling.y=.55;for(let i=0;i<8;i++){P('Cylinder',{height:.62,diameter:.06,tessellation:5},-.2+i*.057,1.6,-.24,hc)}}
+  if(h==7)B(.08,.24,.5,0,2.1,-.02,hc);
+  if(h==8){const c=P('Sphere',{diameter:.54,segments:6},0,2.02,-.02,hc);c.scaling.y=.42}
+  if(h==9)for(let i=0;i<7;i++){const a=i/7*Math.PI*2;P('Sphere',{diameter:.17,segments:4},Math.sin(a)*.2,2.0,Math.cos(a)*.2-.02,hc)}
+  // accessories
+  if(ac==1)for(let i=0;i<5;i++)P('Sphere',{diameter:.05,segments:4},-.12+i*.06,1.62-Math.abs(i-2)*.02,.225,'#c9a54a');
+  if(ac==2){B(.54,.1,.54,0,2.1,0,'#c8102e');B(.3,.03,.22,0,2.07,.3,'#c8102e')}
+  if(ac==3){const c=P('Sphere',{diameter:.6,segments:6},0,2.05,-.02,'#c9d13a');c.scaling.y=.55}
+  if(ac==4){B(.2,.07,.03,-.11,1.93,.28,'#111111');B(.2,.07,.03,.11,1.93,.28,'#111111');B(.04,.02,.03,0,1.94,.28,'#111111')}
+  if(ac==5)B(.56,.12,.56,0,2.0,0,'#fcd116');
+  // face
   [-1,1].forEach(s=>{B(.12,.09,.06,s*.11,1.93,.245,'#ffffff');B(.06,.07,.05,s*.11,1.93,.27,'#111111');B(.13,.03,.04,s*.11,2.02,.25,hc)});
   B(.06,.08,.06,0,1.86,.27,sk);                                   // nose
   [-1,1].forEach(s=>B(.05,.1,.07,s*.265,1.9,0,sk));                // ears
   B(.17,.035,.04,0,1.77,.255,'#7a2a2a');B(.05,.035,.04,-.09,1.79,.25,'#7a2a2a');B(.05,.035,.04,.09,1.79,.25,'#7a2a2a');   // mouth + smile
   // arms (pivot at shoulder)
   const arm=s=>{const a=piv(s*.49,1.62);
-   if(st==0||st==2){B(.2,.32,.22,0,-.16,0,ts,a);B(.17,.4,.2,0,-.52,0,sk,a)}
+   if(st==0||st==2||st==5||st==6){B(.2,.32,.22,0,-.16,0,st==5?'#f4f4f0':ts,a);B(.17,.4,.2,0,-.52,0,sk,a)}
    else{B(.2,.6,.22,0,-.3,0,ts,a);B(.17,.14,.2,0,-.66,0,sk,a)}
    return a};
   // legs (pivot at hip)
@@ -34,7 +53,7 @@
    if(st==2)B(.24,.62,.26,0,-.31,0,sk,q);
    else if(st==3){B(.28,.3,.3,0,-.15,0,pn,q);B(.24,.34,.26,0,-.45,0,sk,q)}
    else B(.28,.62,.3,0,-.31,0,pn,q);
-   B(.3,.2,.42,0,-.78,.06,'#f0f0ec',q);return q};
+   B(.3,.2,.42,0,-.78,.06,shc,q);return q};
   const al=arm(-1),ar=arm(1),ll=leg(-1),lr=leg(1);
   if(st==2)P('Cylinder',{height:.75,diameterTop:.75,diameterBottom:1.1,tessellation:8},0,.95,0,ts);
   const pk=[B(.07,1,.07,0,-.95,.14,'#6b4a2e',ar),B(.6,.1,.1,0,-1.45,.14,'#9aa0a8',ar)];pk.forEach(m=>m.setEnabled(false));   // pickaxe, only shown while mining
@@ -46,7 +65,7 @@
   h.g.position.y=Math.abs(Math.sin(h.ph))*.07*k+Math.sin(performance.now()/450)*.012*(1-k)} // step bounce + idle breathing
  let look;try{look=JSON.parse(localStorage.getItem('accra-look'))}catch(e){}
  const isNew=!look;
- look=look||{skin:1,hair:1,top:3,pants:0,style:0};
+ look=Object.assign({skin:1,hair:1,hcol:0,top:3,pants:0,style:0,acc:0,shoe:0},look||{});
  let mine=null;
  function dress(){if(mine)mine.root.dispose();mine=human(look);mine.root.parent=player;mine.root.position.y=-.91;player.isVisible=false;try{localStorage.setItem('accra-look',JSON.stringify(look))}catch(e){}}
  dress();

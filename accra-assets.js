@@ -171,22 +171,42 @@
   }
 
   // ---------- TROTRO (minibus) ----------
-  function createTrotro(scene, o) {
-    o = Object.assign({ color: "#f2c230", stripe: "#c8102e", position: [0, 0, 0], rotY: 0 }, o);
-    const root = placeRoot(scene, "trotro", o);
-    box(scene, root, 2.1, 1.7, 4.6, o.color, 0, 1.25, 0);
-    box(scene, root, 2.14, 0.25, 4.64, o.stripe, 0, 0.8, 0);
-    [-1, 0, 1].forEach(i => [-1.06, 1.06].forEach(sx =>
-      box(scene, root, 0.06, 0.6, 1.0, "#2b3f55", sx, 1.6, i * 1.3)));
-    box(scene, root, 1.7, 0.7, 0.06, "#2b3f55", 0, 1.55, 2.31);   // windscreen
-    box(scene, root, 1.9, 0.2, 0.2, "#444444", 0, 0.45, 2.3);     // bumper
-    [-1, 1].forEach(sz => [-1.0, 1.0].forEach(sx => {
-      const wh = B.MeshBuilder.CreateCylinder("w", { diameter: 0.8, height: 0.3, tessellation: 10 }, scene);
-      flat(wh); wh.material = getMat(scene, "#1a1a1a"); wh.parent = root;
-      wh.rotation.z = Math.PI / 2; wh.position.set(sx * 1.05, 0.4, sz * 1.5);
-    }));
+  // ---------- CARS: six different body shapes, shaped with real side profiles ----------
+  // Each car is built along +X (front at +X). Use rotY to turn it. Shape: profile points (x, height) extruded across the width.
+  const CAR = {
+    sedan:   { w: 1.9, body: [[-2.2,.45],[2.2,.45],[2.25,.85],[1.5,.95],[.8,1.5],[-.7,1.5],[-1.5,.95],[-2.2,.9]], glass: [[-1.45,.95],[-.7,1.44],[.8,1.44],[1.45,.97]], wheelX: 1.45, paint: "#2c6e8c" },
+    hatch:   { w: 1.8, body: [[-2.0,.45],[2.0,.45],[2.0,.9],[1.3,1.0],[.5,1.45],[-.9,1.45],[-1.9,.95],[-2.0,.9]], glass: [[-1.85,.98],[-.9,1.42],[.5,1.42],[1.25,1.0]], wheelX: 1.3, paint: "#e6e9ec" },
+    suv:     { w: 2.0, body: [[-2.3,.5],[2.3,.5],[2.3,1.0],[2.15,1.85],[-1.3,1.85],[-2.3,1.2]], glass: [[-2.1,1.2],[-1.2,1.78],[2.0,1.78],[2.05,1.2]], wheelX: 1.5, paint: "#3a3d44" },
+    sports:  { w: 1.9, body: [[-2.2,.35],[2.3,.35],[2.3,.7],[1.2,.8],[.2,1.12],[-.8,1.12],[-1.8,.82],[-2.2,.75]], glass: [[-.9,.85],[.2,1.08],[.9,1.08],[1.25,.85]], wheelX: 1.4, paint: "#c0392b" },
+    pickup:  { w: 2.0, body: [[-2.3,.5],[2.3,.5],[2.3,.95],[.25,.95],[.15,1.45],[-1.0,1.45],[-1.1,.95],[-2.3,.95]], glass: [[-.95,1.0],[-.85,1.4],[.1,1.4],[.2,1.0]], wheelX: 1.5, paint: "#f2c230" },
+    trotro:  { w: 2.1, body: [[-2.4,.45],[2.4,.45],[2.4,1.2],[2.1,1.9],[-2.4,1.9]], glass: [[-2.3,1.25],[-2.3,1.82],[1.9,1.82],[2.05,1.25]], wheelX: 1.5, paint: "#f2c230" }
+  };
+  function createCar(scene, type, o) {
+    o = Object.assign({ position: [0, 0, 0], rotY: 0, color: null, stripe: null }, o || {});
+    const d = CAR[type] || CAR.sedan, root = new BABYLON.TransformNode("car_" + type, scene);
+    root.position = new BABYLON.Vector3(...o.position); root.rotation.y = o.rotY;
+    const paint = mat(o.color || d.paint), glass = mat("#1d2a35"), tyre = mat("#161616"), hub = mat("#c9ccd1");
+    const pts = d.body.map(p => new BABYLON.Vector3(p[0], p[1], 0));
+    const path = [new BABYLON.Vector3(0, 0, -d.w / 2), new BABYLON.Vector3(0, 0, d.w / 2)];
+    const body = BABYLON.MeshBuilder.ExtrudeShape("cbody", { shape: pts, path, cap: BABYLON.Mesh.CAP_ALL, closeShape: true }, scene);
+    body.material = paint; body.parent = root; body.isPickable = false; body.checkCollisions = true; if (typeof sg !== "undefined") sg.addShadowCaster(body);
+    const gl = BABYLON.MeshBuilder.ExtrudeShape("cglass", { shape: d.glass.map(p => new BABYLON.Vector3(p[0], p[1], 0)), path: [new BABYLON.Vector3(0, 0, -d.w / 2 - .02), new BABYLON.Vector3(0, 0, d.w / 2 + .02)], cap: BABYLON.Mesh.CAP_ALL, closeShape: true }, scene);
+    gl.material = glass; gl.parent = root; gl.isPickable = false;
+    if (type === "trotro") {                                                         // minibus: a row of side windows and a striped band
+      const st = mat(o.stripe || "#c8102e");
+      const band = BABYLON.MeshBuilder.CreateBox("band", { width: 4.7, height: .22, depth: d.w + .04 }, scene); band.position.y = .75; band.material = st; band.parent = root; band.isPickable = false;
+      for (let i = -1; i <= 1; i++) { const w = BABYLON.MeshBuilder.CreateBox("sw", { width: .9, height: .6, depth: d.w + .06 }, scene); w.position.set(i * 1.25 - .2, 1.45, 0); w.material = glass; w.parent = root; w.isPickable = false; }
+    }
+    if (type === "pickup") { const bed = BABYLON.MeshBuilder.CreateBox("bed", { width: 1.9, height: .12, depth: d.w - .1 }, scene); bed.position.set(-1.25, .95, 0); bed.material = paint; bed.parent = root; bed.isPickable = false; }
+    const lights = [[d.body[1][0] - .05, .72, d.w / 2 - .25], [d.body[1][0] - .05, .72, -d.w / 2 + .25]];   // headlights
+    lights.forEach(l => { const h = BABYLON.MeshBuilder.CreateBox("hl", { width: .12, height: .18, depth: .3 }, scene); h.position.set(...l); h.material = mat("#fff6d6"); h.parent = root; h.isPickable = false; });
+    [[-d.wheelX, .36, d.w / 2 + .03], [d.wheelX, .36, d.w / 2 + .03], [-d.wheelX, .36, -d.w / 2 - .03], [d.wheelX, .36, -d.w / 2 - .03]].forEach(p => {
+      const t = BABYLON.MeshBuilder.CreateCylinder("wh", { diameter: .72, height: .3, tessellation: 12 }, scene); t.rotation.x = Math.PI / 2; t.position.set(...p); t.material = tyre; t.parent = root; t.isPickable = false;
+      const hb = BABYLON.MeshBuilder.CreateCylinder("hb", { diameter: .3, height: .32, tessellation: 8 }, scene); hb.rotation.x = Math.PI / 2; hb.position.set(...p); hb.material = hub; hb.parent = root; hb.isPickable = false;
+    });
     return root;
   }
+  function createTrotro(scene, o) { return createCar(scene, "trotro", o); }
 
   // ---------- TREES ----------
   function createTree(scene, o) {
@@ -211,5 +231,5 @@
     return root;
   }
 
-  global.AccraAssets = { createCharacter, createHouse, createKiosk, createTrotro, createTree };
+  global.AccraAssets = { createCharacter, createHouse, createKiosk, createTrotro, createTree, createCar };
 })(window);

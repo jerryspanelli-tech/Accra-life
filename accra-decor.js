@@ -108,8 +108,8 @@
       { const gz = D / 4, gx = W / 2 + 3.5, WL = (w, dd, x, z) => GS(w, H, dd, x, H / 2, z, "#2b2f36");
         WL(7, .3, gx, gz + 3.5); WL(7, .3, gx, gz - 3.5); WL(.3, 7, W / 2 + 7, gz);
         G(7, .05, 7, gx, .03, gz, "#3b3b40"); G(.2, 2.7, 6, W / 2 + 6.8, 1.35, gz, "#6a6f78"); for (let i = 0; i < 4; i++) G(.12, .05, 5.6, gx - 2.4 + i * 1.6, H - .08, gz, "#fff6d6");
-        const car = (x, z, col) => { G(4.2, .7, 1.9, x, .65, z, col); G(2.2, .55, 1.6, x - .1, 1.28, z, "#1a2530"); G(1.9, .06, 1.55, x - .1, 1.58, z, col); [-1, 1].forEach(a => [-1.4, 1.4].forEach(b => G(.6, .6, .25, x + b, .32, z + a * .95, "#111"))); G(.1, .15, 1.4, x + 2.1, .75, z, "#fff7c0"); };
-        car(gx - .4, gz - 1.7, "#14213d"); car(gx - .4, gz + 1.7, "#2b2b2b"); }
+        const cr = (x, z, t, c) => { const n = window.AccraAssets.createCar(scene, t, { color: c }); n.position.set(sx + x, 0, sz + z); n.rotation.y = -Math.PI / 2; };
+        cr(gx - .4, gz - 1.7, "sedan", "#14213d"); cr(gx - .4, gz + 1.7, "suv", "#2b2b2b"); }
       const sa = spot(1.2, [[0, D / 2 - 1.3]]); if (sa) { G(.7, .25, .7, sa[0], .12, sa[1], "#2a2a2f"); G(.4, 1.4, .3, sa[0], .95, sa[1], "#e8e6df"); G(.3, .3, .3, sa[0], 1.8, sa[1], "#e8e6df"); }
     }
   }

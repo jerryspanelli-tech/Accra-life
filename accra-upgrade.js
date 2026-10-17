@@ -42,10 +42,16 @@
     const hide = () => { pan.classList.remove("min"); pan.style.display = "none"; onPan = null; lock = false; ptOpen = false; };
 
     // ---- clothes: wardrobe (owned only), fitting room (buy), first join (free) ----
-    const OPT = [["Outfit", "style", 4], ["Hair", "hair", 5], ["Top colour", "top", 8], ["Skin", "skin", 6], ["Trousers", "pants", 6]];
-    const PR = { style: [0, 150, 100, 80], hair: 15, top: 20, pants: 20, skin: 0 };
+    const STYLE_N = ["Tee and trousers", "Suit and tie", "Dress", "Hoodie and shorts", "Batik kaftan (Accra)", "Ghana jersey", "Kente shirt (Accra)", "Leather jacket"];
+    const HAIR_N = ["Bald", "Fade", "Afro", "Dreads", "Braids", "Cornrows", "Locs", "Mohawk", "Low cut", "Twists"];
+    const SKIN_N = ["Deep brown", "Brown", "Dark brown", "Espresso", "Caramel", "Ebony", "Light brown", "Honey"];
+    const ACC_N = ["None", "Gold chain", "Cap", "Beanie", "Sunglasses", "Kente headwrap (Accra)"];
+    const SHOE_N = ["White sneakers", "Black shoes", "Brown leather", "Red sneakers"];
+    const HCOL_N = ["Black", "Dark brown", "Brown", "Honey"];
+    const OPT = [["Outfit", "style", 8, STYLE_N], ["Hairstyle", "hair", 10, HAIR_N], ["Hair colour", "hcol", 4, HCOL_N], ["Top colour", "top", 8], ["Trousers", "pants", 6], ["Skin tone", "skin", 8, SKIN_N], ["Accessory", "acc", 6, ACC_N], ["Shoes", "shoe", 4, SHOE_N]];
+    const PR = { style: [0, 150, 100, 80, 120, 140, 160, 130], hair: 15, hcol: 10, top: 20, pants: 20, skin: 0, acc: 25, shoe: 30 };
     const price = (k, v) => Array.isArray(PR[k]) ? PR[k][v] : PR[k];
-    const owned = ls("accra-owned", { style: [0], hair: [1], top: [3], pants: [0], skin: [0, 1, 2, 3, 4, 5] });
+    const owned = Object.assign({ style: [0], hair: [1], hcol: [0], top: [3], pants: [0], skin: [0, 1, 2, 3, 4, 5, 6, 7], acc: [0], shoe: [0] }, ls("accra-owned", {}));
     const has = (k, v) => owned[k].includes(v);
     const markOwned = L => { OPT.forEach(o => { if (!has(o[1], L[o[1]])) owned[o[1]].push(L[o[1]]); }); sv("accra-owned", owned); };
     function styler(mode) {
@@ -65,14 +71,15 @@
       };
       const draw = () => {
         const c = cost(), shop = mode === "shop";
-        show(ttl(shop ? "Fitting room" : mode === "first" ? "Create your character" : "Your wardrobe") +
-          OPT.map((o, i) => '<button data-i="' + i + '" style="' + BS + '">' + o[0] + " \u00B7 " + (L[o[1]] + 1) + " / " + o[2] +
+        show(ttl(shop ? "Fitting room" : mode === "first" ? "Create your character" : mode === "edit" ? "Edit look" : "Your wardrobe") +
+          OPT.map((o, i) => '<button data-i="' + i + '" style="' + BS + '">' + o[0] + " \u00B7 " + (o[3] ? o[3][L[o[1]]] : (L[o[1]] + 1) + " / " + o[2]) +
             (shop ? (has(o[1], L[o[1]]) ? " \u00B7 owned" : " \u00B7 GH\u00A2" + price(o[1], L[o[1]])) : "") + "</button>").join("") +
           (shop ? '<button data-buy="1" style="' + GOLD + '">' + (c ? "Buy & wear \u00B7 GH\u00A2" + c : "Wear") + '</button><button data-x="1" style="' + BS + ';text-align:center">Cancel</button>'
                 : '<button data-done="1" style="' + GOLD + '">Done</button>'), click);
       };
       draw(); lock = mode === "first";
     }
+    window.ACCRA_STYLER = styler;
     if (window.ACCRA_AVATAR) { markOwned(window.ACCRA_AVATAR.look); if (window.ACCRA_AVATAR.isNew) setTimeout(() => styler("first"), 1000); }
 
     function tag(t, x, y, z, tw) {
