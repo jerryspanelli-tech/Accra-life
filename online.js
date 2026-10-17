@@ -14,7 +14,7 @@
   const sk=SK[l.skin%8],st=l.style%8,ts=st==1?'#1c1e21':st==5?'#f4f4f0':TP[l.top%8],pn=PN[l.pants%6],hc=HC[l.hcol%4],h=l.hair%10,ac=l.acc%6,shc=SH[l.shoe%4];
   // torso and outfit
   if(st==4){B(.8,1.15,.44,0,1.2,0,ts);B(.82,.1,.46,0,.66,0,'#c9a54a');B(.82,.1,.46,0,1.68,0,'#c9a54a')}
-  else P('Sphere',{diameter:1,segments:10},0,1.3,0,ts).scaling.set(.56,.78,.34);
+  else B(.56,.78,.32,0,1.3,0,ts);
   if(st==0){B(.74,.1,.42,0,1.02,0,'#c8102e');B(.74,.1,.42,0,.92,0,'#006b3f')}
   if(st==1)B(.1,.5,.02,0,1.3,.21,'#b5473d');
   if(st==3)B(.5,.22,.16,0,1.72,-.2,ts);

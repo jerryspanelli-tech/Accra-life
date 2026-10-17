@@ -452,7 +452,7 @@
       get busy() { return busy; }, set busy(v) { busy = v; }, get seated() { return seated; }, get inside() { return inside; }, get driving() { return driving; },
       homes: () => Object.keys(st.keys).filter(id => UNITS[id]).map(id => ({ name: UNITS[id].name, own: st.keys[id].t === "own", rent: UNITS[id].rent, mins: Math.max(0, Math.ceil((st.keys[id].due - st.play) / 60)) })), leaveHome: () => leave(), vitals: d => { Object.keys(d).forEach(k => { if (k in st) st[k] = clamp(st[k] + d[k]); }); save(); }
     };
-    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js", "accra-world.js", "accra-weather.js", "accra-profile.js", "accra-carskin.js"].forEach(f => { const s = document.createElement("script"); s.src = f + "?v=" + (window.ACCRA_BUILD || 0); s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
+    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js", "accra-world.js", "accra-weather.js", "accra-profile.js", "accra-carskin.js", "accra-model.js"].forEach(f => { const s = document.createElement("script"); s.src = f + "?v=" + (window.ACCRA_BUILD || 0); s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
