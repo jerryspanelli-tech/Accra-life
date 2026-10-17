@@ -39,14 +39,14 @@
  const XS=[-110,-35,35,110],D={};DG.forEach((row,i)=>row.forEach((n,j)=>{(D[n]=D[n]||[]).push([XS[i],XS[j]])}));
  const DEST=Object.entries(D).map(([n,a])=>({n,x:a.reduce((s,p)=>s+p[0],0)/a.length,z:a.reduce((s,p)=>s+p[1],0)/a.length}));
  DEST.push({n:'Your villa',x:VX,z:VZ});DEST.push({n:'Accra Mall',x:35,z:22});DEST.push({n:'Sports Stadium',x:110,z:35});DEST.push({n:'Police Department',x:35,z:82});DEST.push({n:'Accra Hospital',x:110,z:82});DEST.push({n:'Accra Motors (cars)',x:35,z:-52});DEST.push({n:'Independence Square',x:0,z:170});DEST.push({n:'Accra Stone Quarry',x:190,z:-150});DEST.push({n:'Accra Gold Works',x:196,z:120});DEST.push({n:'Labadi Beach (swimming)',x:-90,z:188});(window.ACCRA_LANDMARKS||[]).forEach(d=>DEST.push(d));
- const pos=()=>(driving?car:player).position,dist=d=>Math.round(Math.hypot(d.x-pos().x,d.z-pos().z));
+ const ALLD=()=>DEST.concat(window.ACCRA_DEST_EXTRA||[]),fd=n=>n>=1000?(n/1000).toFixed(1)+' km':n+' m',pos=()=>(driving?car:player).position,dist=d=>Math.round(Math.hypot(d.x-pos().x,d.z-pos().z));
  let nav=null,job=null;
  const bm=BABYLON.MeshBuilder.CreateCylinder('bc',{height:70,diameter:3},scene);bm.material=Object.assign(new BABYLON.StandardMaterial('bcm',scene),{emissiveColor:C3('#c9a54a'),disableLighting:true,alpha:.35,fogEnabled:false});bm.isPickable=false;bm.setEnabled(false);
  function setNav(d){nav=d;bm.setEnabled(!!d);if(d)bm.position.set(d.x,35,d.z);navp.style.display=d?'block':'none'}
  let clk=0;
  scene.onBeforeRenderObservable.add(()=>{
   if(++clk%30===0&&ph.classList.contains('on')){$('ptm2').textContent=new Date().toTimeString().slice(0,5);$('psg').textContent=bars()}
-  if(!nav)return;const m=dist(nav);navp.textContent='➤ '+nav.n+' · '+m+' m';
+  if(!nav)return;const m=dist(nav);navp.textContent='➤ '+nav.n+' · '+fd(m);
   if(m<20){const n=nav;setNav(null);
    if(job&&job.stage===0&&n===job.a){job.stage=1;setNav(job.b);toast('Package picked up. Deliver to '+job.b.n)}
    else if(job&&job.stage===1&&n===job.b){const p=job.pay;add(p,'Delivery to '+job.b.n);toast('Delivered! +GH₵'+p);window.ACCRA_NOTIFY('Delivery to '+job.b.n+' complete: +GH₵'+p,'jobs');job=null}
@@ -99,7 +99,7 @@
  const V2={
   bank:()=>'<div class="cd" style="text-align:center"><small>Balance</small><div class="big">GH₵ '+S.money.toLocaleString()+'</div><small>MoMo savings: GH₵ '+S.sav+'</small></div><button class="bt" data-do="dep">Save GH₵20</button><button class="bt" data-do="wd">Withdraw GH₵20</button><h3>Recent</h3>'+txs(),
   cedi:()=>{const L=window.ACCRA_LIFE,r=L&&L.rents?L.rents():[];return '<div class="cd" style="text-align:center"><small>Wallet</small><div class="big">GH₵ '+S.money.toLocaleString()+'</div><small>Savings: GH₵ '+S.sav+'</small></div><button class="bt" data-app="bank">Savings &amp; withdrawals</button>'+(r.length?'<h3>Rent due</h3>'+r.map(x=>'<div class="cd tx"><span>'+esc(x.name)+'</span><b>GH₵'+x.rent+' in '+x.mins+' min</b></div>').join(''):'')+'<h3>Transactions</h3>'+txs()+'<div class="cd"><small>Sending money to other players needs the online server (not built yet).</small></div>'},
-  map:()=>(nav?'<div class="cd tx"><span>➤ '+esc(nav.n)+' · '+dist(nav)+' m</span><button class="bt" data-do="stop">Stop</button></div>':'')+DEST.slice().sort((a,b)=>dist(a)-dist(b)).map(d=>'<div class="cd tx"><span>'+esc(d.n)+'<br><small>'+dist(d)+' m away</small></span><button class="bt" data-go="'+DEST.indexOf(d)+'">Go</button></div>').join(''),
+  map:()=>(nav?'<div class="cd tx"><span>➤ '+esc(nav.n)+' · '+dist(nav)+' m</span><button class="bt" data-do="stop">Stop</button></div>':'')+ALLD().slice().sort((a,b)=>dist(a)-dist(b)).map(d=>'<div class="cd tx"><span>'+esc(d.n)+'<br><small>'+fd(dist(d))+' away</small></span><button class="bt" data-go="'+ALLD().indexOf(d)+'">Go</button></div>').join(''),
   jobs:()=>'<div class="cd"><b>🏍️ Delivery rider</b><br><small>Pick up a package in one district and deliver it to another. Pay depends on distance.</small><br>'+(job?'<small>Active: '+(job.stage?'deliver to '+esc(job.b.n):'pick up at '+esc(job.a.n))+' · GH₵'+job.pay+'</small><br><button class="bt" data-do="cancel">Cancel</button>':'<button class="bt" data-do="deliv">Start delivery</button>')+'</div>',
   cam:()=>'<button class="bt" data-do="shot">📸 Take photo</button>'+shots.map(x=>'<img src="'+x+'">').join('')+(shots.length?'<small>Press and hold a photo to save it.</small>':'<div class="cd">Photos of the game world appear here.</div>'),
   vyba:()=>'<div class="cd"><b>VYBA</b><br><small>Your photos from the Camera app. Sharing with other players needs the online server (not built yet).</small></div><button class="bt" data-do="shot">📸 Take photo</button>'+shots.map(x=>'<img src="'+x+'">').join(''),
@@ -173,7 +173,7 @@
    if(Date.now()<(m.cd||0))toast('Give them a little time before the next date.');
    else if(S.money<v[1])toast('Not enough cash for this date.');
    else{add(-v[1],'Date: '+v[0]);if(api)api.vitals(Object.assign({},v[2]));m.aff=Math.min(100,m.aff+12);m.cd=Date.now()+90000;m.last='That was a lovely time at '+v[0]+'!';saveDt();toast('Great date! Mood up.');if(m.aff>=100)window.ACCRA_NOTIFY&&window.ACCRA_NOTIFY('You are now in a relationship with '+PROF[chat][0]+' ❤️','date')}}
-  else if(d.go!==undefined){setNav(DEST[+d.go]);toast('Route set. Follow the gold beam.');open(false);return}
+  else if(d.go!==undefined){setNav(ALLD()[+d.go]);toast('Route set. Follow the gold beam.');open(false);return}
   else if(d.buy){const r=window.ACCRA_LIFE?window.ACCRA_LIFE.buy(d.buy,true):'Not ready';toast(r==='ok'?'Added to your fridge':r)}
   else if(d.st){if(AU.key===d.st)stopSt();else playSt(d.st)}
   else if(d.do==='dep'){if(S.money<20)toast('Not enough cash.');else{S.money-=20;S.sav+=20;S.tx.unshift({d:-20,w:'MoMo savings'});save();paint()}}
