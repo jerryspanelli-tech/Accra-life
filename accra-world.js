@@ -39,6 +39,7 @@
     function roadTask(z0, list) {
       const surf = [], bars = [];
       for (let z = z0; z > z0 - CH; z -= 64) {
+        if (z - 32 > -150) continue;                               // nothing north of the city avenue is skipped; the city core keeps its own roads
         const zm = z - 32, x = hx(zm), th = -Math.atan(slope(zm)), cs = Math.cos(th), sn = Math.sin(th);
         const add = (arr, w, h, d, ox, y, oz, m) => { const b = mk(w, h, d, x + cs * ox + sn * oz, y, zm - sn * ox + cs * oz, m, th); arr.push(b); };
         add(surf, 20, .08, 66, 0, .05, 0, asphalt); add(surf, .25, .09, 66, -9.7, .06, 0, white); add(surf, .25, .09, 66, 9.7, .06, 0, white);
@@ -56,7 +57,7 @@
     }
     function propsTask(cx, cz, list) {       // trees, fields and farmhouses beside the road
       const r = rng(hash(cx, cz, 7)), farm = cz * CH < -7000 && cz * CH > -17000;
-      for (let i = 0; i < (farm ? 7 : 16); i++) { const z = cz * CH + r() * CH, side = r() < .5 ? -1 : 1, x = hx(z) + side * (16 + r() * 70);
+      for (let i = 0; i < (farm ? 7 : 16); i++) { const z = cz * CH + r() * CH; if (z > -160) continue; const side = r() < .5 ? -1 : 1, x = hx(z) + side * (16 + r() * 70);
         if (TOWNS.some(t => Math.hypot(x - t.x, z - t.z) < t.R + 30)) continue;
         const t = treeSrc.createInstance("tr"); t.position.set(x, 0, z); t.scaling.setAll(.8 + r() * .8); t.isPickable = false; list.push(t); }
       if (farm) for (let i = 0; i < 3; i++) { const z = cz * CH + 30 + r() * (CH - 60), side = r() < .5 ? -1 : 1, x = hx(z) + side * (50 + r() * 60);
@@ -91,7 +92,7 @@
     }
 
     const chunks = new Map(), queue = [];
-    const near = (cx, cz) => { const zc = cz * CH + CH / 2; if (zc > -300) return false; if (zc < END - 400) return false; const hxc = hx(zc);
+    const near = (cx, cz) => { const zc = cz * CH + CH / 2; if (zc > -120) return false; if (zc < END - 400) return false; const hxc = hx(zc);
       return Math.abs(cx * CH + CH / 2 - hxc) < CH + 120 || TOWNS.some(t => Math.abs(cx * CH + CH / 2 - t.x) < t.R + CH && Math.abs(zc - t.z) < t.R + CH); };
     function request(cx, cz) {
       const k = cx + "," + cz; if (chunks.has(k)) return; const list = []; chunks.set(k, list);
@@ -118,27 +119,6 @@
         P.arms.forEach(a => { const up = P.until > st.play; a.position.y += ((up ? 5 : 1.2) - a.position.y) * .12; a.checkCollisions = !up; }); });
     });
 
-    // ---------- 2b. highway joins the Accra road grid at Accra North ----------
-    try {
-      const jn = [];
-      jn.push(mk(40, .08, 8, hx(-165) + 18, .07, -165, asphalt));                                // east-west link to the city avenue
-      jn.push(mk(22, .9, .3, hx(-165), 6.5, -159, "#f2f2f2"));                                  // junction gantry bar
-      const jsn = B.MeshBuilder.CreatePlane("jsn", { width: 14, height: 2.2 }, scene); jsn.position.set(hx(-165), 7.2, -158.8); jsn.rotation.y = Math.PI; jsn.material = gantryTex("ACCRA NORTH \u2014 KUMASI 250 km"); jsn.isPickable = false;
-      jn.push(jsn);
-    } catch (e) { console.warn("junction: " + e.message); }
-
-    // ---------- 3. intercity buses (fast travel) ----------
-    const STOPS = [["Accra", 14, -185]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
-    const FARE = { Accra: 0, Nsawam: 25, Suhum: 40, Nkawkaw: 70, Konongo: 90, Ejisu: 110, Kumasi: 130 };
-    mk(8, 3, 4, 14, 1.5, -185, "#f2c230"); mk(8.6, .25, 4.6, 14, 3.1, -185, "#17191c");
-    function bus(here) {
-      const draw = () => show(ttl("\uD83D\uDE8C Intercity buses") + "<small>You are in " + here + " \u00B7 cash GH\u00A2" + cash() + "</small>" + STOPS.filter(s => s[0] !== here).map((s, i) => '<button data-d="' + s[0] + '" style="' + BS + '">' + s[0] + " \u00B7 GH\u00A2" + Math.max(FARE[s[0]], FARE[here]) + "</button>").join("") + CLOSE, d => {
-        if (d.x) return hide();
-        if (window.ACCRA_CRIME && window.ACCRA_CRIME.wanted >= 2) return note("Police are watching the bus station.");
-        const s = STOPS.find(q => q[0] === d.d), f = Math.max(FARE[d.d], FARE[here]); if (cash() < f) return note("Not enough cash for the ticket (GH\u00A2" + f + ").");
-        hide(); pay(f, "Bus to " + d.d); fade(3000, () => { tp(s[1], s[2]); L.vitals({ hu: -15, hy: -8, en: 15 }); }, () => note("Arrived in " + d.d + ". Long ride, you feel rested but hungry."));
-      }); draw();
-    }
     // ---------- 3b. Ayalolo: the shared bus between Accra and Kumasi, one bus per direction ----------
     const AYA = { line: "Ayalolo 5 \u00B7 Accra \u2194 Kumasi", fare: 35 };
     const aStops = STOPS.map(s => ({ n: s[0], x: s[1], z: s[2] }));
