@@ -452,19 +452,25 @@
       get busy() { return busy; }, set busy(v) { busy = v; }, get seated() { return seated; }, get inside() { return inside; }, get driving() { return driving; },
       leaveHome: () => leave(), vitals: d => { Object.keys(d).forEach(k => { if (k in st) st[k] = clamp(st[k] + d[k]); }); save(); }
     };
-    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js", "accra-world.js"].forEach(f => { const s = document.createElement("script"); s.src = f + "?v=" + (window.ACCRA_BUILD || 0); s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
+    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js", "accra-world.js", "accra-weather.js"].forEach(f => { const s = document.createElement("script"); s.src = f + "?v=" + (window.ACCRA_BUILD || 0); s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
-    const TELE = { mall: [35, 12], stadium: [110, 12], hospital: [110, 80], police: [35, 80], villa: [VX, VZ + 12], airport: [-60, -66] };
+    const TELE = { mall: [35, 12], stadium: [110, 12], hospital: [110, 80], police: [35, 80], villa: [VX, VZ + 12], airport: [-60, -66],
+      "Labadi beach": [-90, 190], "Amoamah estate": [110, -30], "Car dealership": [35, -35], "Gold works": [196, 120], "Stone quarry": [190, -150],
+      "Accra North (highway)": [-60, -180], "Nsawam": [-120, -3470], "Suhum": [-120, -6470], "Nkawkaw": [-120, -12970], "Konongo": [-120, -18970], "Ejisu": [-760, -22470], "Kumasi (Kejetia)": [-820, -24470] };
     function adminPanel() {
       show(ttl("\uD83D\uDD27 Admin") + "<small>Play-money and test tools</small>" + [500, 5000, 50000, 500000].map(a => '<button data-m="' + a + '" style="' + BS + '">Give myself GH\u00A2' + a.toLocaleString() + "</button>").join("") +
         '<button data-p="1" style="' + BS + '">Give play money to an online player\u2026</button><button data-v="1" style="' + BS + '">Refill my health, energy, hunger</button>' +
-        Object.keys(TELE).map(t => '<button data-t="' + t + '" style="' + BS + '">Go to: ' + t + "</button>").join("") + CLOSE, d => {
+        '<div style="margin:6px 0 2px;color:#c9a54a;font-weight:700">Weather</div>' + ["sunny", "cloudy", "rain", "storm", "haze"].map(w => '<button data-w="' + w + '" style="' + BS + '">Set: ' + w + "</button>").join("") + '<button data-w="auto" style="' + BS + '">Back to automatic weather</button>' +
+        '<div style="margin:6px 0 2px;color:#c9a54a;font-weight:700">Transit and places</div>' + Object.keys(TELE).map(t => '<button data-t="' + t + '" style="' + BS + '">Go to: ' + t + "</button>").join("") +
+        '<div style="margin:6px 0 2px;color:#c9a54a;font-weight:700">Test tools</div><button data-r="1" style="' + BS + '">Clear my wanted level</button>' + CLOSE, d => {
         if (d.x) return hide();
         if (d.m) { earn(+d.m, "Admin grant"); note("You received GH\u00A2" + (+d.m).toLocaleString()); }
         else if (d.v) { st.hp = st.en = st.hu = st.hy = st.md = 100; note("Refilled"); }
         else if (d.t) { hide(); tp(TELE[d.t][0], TELE[d.t][1]); }
+        else if (d.w) { if (window.ACCRA_WEATHER) { if (d.w === "auto") window.ACCRA_WEATHER.auto(); else window.ACCRA_WEATHER.set(d.w); } note(d.w === "auto" ? "Weather is automatic again" : "Weather set to " + d.w); }
+        else if (d.r) { if (window.ACCRA_CRIME) window.ACCRA_CRIME.setWanted(0); note("Wanted level cleared"); }
         else if (d.p) { const to = prompt("Player name"), amount = Math.round(+prompt("Amount in GH\u00A2")), n = NET(); if (!to || !(amount > 0)) return; if (!n) return note("Not online: no server connection."); n.emit("adminGive", { to, amount, code: ADMIN_CODE }); note("Request sent. The server must support adminGive."); }
       });
     }

@@ -38,14 +38,14 @@
  // ---------- destinations from the real city grid ----------
  const XS=[-110,-35,35,110],D={};DG.forEach((row,i)=>row.forEach((n,j)=>{(D[n]=D[n]||[]).push([XS[i],XS[j]])}));
  const DEST=Object.entries(D).map(([n,a])=>({n,x:a.reduce((s,p)=>s+p[0],0)/a.length,z:a.reduce((s,p)=>s+p[1],0)/a.length}));
- DEST.push({n:'Your villa',x:VX,z:VZ});DEST.push({n:'Accra Mall',x:35,z:22});DEST.push({n:'Sports Stadium',x:110,z:35});DEST.push({n:'Police Department',x:35,z:82});DEST.push({n:'Accra Hospital',x:110,z:82});DEST.push({n:'Accra Motors (cars)',x:35,z:-52});DEST.push({n:'Independence Square',x:0,z:170});DEST.push({n:'Accra Stone Quarry',x:190,z:-150});DEST.push({n:'Accra Gold Works',x:196,z:120});DEST.push({n:'Labadi Beach (swimming)',x:-90,z:188});(window.ACCRA_LANDMARKS||[]).forEach(d=>DEST.push(d));
+ DEST.push({n:'Your villa',x:VX,z:VZ});DEST.push({n:'Accra Mall',x:35,z:22});DEST.push({n:'Sports Stadium',x:110,z:35});DEST.push({n:'Police Department',x:35,z:82});DEST.push({n:'Accra Hospital',x:110,z:82});DEST.push({n:'Accra Motors (cars)',x:35,z:-52});DEST.push({n:'Accra Stone Quarry',x:190,z:-150});DEST.push({n:'Accra Gold Works',x:196,z:120});DEST.push({n:'Labadi Beach (swimming)',x:-90,z:188});(window.ACCRA_LANDMARKS||[]).forEach(d=>DEST.push(d));
  const ALLD=()=>DEST.concat(window.ACCRA_DEST_EXTRA||[]),fd=n=>n>=1000?(n/1000).toFixed(1)+' km':n+' m',pos=()=>(driving?car:player).position,dist=d=>Math.round(Math.hypot(d.x-pos().x,d.z-pos().z));
  let nav=null,job=null;
  const bm=BABYLON.MeshBuilder.CreateCylinder('bc',{height:70,diameter:3},scene);bm.material=Object.assign(new BABYLON.StandardMaterial('bcm',scene),{emissiveColor:C3('#c9a54a'),disableLighting:true,alpha:.35,fogEnabled:false});bm.isPickable=false;bm.setEnabled(false);
  function setNav(d){nav=d;bm.setEnabled(!!d);if(d)bm.position.set(d.x,35,d.z);navp.style.display=d?'block':'none'}
  let clk=0;
  scene.onBeforeRenderObservable.add(()=>{
-  if(++clk%30===0&&ph.classList.contains('on')){$('ptm2').textContent=new Date().toTimeString().slice(0,5);$('psg').textContent=bars()}
+  if(++clk%30===0&&ph.classList.contains('on')){$('ptm2').textContent=new Date().toTimeString().slice(0,5);$('psg').textContent=bars()+(window.ACCRA_WEATHER?' · '+window.ACCRA_WEATHER.label():'')}
   if(!nav)return;const m=dist(nav);navp.textContent='➤ '+nav.n+' · '+fd(m);
   if(m<20){const n=nav;setNav(null);
    if(job&&job.stage===0&&n===job.a){job.stage=1;setNav(job.b);toast('Package picked up. Deliver to '+job.b.n)}

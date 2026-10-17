@@ -118,6 +118,15 @@
         P.arms.forEach(a => { const up = P.until > st.play; a.position.y += ((up ? 5 : 1.2) - a.position.y) * .12; a.checkCollisions = !up; }); });
     });
 
+    // ---------- 2b. highway joins the Accra road grid at Accra North ----------
+    try {
+      const jn = [];
+      jn.push(mk(40, .08, 8, hx(-165) + 18, .07, -165, asphalt));                                // east-west link to the city avenue
+      jn.push(mk(22, .9, .3, hx(-165), 6.5, -159, "#f2f2f2"));                                  // junction gantry bar
+      const jsn = B.MeshBuilder.CreatePlane("jsn", { width: 14, height: 2.2 }, scene); jsn.position.set(hx(-165), 7.2, -158.8); jsn.rotation.y = Math.PI; jsn.material = gantryTex("ACCRA NORTH \u2014 KUMASI 250 km"); jsn.isPickable = false;
+      jn.push(jsn);
+    } catch (e) { console.warn("junction: " + e.message); }
+
     // ---------- 3. intercity buses (fast travel) ----------
     const STOPS = [["Accra", 14, -185]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
     const FARE = { Accra: 0, Nsawam: 25, Suhum: 40, Nkawkaw: 70, Konongo: 90, Ejisu: 110, Kumasi: 130 };
@@ -130,6 +139,33 @@
         hide(); pay(f, "Bus to " + d.d); fade(3000, () => { tp(s[1], s[2]); L.vitals({ hu: -15, hy: -8, en: 15 }); }, () => note("Arrived in " + d.d + ". Long ride, you feel rested but hungry."));
       }); draw();
     }
+    // ---------- 3b. Ayalolo: the shared bus between Accra and Kumasi, one bus per direction ----------
+    const AYA = { line: "Ayalolo 5 \u00B7 Accra \u2194 Kumasi", fare: 35 };
+    const aStops = STOPS.map(s => ({ n: s[0], x: s[1], z: s[2] }));
+    const ayaBodies = [];
+    for (let i = 0; i < 2; i++) {
+      const b = mk(2.6, 2.4, 6, 0, 1.6, 0, "#e1a31a"), st2 = mk(2.62, .4, 6.02, 0, 1.1, 0, "#17191c"), rf = mk(2.4, .2, 5.6, 0, 2.85, 0, "#ffffff");
+      const bus = B.Mesh.MergeMeshes([b, st2, rf], true, true, undefined, false, true); bus.isPickable = false;
+      ayaBodies.push({ m: bus, dir: i === 0 ? 1 : -1, t: i * .5 });
+    }
+    scene.onBeforeRenderObservable.add(() => {
+      const dt = Math.min(engine.getDeltaTime() / 1000, .1);
+      ayaBodies.forEach(b => { b.t = (b.t + dt / 900) % 1; const u = b.dir > 0 ? b.t : 1 - b.t, z = -165 - u * (24500 - 165), x = hx(z);
+        b.m.position.set(x, 0, z); b.m.rotation.y = -Math.atan(slope(z)) + (b.dir > 0 ? 0 : Math.PI); });
+    });
+    const ayaBoard = s => show(ttl("\uD83D\uDE8C " + AYA.line) + "<small>Fare GH\u00A2" + AYA.fare + " to any stop, a bus about every 5 minutes. You are at " + s.n + ". Cash GH\u00A2" + cash() + "</small>" +
+      aStops.filter(q => q.n !== s.n).map(q => '<button data-a="' + q.n + '" style="' + BS + '">' + q.n + " \u00B7 GH\u00A2" + AYA.fare + "</button>").join("") + CLOSE, d => {
+        if (d.x) return hide();
+        const to = aStops.find(q => q.n === d.a); if (!to) return;
+        if (window.ACCRA_CRIME && window.ACCRA_CRIME.wanted >= 2) return note("Police are checking the buses. Lose them first.");
+        if (cash() < AYA.fare) return note("Not enough cash for the Ayalolo fare (GH\u00A2" + AYA.fare + ").");
+        hide(); pay(AYA.fare, "Ayalolo to " + to.n);
+        note("Ayalolo to " + to.n + " (" + realKm(to.z) + " km from Accra).");
+        fade(2400, () => { tp(to.x, to.z); L.vitals({ hu: -8, en: 6 }); }, () => note("Arrived at " + to.n + "."));
+      });
+    aStops.forEach(q => points.push({ x: q.x + 4, z: q.z + 4, r: 4, t: "\uD83D\uDE8C Ayalolo stop", ok: () => !L.busy && !L.seated && !L.driving, f: () => ayaBoard(q) }));
+    window.ACCRA_AYALOLO = { line: AYA.line, fare: AYA.fare, stops: aStops };
+
     STOPS.forEach(s => points.push({ x: s[1], z: s[2], r: 5, t: "\uD83D\uDE8C Bus to other cities", ok: () => !L.busy && !L.seated && !L.driving, f: () => bus(s[0]) }));
     window.ACCRA_DEST_EXTRA = TOWNS.map(t => ({ n: t.n + " (" + realKm(t.z) + " km from Accra)", x: t.x, z: t.z }));
     window.ACCRA_WORLD = { hx, towns: TOWNS, tolls: TOLLS, chunks };
