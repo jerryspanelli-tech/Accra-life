@@ -1,6 +1,7 @@
 /* accra-model.js - Player humanoid model loader and animation handler */
 (function () {
   try {
+    if (window.AccraFigure) { console.log("accra-model: new figure in use, robot model skipped"); return; }
     const AV = window.ACCRA_AVATAR;
     if (!AV) { console.log("accra-model: avatar not ready"); return; }
     const say = m => { console.log(m); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note(m); };
