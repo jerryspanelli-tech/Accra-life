@@ -4,7 +4,7 @@
  // outfit: 0 tee+trousers, 1 suit+tie, 2 dress, 3 hoodie+shorts, 4 kaftan (batik), 5 Ghana jersey, 6 kente shirt, 7 leather jacket
  // hair: 0 bald, 1 fade, 2 afro, 3 dreads, 4 braids, 5 cornrows, 6 locs, 7 mohawk, 8 low cut, 9 twists
  // accessories: 0 none, 1 gold chain, 2 cap, 3 beanie, 4 sunglasses, 5 kente headwrap
- function human(l){ if (window.AccraFigure) return window.AccraFigure.human(); 
+ function human(l){ if (window.AccraFigure) return window.AccraFigure.human(l); 
   l=Object.assign({skin:1,hair:1,hcol:0,top:3,pants:0,style:0,acc:0,shoe:0},l||{});
   const root=new BABYLON.TransformNode('hu',scene);
   const g=new BABYLON.TransformNode('hg',scene);g.parent=root;g.scaling.setAll(.85);
