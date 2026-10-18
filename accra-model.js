@@ -36,10 +36,26 @@
     function recolorMeshes(meshes) {
       const seen = new Map();
       meshes.forEach(mesh => {
-        if (!mesh.material) return;
-        if (!seen.has(mesh.material)) seen.set(mesh.material, seen.size === 0 ? "#8d5a3b" : "#24324a");
-        mesh.material.diffuseColor = BABYLON.Color3.FromHexString(seen.get(mesh.material));
-        mesh.material.diffuseTexture = null;
+        const mt = mesh.material;
+        if (!mt) return;
+        if (!seen.has(mt)) {
+          const joints = /joint/i.test(mt.name || "");
+          seen.set(mt, joints ? "#24324a" : "#8d5a3b");   // limbs become skin tone, joints become dark clothing
+        }
+        const col = BABYLON.Color3.FromHexString(seen.get(mt));
+        if (mt.albedoColor !== undefined) { mt.albedoColor = col; mt.albedoTexture = null; }
+        mt.diffuseColor = col;
+        mt.diffuseTexture = null;
+      });
+    }
+
+    // arms hang down (same pose as the player's own model) for the NPC copies, which start in the T-pose
+    function armsDown(sk) {
+      if (!sk || !sk.bones) return;
+      sk.bones.forEach(b => {
+        const n = b.name.toLowerCase();
+        if (n.includes("leftarm")) b.setRotationQuaternion(BABYLON.Quaternion.RotationYawPitchRoll(0, 0, -1.35), BABYLON.Space.LOCAL);
+        if (n.includes("rightarm")) b.setRotationQuaternion(BABYLON.Quaternion.RotationYawPitchRoll(0, 0, 1.35), BABYLON.Space.LOCAL);
       });
     }
 
@@ -74,6 +90,7 @@
       root.rotation.set(0, 0, 0);
       root.scaling.setAll(npcScale);
       recolorMeshes(root.getChildMeshes(false));
+      if (inst.skeletons) inst.skeletons.forEach(armsDown);
     }
 
     async function start() {
