@@ -16,7 +16,9 @@
       o = o || {};
       return {
         gender: o.gender, skinTone: o.skinTone || (typeof o.skin === "string" ? o.skin : undefined),
-        shirtHex: o.shirtHex || o.shirt, hairStyle: o.hairStyle, hatStyle: o.hatStyle, police: !!o.police
+        shirtHex: o.shirtHex || o.shirt, hairStyle: o.hairStyle, hatStyle: o.hatStyle,
+        // officers are recognised by their police shirt colour too, so the uniform always shows
+        police: !!o.police || (o.shirt === "#1d3b6b" || o.shirtHex === "#1d3b6b")
       };
     }
 
