@@ -32,6 +32,50 @@
       });
     }
 
+    // human colours: the first material is skin, the rest are clothing (instead of the red robot look)
+    function recolorMeshes(meshes) {
+      const seen = new Map();
+      meshes.forEach(mesh => {
+        if (!mesh.material) return;
+        if (!seen.has(mesh.material)) seen.set(mesh.material, seen.size === 0 ? "#8d5a3b" : "#24324a");
+        mesh.material.diffuseColor = BABYLON.Color3.FromHexString(seen.get(mesh.material));
+        mesh.material.diffuseTexture = null;
+      });
+    }
+
+    // NPC police, bouncers and other online players: same humanoid model, cloned from one loaded copy
+    let npcCont = null, npcScale = 1, npcOffY = 0, npcId = 0;
+    async function loadNpcSource() {
+      for (const name of ["X_Bot.glb", "X Bot.glb"]) {
+        try {
+          const c = await BABYLON.SceneLoader.LoadAssetContainerAsync(folder, name, scene);
+          const probe = c.instantiateModelsToScene(n => n + "_probe", false);
+          const ms = probe.rootNodes[0].getChildMeshes(false);
+          let mn = Infinity, mx = -Infinity;
+          ms.forEach(q => { q.computeWorldMatrix(true); const b = q.getBoundingInfo().boundingBox; mn = Math.min(mn, b.minimumWorld.y); mx = Math.max(mx, b.maximumWorld.y); });
+          probe.rootNodes.forEach(n => n.dispose());
+          const hgt = mx - mn;
+          npcScale = 1.8 / Math.max(hgt, .001);
+          npcOffY = -mn * npcScale;
+          npcCont = c;
+          return;
+        } catch (e) { /* try the other name */ }
+      }
+    }
+
+    function humanize(node) {
+      if (!npcCont || (node.metadata && node.metadata.humanized)) return;
+      node.metadata = Object.assign({}, node.metadata, { humanized: true });
+      node.getChildMeshes(false).forEach(q => { q.isVisible = false; });
+      const inst = npcCont.instantiateModelsToScene(n => n + "_npc" + (++npcId), true);
+      const root = inst.rootNodes[0];
+      root.parent = node;
+      root.position.set(0, npcOffY, 0);
+      root.rotation.set(0, 0, 0);
+      root.scaling.setAll(npcScale);
+      recolorMeshes(root.getChildMeshes(false));
+    }
+
     async function start() {
       await loadScript("https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js");
       let r = null, lastErr = "";
@@ -58,6 +102,7 @@
       root.rotation = new BABYLON.Vector3(0, Math.PI, 0);
 
       model = r;
+      recolorMeshes(r.meshes);
 
       // Check for built-in GLB animation tracks
       if (r.animationGroups && r.animationGroups.length > 0) {
@@ -124,6 +169,16 @@
         const rot = BABYLON.Quaternion.RotationYawPitchRoll(0, s * 0.4 * amp, 0);
         boneMap.rightLeg.setRotationQuaternion(rot, BABYLON.Space.LOCAL);
       }
+    });
+
+    loadNpcSource();
+
+    let scanT = 0;
+    scene.onBeforeRenderObservable.add(() => {
+      if (!npcCont || ++scanT % 30) return;
+      scene.transformNodes.forEach(n => {
+        if ((n.name === "character" || n.name === "hu") && n.parent !== player) humanize(n);
+      });
     });
 
     start().catch(e => { 
