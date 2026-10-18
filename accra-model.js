@@ -134,6 +134,7 @@
       if (r.skeletons && r.skeletons.length > 0) {
         skeleton = r.skeletons[0];
         mapSkeletonBones(skeleton);
+        armsDown(skeleton);   // lower the player's arms once at load, as well as every frame
       }
 
       hideFigure();
