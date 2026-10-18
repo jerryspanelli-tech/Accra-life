@@ -6,7 +6,7 @@
     const C3 = h => BABYLON.Color3.FromHexString(h);
     const mats = {};
     const M = h => mats[h] || (mats[h] = Object.assign(new BABYLON.StandardMaterial("ff" + h, scene), { diffuseColor: C3(h), specularColor: new BABYLON.Color3(.08, .08, .08) }));
-    const DEF = { gender: "male", skinTone: "#6b4028", shirtHex: "#1f5c3a", hairStyle: "dreads", hatStyle: "none", police: false };
+    const DEF = { gender: "male", skinTone: "#a8754f", shirtHex: "#f2f2f0", pantsHex: "#f2f2f0", hairStyle: "dreads", hatStyle: "cap", police: false };
     const SHORTS = "#15171c", SNEAK = "#f4f4f2", SOCK = "#c8102e", STRIPE = "#fcd116", DREAD = "#1a1410", EYE = "#0d0d0d";
     const NAVY = "#1b2a4a", BLACK = "#101216", HIVIS = "#e6e300", REFL = "#f2f2f2", GOLD = "#c9a54a";
     const autos = [];
@@ -16,7 +16,7 @@
       o = o || {};
       return {
         gender: o.gender, skinTone: o.skinTone || (typeof o.skin === "string" ? o.skin : undefined),
-        shirtHex: o.shirtHex || o.shirt, hairStyle: o.hairStyle, hatStyle: o.hatStyle,
+        shirtHex: o.shirtHex || o.shirt, pantsHex: o.pantsHex, hairStyle: o.hairStyle, hatStyle: o.hatStyle,
         // officers are recognised by their police shirt colour too, so the uniform always shows
         police: !!o.police || (o.shirt === "#1d3b6b" || o.shirtHex === "#1d3b6b")
       };
@@ -42,10 +42,11 @@
 
       // torso and hips: one connected shape, so there are no gaps
       P("Capsule", { height: fem ? .68 : .72, radius: fem ? .18 : .2, tessellation: 12 }, 0, 1.3, 0, torsoHex);
-      P("Capsule", { height: .3, radius: fem ? .19 : .17, tessellation: 10 }, 0, .98, 0, o.police ? BLACK : SHORTS);
+      P("Capsule", { height: .3, radius: fem ? .19 : .17, tessellation: 10 }, 0, .98, 0, o.police ? BLACK : o.pantsHex);
       // neck and head, the neck overlaps both the torso and the head
       P("Cylinder", { height: .16, diameter: .13, tessellation: 10 }, 0, 1.6, 0, o.skinTone);
       P("Sphere", { diameter: .27, segments: 12 }, 0, 1.74, .02, o.skinTone);
+      if (!o.police) for (let i = 0; i < 5; i++) P("Sphere", { diameter: .035, segments: 6 }, -.1 + i * .05, 1.5 - Math.abs(i - 2) * .02, .19, GOLD);
       [-1, 1].forEach(s => P("Box", { width: .04, height: .035, depth: .03 }, s * .06, 1.76, .15, EYE));
 
       // hair
@@ -58,7 +59,7 @@
       if (o.hatStyle === "hood") { P("Sphere", { diameter: .36, segments: 10 }, 0, 1.82, -.1, o.shirtHex).scaling.set(1, .9, .9); }
       if (o.hatStyle === "beanie") { P("Sphere", { diameter: .3, segments: 10 }, 0, 1.86, 0, "#c9d13a").scaling.set(1, .6, 1); }
       if (o.hatStyle === "cap") {
-        const capHex = o.police ? BLACK : "#3a3a44";
+        const capHex = o.police ? BLACK : "#f4f4f2";
         P("Cylinder", { height: .09, diameterTop: .24, diameterBottom: .28, tessellation: 14 }, 0, 1.92, 0, capHex);
         P("Box", { width: .22, height: .02, depth: .13 }, 0, 1.87, .2, capHex);
         if (o.police) P("Box", { width: .07, height: .06, depth: .02 }, 0, 1.94, .135, GOLD);   // cap badge
@@ -93,10 +94,7 @@
           P("Cylinder", { height: .8, diameterTop: .26, diameterBottom: .21, tessellation: 12 }, 0, -.45, 0, BLACK, q);
           P("Box", { width: .2, height: .13, depth: .34 }, 0, -.93, .06, BLACK, q);            // boots
         } else {
-          P("Cylinder", { height: .42, diameterTop: .3, diameterBottom: .26, tessellation: 12 }, 0, -.21, 0, SHORTS, q);
-          P("Capsule", { height: .42, radius: .085, tessellation: 10 }, 0, -.6, 0, o.skinTone, q);
-          P("Cylinder", { height: .1, diameter: .17, tessellation: 10 }, 0, -.86, 0, SOCK, q);
-          P("Cylinder", { height: .02, diameter: .19, tessellation: 10 }, 0, -.84, 0, STRIPE, q);
+          P("Cylinder", { height: .8, diameterTop: .27, diameterBottom: .22, tessellation: 12 }, 0, -.45, 0, o.pantsHex, q);   // long trousers
           P("Box", { width: .2, height: .12, depth: .34 }, 0, -.94, .06, SNEAK, q);
         }
         return q;
