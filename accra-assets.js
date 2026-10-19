@@ -200,6 +200,13 @@
     if (type === "pickup") { const bed = BABYLON.MeshBuilder.CreateBox("bed", { width: 1.9, height: .12, depth: d.w - .1 }, scene); bed.position.set(-1.25, .95, 0); bed.material = paint; bed.parent = root; bed.isPickable = false; }
     const lights = [[d.body[1][0] - .05, .72, d.w / 2 - .25], [d.body[1][0] - .05, .72, -d.w / 2 + .25]];   // headlights
     lights.forEach(l => { const h = BABYLON.MeshBuilder.CreateBox("hl", { width: .12, height: .18, depth: .3 }, scene); h.position.set(...l); h.material = mat("#fff6d6"); h.parent = root; h.isPickable = false; });
+    // bumpers, grille and mirrors make the body easy to read as a real car
+    const frontX = d.body[1][0], rearX = d.body[0][0];
+    const dark = mat("#1a1a1a"), chrome = mat("#c9ccd1");
+    const bump = (x, y) => { const b = BABYLON.MeshBuilder.CreateBox("bump", { width: .22, height: .26, depth: d.w + .08 }, scene); b.position.set(x, y, 0); b.material = dark; b.parent = root; b.isPickable = false; };
+    bump(frontX + .05, .42); bump(rearX - .05, .42);
+    const grille = BABYLON.MeshBuilder.CreateBox("grille", { width: .08, height: .3, depth: d.w * .5 }, scene); grille.position.set(frontX + .02, .72, 0); grille.material = chrome; grille.parent = root; grille.isPickable = false;
+    [-1, 1].forEach(sd => { const m = BABYLON.MeshBuilder.CreateBox("mirror", { width: .18, height: .14, depth: .12 }, scene); m.position.set(frontX - .55, 1.02, sd * (d.w / 2 + .08)); m.material = paint; m.parent = root; m.isPickable = false; });
     [[-d.wheelX, .36, d.w / 2 + .03], [d.wheelX, .36, d.w / 2 + .03], [-d.wheelX, .36, -d.w / 2 - .03], [d.wheelX, .36, -d.w / 2 - .03]].forEach(p => {
       const t = BABYLON.MeshBuilder.CreateCylinder("wh", { diameter: .72, height: .3, tessellation: 12 }, scene); t.rotation.x = Math.PI / 2; t.position.set(...p); t.material = tyre; t.parent = root; t.isPickable = false;
       const hb = BABYLON.MeshBuilder.CreateCylinder("hb", { diameter: .3, height: .32, tessellation: 8 }, scene); hb.rotation.x = Math.PI / 2; hb.position.set(...p); hb.material = hub; hb.parent = root; hb.isPickable = false;
