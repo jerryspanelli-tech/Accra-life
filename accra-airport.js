@@ -31,7 +31,12 @@
 
     // ----- fence around the whole site, with a gate on the east side -----
     const FX = 190, FZ = 105, GATE = [50, 62];                 // local fence extent; gate opening at z 50..62
-    scene.meshes.filter(m => (m.name === "bd" || m.name === "rf" || m.name === "localroad") && Math.abs(m.position.x - C.x) < FX + 5 && Math.abs(m.position.z - C.z) < FZ + 5).forEach(m => m.dispose());
+    scene.meshes.filter(m => {
+      if (m.name !== "bd" && m.name !== "rf" && m.name !== "localroad") return false;
+      const inAirport = Math.abs(m.position.x - C.x) < FX + 5 && Math.abs(m.position.z - C.z) < FZ + 5;
+      const inAccessCorridor = m.position.x >= C.x + 190 && m.position.x <= C.x + 1000 && Math.abs(m.position.z - (C.z + 56)) < 35;
+      return inAirport || inAccessCorridor;
+    }).forEach(m => m.dispose());
     const fenceH = 2.4;
     function fenceRun(x1, z1, x2, z2) {
       const len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(z2 - z1, x2 - x1), n = Math.max(1, Math.round(len / 10));
