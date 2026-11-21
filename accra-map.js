@@ -57,6 +57,7 @@
     { name: "Liberation Road", type: "arterial", width: 14, points: [[420, -550], [430, -360], [350, -160], [200, 40], [280, 230], [600, 350]] },
     { name: "Independence Avenue", type: "arterial", width: 12, points: [[-200, -200], [-150, -60], [-80, 80], [-42, 202], [40, 350]] },
     { name: "Spintex Road", type: "arterial", width: 16, points: [[250, 500], [520, 500], [850, 430], [1200, 350], [1650, 260], [2100, 200], [2500, 200]] },
+    { name: "Accra–Tema Motorway", type: "highway", width: 18, points: [[600, -600], [850, -500], [1200, -300], [1600, -100], [2000, 50], [2500, 200]] },
     { name: "Tema Harbour Access Road", type: "arterial", width: 12, points: [[2500, 200], [2550, 250], [2600, 330]] }
   ];
   root.ACCRA_MAP = {
