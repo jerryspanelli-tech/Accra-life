@@ -39,8 +39,13 @@ async function waitFor(url, child) {
     const health = await waitFor(base + '/health', child);
     const healthData = await health.json();
     if (!healthData.ok) throw new Error('Health endpoint did not return ok');
+    const home = await fetch(base + '/');
+    const homeHtml = await home.text();
+    if (!home.ok || !homeHtml.includes('accra-map.js') || !homeHtml.includes('online.js')) throw new Error('Game homepage or shared map script was not served');
     const page = await fetch(base + '/babylon.html');
-    if (!page.ok || !(await page.text()).includes('online.js')) throw new Error('Babylon game page was not served');
+    if (!page.ok || !(await page.text()).includes('accra-map.js')) throw new Error('Babylon game page was not served');
+    const map = await fetch(base + '/accra-map.js');
+    if (!map.ok || !(await map.text()).includes('Airport Residential')) throw new Error('Shared Accra map data was not served');
     const handshake = await fetch(base + '/socket.io/?EIO=4&transport=polling&t=smoke');
     if (!handshake.ok) throw new Error('Socket.IO polling handshake failed');
     const packet = await handshake.text();
@@ -55,7 +60,7 @@ async function waitFor(url, child) {
     const messages = await fetch(base + '/socket.io/?EIO=4&transport=polling&sid=' + encodeURIComponent(sid));
     const body = await messages.text();
     if (!messages.ok || !body.includes('42["hello"')) throw new Error('Authenticated player did not receive hello event');
-    console.log('Server smoke test passed: health, Babylon page, Socket.IO handshake and player authentication.');
+    console.log('Server smoke test passed: health, homepage, map asset, Babylon page, Socket.IO handshake and player authentication.');
   } finally {
     child.kill('SIGTERM');
     await new Promise(resolve => {
