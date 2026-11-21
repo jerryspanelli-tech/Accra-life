@@ -1,5 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 global.window = {};
 require('../accra-map.js');
 const M = window.ACCRA_MAP;
@@ -61,4 +63,15 @@ for (const [name, p] of Object.entries(M.places)) {
   assert.ok(Number.isFinite(p.x) && Number.isFinite(p.z), name + ' coordinates must be finite');
 }
 assert.equal(M.places.atms.length, 10, 'ATM destinations must remain available');
+
+const html = fs.readFileSync(path.join(__dirname, '..', 'babylon.html'), 'utf8');
+const world = fs.readFileSync(path.join(__dirname, '..', 'accra-world.js'), 'utf8');
+const airport = fs.readFileSync(path.join(__dirname, '..', 'accra-airport.js'), 'utf8');
+assert.ok(html.includes('window.ACCRA_BUILD = 4'), 'dynamic Accra modules must use the current cache version');
+assert.ok(html.includes('accra-map.js?v=4'), 'the expanded shared map must bypass old browser cache');
+assert.ok(world.includes('ground.scaling.set(50, 1, 65)'), 'world terrain must cover the expanded city and highway');
+assert.ok(world.includes('ground.position.set(0, 0, -14000)'), 'world terrain must cover the south coast and northern highway');
+assert.ok(airport.includes('box(800, .06, 12, C.x + 600, .04, C.z + 56'), 'Kotoka east gate must connect to the x=2000 arterial');
+assert.ok(M.places.temaHarbour.x < 15000 && M.places.temaHarbour.x > 12000, 'Tema Harbour must remain inside the expanded world terrain');
+assert.ok(M.namedRoads.find(r => r.name === 'Tema Harbour Access Road').points.at(-1)[0] === M.places.temaHarbour.x, 'Tema Harbour access road must reach the harbour');
 console.log('Accra map checks passed: 16 distinct districts, aligned civic landmarks, and named road hierarchy.');
