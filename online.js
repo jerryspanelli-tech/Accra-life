@@ -96,15 +96,57 @@
     mine.al.rotation.x=-2.5+w*.9;mine.ar.rotation.x=-2.5-w*.9;mine.ll.rotation.x=Math.sin(mine.ph*2)*.4;mine.lr.rotation.x=-Math.sin(mine.ph*2)*.4}
   else{mine.al.rotation.z=mine.ar.rotation.z=0;mine.g.rotation.z=0;r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
  // ---------- online ----------
+ function cloudflareSocket(base, auth) {
+  const listeners = new Map(), pending = new Map();
+  let socket = null, stopped = false, authenticated = false, retry = 0, retryTimer = null;
+  const api = {
+   id: auth.pid,
+   on(event, fn) { if(!listeners.has(event)) listeners.set(event,[]); listeners.get(event).push(fn); return api; },
+   emit(event, data) {
+    if(authenticated && socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify({event,data}));
+    else if(event!=='auth') pending.set(event,data);
+    return api;
+   },
+   disconnect() { stopped=true; clearTimeout(retryTimer); if(socket) socket.close(1000,'Client closed'); }
+  };
+  const fire=(event,data)=>{(listeners.get(event)||[]).forEach(fn=>{try{fn(data)}catch(e){console.error(e)}})};
+  function connect() {
+   if(stopped)return;
+   let endpoint;
+   try { endpoint=new URL(base); endpoint.protocol=endpoint.protocol==='https:'?'wss:':'ws:'; endpoint.pathname='/ws'; endpoint.search=''; endpoint.hash=''; }
+   catch(e){fire('connect_error',e);return}
+   socket=new WebSocket(endpoint.toString());
+   socket.onopen=()=>{retry=0;authenticated=false;socket.send(JSON.stringify({event:'auth',data:auth}))};
+   socket.onmessage=event=>{
+    let packet;try{packet=JSON.parse(event.data)}catch(e){return}
+    if(!packet||typeof packet.event!=='string')return;
+    if(packet.event==='hello'){
+     authenticated=true;fire('hello',packet.data);
+     pending.forEach((data,name)=>socket.send(JSON.stringify({event:name,data})));pending.clear();
+    }
+    fire(packet.event,packet.data);
+   };
+   socket.onerror=()=>fire('connect_error',new Error('Cloudflare WebSocket connection failed'));
+   socket.onclose=()=>{
+    authenticated=false;
+    if(!stopped){const delay=Math.min(10000,500*Math.pow(2,Math.min(retry++,5)));retryTimer=setTimeout(connect,delay)}
+   };
+  }
+  connect();
+  return api;
+ }
+
  const URL_=window.ACCRA_SERVER||window.location.origin;
+ const useCloudflare=window.ACCRA_TRANSPORT==='cloudflare';
  const cur={sp:0};let px=0,pz=0;
  const snap=()=>{const o=driving?car:player;return{x:o.position.x,z:o.position.z,ry:driving?heading:player.rotation.y,sp:cur.sp,drv:driving?1:0,look}};
- if(!window.io||URL_.indexOf('PASTE')===0){console.log('Offline mode: set ACCRA_SERVER in online.js to play online');return}
+ if((!useCloudflare&&!window.io)||URL_.indexOf('PASTE')===0){console.log('Offline mode: configure the multiplayer server before playing online');return}
  const pid='p'+crypto.randomUUID().replace(/-/g,''),gt=(k,v)=>{let x=localStorage.getItem(k);if(!x){x=v;localStorage.setItem(k,x)}return x};
  const ID=gt('accra-pid',pid),SEC=gt('accra-secret',crypto.randomUUID()+crypto.randomUUID()),NAME=gt('accra-name','Citizen'+Math.floor(1000+Math.random()*9000));
  const hud=document.createElement('div');hud.className='pill';hud.style.cssText+=';top:calc(env(safe-area-inset-top,0px) + 46px);font-size:12px;color:#fff';document.body.appendChild(hud);
- let count=1,bal=0,area=null;const paint=()=>{hud.textContent='\uD83D\uDC65 '+count+' \u00B7 GH\u20B5 '+bal+(area?' \u00B7 \uD83D\uDCCD '+area:'')};paint();
- net=io(URL_,{transports:['websocket'],auth:{pid:ID,secret:SEC,name:NAME}});
+ let count=1,bal=0,area=null;const paint=()=>{hud.textContent='👥 '+count+' · GH₵ '+bal+(area?' · 📍 '+area:'')};paint();
+ net=useCloudflare?cloudflareSocket(URL_,{pid:ID,secret:SEC,name:NAME}):io(URL_,{transports:['websocket'],auth:{pid:ID,secret:SEC,name:NAME}});
+
  const others=new Map();
  function label(t){const dt=new BABYLON.DynamicTexture('l',{width:256,height:64},scene,false);dt.hasAlpha=true;const c=dt.getContext();c.font='bold 30px system-ui';c.textAlign='center';c.fillStyle='rgba(23,25,28,.8)';c.fillRect(0,8,256,48);c.fillStyle='#c9a54a';c.fillText(t,128,44);dt.update();
   const m=BABYLON.MeshBuilder.CreatePlane('nl',{width:1.6,height:.4},scene);m.material=Object.assign(new BABYLON.StandardMaterial('lm',scene),{diffuseTexture:dt,emissiveTexture:dt,opacityTexture:dt,disableLighting:true,backFaceCulling:false});m.billboardMode=BABYLON.Mesh.BILLBOARDMODE_ALL;m.isPickable=false;return m}
