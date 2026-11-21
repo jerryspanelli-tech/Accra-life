@@ -77,11 +77,13 @@
       box("square-apron",70,.08,36,p.x,.08,p.z,"#c5c3b8",false);
       [-16,16].forEach(dx=>box("black-star-pillar",3,12,3,p.x+dx,6,p.z+13,"#e6e3d8",true));
       box("black-star-crossbeam",38,2.2,3,p.x,12,p.z+13,"#e6e3d8",true);
-      box("black-star-emblem-1",1.1,4.8,.5,p.x,14.7,p.z+14.8,"#17191c",false);
-      box("black-star-emblem-2",4.8,1.1,.5,p.x,14.7,p.z+14.8,"#17191c",false);
+      const starShape=[];
+      for(let i=0;i<10;i++){const r=i%2===0?2.8:1.15,a=-Math.PI/2+i*Math.PI/5;starShape.push(new B.Vector2(Math.cos(a)*r,Math.sin(a)*r));}
+      const star=B.MeshBuilder.CreatePolygon("black-star-emblem",{shape:starShape,depth:.6,sideOrientation:B.Mesh.DOUBLESIDE},scene);
+      star.position.set(p.x,14.7,p.z+14.8); star.material=matOf("#17191c"); star.isPickable=false;
       box("unknown-soldier-plinth",7,1.3,5,p.x-22,.65,p.z-8,"#d6d3c9",true);
       label("Black Star Square",p.x,p.z-22,18);
-      addPlace("blackStarSquare","Black Star Square");
+      addPlace("blackStarSquare","Independence Square / Black Star Square");
     }
 
     // Kwame Nkrumah Memorial Park and the adjacent Arts Centre.
