@@ -10,7 +10,7 @@
     const S = t => t * t * (3 - 2 * t);
     const hx = z => DRIFT * S(Math.min(1, Math.max(0, (-z - CITY_NORTH) / (-END - CITY_NORTH))));        // highway centre line x at z
     const slope = z => (hx(z - 8) - hx(z + 8)) / 16;
-    const realKm = z => Math.round((-z - CITY_NORTH) / 1000 * 10.2);                               // 1 : 10 scale, so game km x 10.2 = real km
+    const realKm = z => Math.round((-z) / 1000 * 10.2);                               // 1 : 10 scale, so game km x 10.2 = real km
     const rng = seed => { let s = (seed * 2654435761) >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
     const hash = (a, b, c) => ((a * 73856093) ^ (b * 19349663) ^ (c * 83492791)) >>> 0;
 
@@ -25,8 +25,8 @@
       const el = document.getElementById("spd"); if (L.driving && el && sp < 90) el.textContent = Math.round(sp * 3.6) + " km/h"; });
 
     // ---------- 2. chunk streaming ----------
-    const TOWNS = [["Nsawam", -3500, 0], ["Suhum", -6500, 0], ["Nkawkaw", -13000, 0], ["Konongo", -19000, 0], ["Ejisu", -22500, 1], ["Kumasi", -24500, 2]].map(t => ({ n: t[0], z: t[1], big: t[2], x: hx(t[1]) + 220, R: [150, 190, 340][t[2] === 2 ? 2 : t[2]] }));
-    const TOLLS = [{ z: -1200, fee: 15, n: "Accra Gate toll" }, { z: -21500, fee: 20, n: "Ejisu toll" }];
+    const TOWNS = [["Nsawam", -5000, 0], ["Suhum", -7500, 0], ["Nkawkaw", -13000, 0], ["Konongo", -19000, 0], ["Ejisu", -22500, 1], ["Kumasi", -24500, 2]].map(t => ({ n: t[0], z: t[1], big: t[2], x: hx(t[1]) + 220, R: [150, 190, 340][t[2] === 2 ? 2 : t[2]] }));
+    const TOLLS = [{ z: -4700, fee: 15, n: "Accra Gate toll" }, { z: -21500, fee: 20, n: "Ejisu toll" }];
     const asphalt = mat("#2f3033"), white = mat("#f2f2f2"), rail = mat("#b8bcc2"), conc = mat("#9a9a96");
     const mk = (w, h, d, x, y, z, m, ry) => { const b = B.MeshBuilder.CreateBox("wb", { width: w, height: h, depth: d }, scene); b.position.set(x, y, z); b.material = typeof m === "string" ? mat(m) : m; if (ry) b.rotation.y = ry; b.isPickable = false; return b; };
     const merge = (arr, solid) => { if (!arr.length) return null; const m = B.Mesh.MergeMeshes(arr, true, true, undefined, false, true); if (m) { m.checkCollisions = !!solid; m.isPickable = false; } return m; };
