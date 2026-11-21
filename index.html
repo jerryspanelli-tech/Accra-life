@@ -127,9 +127,9 @@ const R=0xb5473d,G=0xc9a54a,Gr=0x3f6b4f;
 var SIGNS=[];
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fd3ee);scene.fog=new THREE.Fog(0xcfeaf7,90,250);
 const cam=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,300);const isoCam=new THREE.OrthographicCamera(-9,9,9,-9,.1,400);
-const ren=new THREE.WebGLRenderer({antialias:true});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,innerWidth<900?1.5:2));ren.outputEncoding=THREE.sRGBEncoding;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=.95;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;
+const ren=new THREE.WebGLRenderer({antialias:true});let gfxQuality='high';ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,innerWidth<900?1.5:2));ren.outputEncoding=THREE.sRGBEncoding;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=.95;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;
 document.body.prepend(ren.domElement);
-addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setPixelRatio(gfxQuality==='high'?Math.min(devicePixelRatio,innerWidth<900?1.5:2):1);ren.setSize(innerWidth,innerHeight)});
 const hemi=new THREE.HemisphereLight(0xcfe8ff,0x6b8f4e,.8);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff0d0,1.2);sun.castShadow=true;const sm=innerWidth>900?2048:1024;sun.shadow.mapSize.set(sm,sm);const sc=sun.shadow.camera;sc.left=sc.bottom=-48;sc.right=sc.top=48;sc.near=1;sc.far=200;sun.shadow.bias=-.0005;scene.add(sun,sun.target);
 const skyU={top:{value:new THREE.Color(0x6f98c4)},bot:{value:new THREE.Color(0xd3dde3)}};
@@ -950,7 +950,7 @@ function setDriveLabels(on){hornBtn(on);const sp=$('sprint'),jp=$('jump');if(!sp
 function drive(dt,x,thr,brk){if(jreq){jreq=0;spd*=.55}{const w=myCar.userData.wh;if(w){const r=spd*dt/.4;for(const q of w)q.rotation.x+=r}}if(thr)spd+=12*dt*(1-Math.max(0,spd)/22);if(brk)spd-=Math.sign(spd||1)*18*dt;spd*=Math.pow(.5,dt);if(fuel<=0){spd*=.9;if(Math.random()<dt)toast('Out of fuel! Find Goil Fuel.')}else if(Math.abs(spd)>1)fuel=Math.max(0,fuel-dt*(.05+.12*Math.min(1,Math.abs(spd)/22)));
  spd=Math.max(-8,Math.min(22,spd));hd-=x*dt*1.8*Math.max(-1,Math.min(1,spd/8));const cpx0=me.position.x,cpz0=me.position.z;{const dd=spd*dt,nn=Math.max(1,Math.ceil(Math.abs(dd)/.15)),sx=Math.sin(hd)*dd/nn,sz=Math.cos(hd)*dd/nn;for(let k=0;k<nn;k++){me.position.x=Math.max(-330,Math.min(330,me.position.x+sx));me.position.z=Math.max(-330,Math.min(330,me.position.z+sz));let hit=false;for(const off of[-1.5,0,1.5]){const cx=me.position.x+Math.sin(hd)*off,cz=me.position.z+Math.cos(hd)*off,q=push(cx,cz,1.15);if(q[2]){me.position.x+=q[0]-cx;me.position.z+=q[1]-cz;hit=true}}if(hit){if(Math.abs(spd)>2.5){spd*=-.3;if(performance.now()-crashT>800){crashT=performance.now();toast('Crash!');playCrash()}}else spd*=.5;break}}}if(insideSolid(me.position.x,me.position.z)){me.position.x=cpx0;me.position.z=cpz0;spd=0}me.rotation.y=hd;
  const now=performance.now();
- for(const t of T)if(Math.hypot(t.m.position.x-me.position.x,t.m.position.z-me.position.z)<3.2){spd*=-.4;if(now-crashT>900){crashT=now;toast('Crash!');playCrash()}break}
+ for(const t of T){const v=Number.isFinite(t.v)?t.v:t.sp,raw=t.p+t.dr*v*dt,pred=raw>t.a1?t.a0:raw<t.a0?t.a1:raw,tx=t.ax?t.c-2*t.dr:pred,tz=t.ax?pred:t.c+2*t.dr;if(Math.hypot(tx-me.position.x,tz-me.position.z)<3.2){spd*=-.4;if(now-crashT>900){crashT=now;toast('Crash!');playCrash()}break}}
  // P contains parked taxis and player-owned vehicles created by spawnCar().
  for(const p of P)if(p!==drv&&p.act==='car'&&p.g&&Math.hypot(p.g.position.x-me.position.x,p.g.position.z-me.position.z)<3.1){spd*=-.35;if(now-crashT>900){crashT=now;toast('Crash!');playCrash()}break}
  if(S.duty){fare+=Math.abs(spd)*dt;if(fare>=30){fare-=30;S.money+=Math.round(3*(1+.2*lv('drive')));S.sk.drive=(S.sk.drive||0)+1}}}
@@ -1143,7 +1143,7 @@ const mmc=$('mm'),mx=mmc.getContext('2d'),mOff=document.createElement('canvas');
  o.fillStyle='#3a3a3d';RD.forEach(r=>{if(r.ax)o.fillRect(X(r.c-r.w/2),X(r.a0),r.w*k,(r.a1-r.a0)*k);else o.fillRect(X(r.a0),X(r.c-r.w/2),(r.a1-r.a0)*k,r.w*k)})}
 
 {const T0=$('title');let seen=false,gq='high';try{seen=!!localStorage.getItem('accra-seen');gq=localStorage.getItem('accra-gfx')||'high'}catch(e){}
- const setG=q=>{gq=q;sun.castShadow=q=='high';ren.setPixelRatio(q=='high'?Math.min(devicePixelRatio,innerWidth<900?1.5:2):1);$('gfx').textContent='Graphics: '+(q=='high'?'High (shadows)':'Low (faster on phones)');try{localStorage.setItem('accra-gfx',q)}catch(e){}};setG(gq);
+ const setG=q=>{gq=q;gfxQuality=q;sun.castShadow=q=='high';ren.shadowMap.enabled=q=='high';ren.setPixelRatio(q=='high'?Math.min(devicePixelRatio,innerWidth<900?1.5:2):1);$('gfx').textContent='Graphics: '+(q=='high'?'High (shadows)':'Low (faster on phones)');try{localStorage.setItem('accra-gfx',q)}catch(e){}};setG(gq);
  if(seen){$('tin').textContent='Welcome back. Your character, money and progress on this device are ready.';$('play').textContent='CONTINUE'}
  $('gfx').onclick=()=>setG(gq=='high'?'low':'high');
  $('cust').onclick=()=>{tab='style';$('phone').style.display='flex';document.body.classList.add('pho');render()};
