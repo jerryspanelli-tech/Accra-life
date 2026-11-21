@@ -117,9 +117,9 @@
     });
     [-130, -100, 100, 130].forEach(x => palm(X(x), Z(102)));
 
-    // ----- access road: the east-side gate joins the north-south city avenue at x 400 -----
-    box(12, .06, 100, C.x + 200, .04, C.z + 100, "#2b2d31", false);
-    box(24, .06, 12, C.x + 200, .04, C.z + 50, "#2b2d31", false);
+    // ----- access road: east-side gate connects directly to the x=2000 city arterial -----
+    // The gate is at C.x+200; this 800m connector reaches the arterial without crossing the runway.
+    box(800, .06, 12, C.x + 600, .04, C.z + 56, "#2b2d31", false);
 
     // ----- moving traffic -----
     // closed loop along the drop-off road: east on one lane, west on the other, so nothing drives head-on
