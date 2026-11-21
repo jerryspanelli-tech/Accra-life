@@ -8,7 +8,7 @@ const M = window.ACCRA_MAP;
 assert.ok(M, 'shared Accra map must load');
 assert.equal(M.version, 4);
 assert.equal(M.expansion, 5);
-assert.equal(M.scale, 4);
+assert.equal(M.scale, 10);
 assert.deepEqual(M.grid, [-4000, -2000, 0, 2000, 4000]);
 assert.deepEqual(M.cellCenters, [-3000, -1000, 1000, 3000]);
 assert.equal(M.districts.length, 4);
