@@ -40,7 +40,7 @@
       dealer: { x: -600, z: 200 },
       pub: { x: 200, z: 200 },
       airport: { x: 200, z: -550 },
-      labadiBeach: { x: 600, z: 700 },
+      labadiBeach: { x: 200, z: 700 },
       quarry: { x: -1200, z: -600 },
       goldworks: { x: 1200, z: 400 },
       tema: { x: 2500, z: 200 },
