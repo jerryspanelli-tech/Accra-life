@@ -7,18 +7,18 @@
     const L = window.ACCRA_LIFE && window.ACCRA_LIFE.api;
     if (!L) { console.log("accra-world: life API not ready"); return; }
     const B = BABYLON, { st, cash, pay, note, show, hide, ttl, BS, CLOSE, points, fade, tp } = L;
-    const END = -24500, DRIFT = -2400, CH = 256;
+    const END = -24500, DRIFT = -2400, CH = 256, CITY_NORTH = window.ACCRA_MAP ? window.ACCRA_MAP.highwayStartZ : -850;
     const S = t => t * t * (3 - 2 * t);
-    const hx = z => DRIFT * S(Math.min(1, Math.max(0, (-z - 165) / (-END - 165))));        // highway centre line x at z
+    const hx = z => DRIFT * S(Math.min(1, Math.max(0, (-z - CITY_NORTH) / (-END - CITY_NORTH))));        // highway centre line x at z
     const slope = z => (hx(z - 8) - hx(z + 8)) / 16;
-    const realKm = z => Math.round((-z - 165) / 1000 * 10.2);                               // 1 : 10 scale, so game km x 10.2 = real km
+    const realKm = z => Math.round((-z - CITY_NORTH) / 1000 * 10.2);                               // 1 : 10 scale, so game km x 10.2 = real km
     const rng = seed => { let s = (seed * 2654435761) >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
     const hash = (a, b, c) => ((a * 73856093) ^ (b * 19349663) ^ (c * 83492791)) >>> 0;
 
     // ---------- 1. the world gets big: ground, fog, speed ----------
     ground.scaling.set(20, 1, 45); ground.position.set(0, 0, -12500);                       // x -6000..6000, z -26000..+1000
     gMat.diffuseTexture.uScale = 120 * 20; gMat.diffuseTexture.vScale = 120 * 45;
-    scene.fogStart = 260; scene.fogEnd = 950;
+    scene.fogStart = 600; scene.fogEnd = 1800;
     const mwc = car.moveWithCollisions.bind(car);
     let carF = 1, lx = car.position.x, lz = car.position.z;
     car.moveWithCollisions = v => { const onHw = car.position.z < -260 && Math.abs(car.position.x - hx(car.position.z)) < 16; carF += ((onHw ? 2.3 : 1) - carF) * .06; return mwc(new B.Vector3(v.x * carF, v.y, v.z * carF)); };
@@ -39,7 +39,7 @@
     function roadTask(z0, list) {
       const surf = [], bars = [];
       for (let z = z0; z > z0 - CH; z -= 64) {
-        if (z - 32 > -150) continue;                               // nothing north of the city avenue is skipped; the city core keeps its own roads
+        if (z - 32 > CITY_NORTH) continue;                               // nothing north of the city avenue is skipped; the city core keeps its own roads
         const zm = z - 32, x = hx(zm), th = -Math.atan(slope(zm)), cs = Math.cos(th), sn = Math.sin(th);
         const add = (arr, w, h, d, ox, y, oz, m) => { const b = mk(w, h, d, x + cs * ox + sn * oz, y, zm - sn * ox + cs * oz, m, th); arr.push(b); };
         add(surf, 20, .08, 66, 0, .05, 0, asphalt); add(surf, .25, .09, 66, -9.7, .06, 0, white); add(surf, .25, .09, 66, 9.7, .06, 0, white);
@@ -92,7 +92,7 @@
     }
 
     const chunks = new Map(), queue = [];
-    const near = (cx, cz) => { const zc = cz * CH + CH / 2; if (zc > -120) return false; if (zc < END - 400) return false; const hxc = hx(zc);
+    const near = (cx, cz) => { const zc = cz * CH + CH / 2; if (zc > CITY_NORTH - 120) return false; if (zc < END - 400) return false; const hxc = hx(zc);
       return Math.abs(cx * CH + CH / 2 - hxc) < CH + 120 || TOWNS.some(t => Math.abs(cx * CH + CH / 2 - t.x) < t.R + CH && Math.abs(zc - t.z) < t.R + CH); };
     function request(cx, cz) {
       const k = cx + "," + cz; if (chunks.has(k)) return; const list = []; chunks.set(k, list);
@@ -115,7 +115,7 @@
     let tt = 0;
     scene.onBeforeRenderObservable.add(() => {
       const p = L.driving ? car.position : player.position;
-      if (++tt % 10 === 0 && p.z < -150) {
+      if (++tt % 10 === 0 && p.z < CITY_NORTH - 100) {
         const cx = Math.floor(p.x / CH), cz = Math.floor(p.z / CH), want = new Set();
         for (let x = cx - 3; x <= cx + 3; x++) for (let z = cz - 3; z <= cz + 3; z++) if (near(x, z)) { want.add(x + "," + z); request(x, z); }
         for (const k of [...chunks.keys()]) if (!want.has(k)) drop(k);
@@ -128,7 +128,7 @@
     });
 
     // ---------- 3. intercity buses (fast travel): the stop list and fares ----------
-    const STOPS = [["Accra", 14, -185]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
+    const BS = window.ACCRA_MAP ? window.ACCRA_MAP.places.busStation : { x: -200, z: 350 }; const STOPS = [["Accra", BS.x, BS.z]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
     const FARE = { Accra: 0, Nsawam: 25, Suhum: 40, Nkawkaw: 70, Konongo: 90, Ejisu: 110, Kumasi: 130 };
     function bus(here) {
       const draw = () => show(ttl("\uD83D\uDE8C Intercity buses") + "<small>You are in " + here + " \u00B7 cash GH\u00A2" + cash() + "</small>" + STOPS.filter(s => s[0] !== here).map(s => '<button data-d="' + s[0] + '" style="' + BS + '">' + s[0] + " \u00B7 GH\u00A2" + Math.max(FARE[s[0]], FARE[here]) + "</button>").join("") + CLOSE, d => {
@@ -150,7 +150,7 @@
     }
     scene.onBeforeRenderObservable.add(() => {
       const dt = Math.min(engine.getDeltaTime() / 1000, .1);
-      ayaBodies.forEach(b => { b.t = (b.t + dt / 900) % 1; const u = b.dir > 0 ? b.t : 1 - b.t, z = -165 - u * (24500 - 165), x = hx(z);
+      ayaBodies.forEach(b => { b.t = (b.t + dt / 900) % 1; const u = b.dir > 0 ? b.t : 1 - b.t, z = CITY_NORTH - u * (Math.abs(END) - Math.abs(CITY_NORTH)), x = hx(z);
         b.m.position.set(x, 0, z); b.m.rotation.y = -Math.atan(slope(z)) + (b.dir > 0 ? 0 : Math.PI); });
     });
     const ayaBoard = s => show(ttl("\uD83D\uDE8C " + AYA.line) + "<small>Fare GH\u00A2" + AYA.fare + " to any stop, a bus about every 5 minutes. You are at " + s.n + ". Cash GH\u00A2" + cash() + "</small>" +
