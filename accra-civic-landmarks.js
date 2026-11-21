@@ -159,7 +159,7 @@
       ring.position.set(p.x,.09,p.z); ring.scaling.y=.04; ring.material=asphalt; ring.isPickable=false;
       const island=B.MeshBuilder.CreateCylinder("circle-island",{diameter:50,height:.25,tessellation:32},scene);
       island.position.set(p.x,.13,p.z); island.material=matOf("#4c8041"); island.isPickable=false;
-      for(let i=0;i<8;i++){const a=i*Math.PI/4; const x=p.x+17*Math.cos(a),z=p.z+17*Math.sin(a); cylinder("circle-tree-trunk",.8,4,x,2,z,"#79583c",false); const crown=B.MeshBuilder.CreateSphere("circle-tree-crown",{diameter:5,segments:6},scene); crown.position.set(x,5,z); crown.material=matOf("#397445"); crown.isPickable=false;}
+      for(let i=0;i<6;i++){const a=i*Math.PI/3; const x=p.x+17*Math.cos(a),z=p.z+17*Math.sin(a); cylinder("circle-tree-trunk",.8,4,x,2,z,"#79583c",false); const crown=B.MeshBuilder.CreateSphere("circle-tree-crown",{diameter:5,segments:6},scene); crown.position.set(x,5,z); crown.material=matOf("#397445"); crown.isPickable=false;}
       [[-1,0],[1,0],[0,-1],[0,1]].forEach(v=>{const len=52,road=box("circle-approach",12,.06,len,p.x+v[0]*48,.06,p.z+v[1]*48,"#303236",false);road.rotation.y=v[0]===0?0:Math.PI/2;});
       label("Kwame Nkrumah Circle",p.x,p.z-43,18);
       addPlace("circle","Kwame Nkrumah Circle");
@@ -183,8 +183,8 @@
       const p=P.achimotaForest; clearBlocks(p.x,p.z,105,82);
       ground("achimota-forest",210,164,p.x,p.z,"#416d3c");
       box("forest-path",5,.07,150,p.x,.08,p.z,"#c5b58d",false);
-      for(let i=0;i<20;i++){
-        const x=p.x-76+(i%5)*38+(i%2)*4,z=p.z-48+Math.floor(i/5)*28;
+      for(let i=0;i<12;i++){
+        const x=p.x-54+(i%4)*36,z=p.z-28+Math.floor(i/4)*28;
         cylinder("forest-trunk",.8,5,x,2.5,z,"#79583c",false);
         const crown=B.MeshBuilder.CreateSphere("forest-canopy",{diameter:7,segments:6},scene);
         crown.position.set(x,6,z); crown.material=matOf(i%4===0?"#315f36":"#397445"); crown.isPickable=false;
