@@ -8,7 +8,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#9fd3ee;touch-action:n
 .pill{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;background:rgba(28,30,33,.78);border-radius:14px;padding:7px 12px;font:700 14px system-ui;color:#c9a54a}
 #spd{left:auto;right:8px;color:#fff}
 #joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 18px);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:140px;height:140px;border-radius:50%;background:rgba(28,30,33,.35);border:2px solid rgba(255,255,255,.55);touch-action:none}
-#knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(201,165,74,.92);pointer-events:none}
+#knob{position:absolute;left:50%;top:200%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(201,165,74,.92);pointer-events:none}
 .pb{position:fixed;width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(28,30,33,.55);color:#fff;font-size:26px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);touch-action:none}
 #jump{right:calc(env(safe-area-inset-right,0px) + 18px)}
 #act{right:calc(env(safe-area-inset-right,0px) + 96px);background:rgba(201,165,74,.9);color:#17191c;display:none}
@@ -33,17 +33,17 @@ const mats={};
 const mat=h=>mats[h]||(mats[h]=Object.assign(new BABYLON.StandardMaterial('m'+h,scene),{diffuseColor:C3(h),specularColor:new BABYLON.Color3(.05,.05,.05)}));
 // every solid mesh gets checkCollisions: players, cars and the camera cannot pass through it
 function box(w,h,d,x,y,z,col,solid){const m=BABYLON.MeshBuilder.CreateBox('b',{width:w,height:h,depth:d},scene);m.position.set(x,y,z);m.material=mat(col);m.checkCollisions=solid!==false;m.receiveShadows=true;if(h>.1)sg.addShadowCaster(m);return m}
-const ground=BABYLON.MeshBuilder.CreateGround('g',{width:600,height:600},scene);function noiseTex(base,sp,n){const t=new BABYLON.DynamicTexture('nt',256,scene,true),c=t.getContext();c.fillStyle=base;c.fillRect(0,0,256,256);for(let i=0;i<n;i++){c.fillStyle=sp[i%sp.length];const q=1+Math.random()*3;c.fillRect(Math.random()*256,Math.random()*256,q,q)}t.update();t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;return t}
+const ground=BABYLON.MeshBuilder.CreateGround('g',{width:30000,height:30000},scene);function noiseTex(base,sp,n){const t=new BABYLON.DynamicTexture('nt',256,scene,true),c=t.getContext();c.fillStyle=base;c.fillRect(0,0,256,256);for(let i=0;i<n;i++){c.fillStyle=sp[i%sp.length];const q=1+Math.random()*3;c.fillRect(Math.random()*256,Math.random()*256,q,q)}t.update();t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;return t}
 const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor:new BABYLON.Color3(0,0,0)});gMat.diffuseTexture=noiseTex('#6f9448',['#5e8038','#80a655','#6a8a40','#a3a068'],5000);gMat.diffuseTexture.uScale=gMat.diffuseTexture.vScale=120;
 ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
 const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
 // ===== CITY: 5 x 5 arterial grid, 16 distinct Accra neighbourhoods =====
 const MAP=window.ACCRA_MAP;
 const R=MAP.grid,DG=MAP.districts,VX=MAP.places.villa.x,VZ=MAP.places.villa.z;
-function road(c,ax){const L=1650,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?14:L,height:.05,depth:ax?L:14},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
- const pts=[-825];R.forEach(q=>pts.push(q-18,q+18));pts.push(825);
+function road(c,ax){const L=8250,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?14:L,height:.05,depth:ax?L:14},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
+ const pts=[-4125];R.forEach(q=>pts.push(q-18,q+18));pts.push(4125);
  for(let i=0;i<pts.length;i+=2){const a=pts[i],b=pts[i+1];if(b-a<2)continue;[-1,1].forEach(q=>box(ax?2:b-a,.22,ax?b-a:2,ax?c+q*9.2:(a+b)/2,.11,ax?(a+b)/2:c+q*9.2,'#b5b0a5',false))}
- let src=null;for(let t=-800;t<800;t+=24){if(R.some(q=>Math.abs(t-q)<20))continue;let d;
+ let src=null;for(let t=-4000;t<4000;t+=120){if(R.some(q=>Math.abs(t-q)<20))continue;let d;
   if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:6,height:.02,depth:ax?6:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');
   d.position.set(ax?c:t,.08,ax?t:c);d.isPickable=false}}
 R.forEach(c=>{road(c,0);road(c,1)});
@@ -57,27 +57,27 @@ function bldg(cx,cz,w,d,h,col){const m=BABYLON.MeshBuilder.CreateBox('bd',{width
  const r=BABYLON.MeshBuilder.CreateBox('rf',{width:w+.6,height:.5,depth:d+.6},scene);r.position.set(cx,h+.25,cz);r.material=mat('#7b4b33');r.isPickable=false;sg.addShadowCaster(r);m.freezeWorldMatrix();r.freezeWorldMatrix()}
 const PAL=['#e3d8c0','#d6c4a0','#c9b79a','#b8c4c0','#d9cbb6','#cfa98b','#e6e0d4','#a9b8a8'];
 const STY={
- 'Airport City':{w:34,h:[28,70],c:['#5b8aa8','#4a6f8a','#9dbbd0','#c4ccd4'],p:78},
- 'Airport Residential':{w:24,h:[8,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:72},
- 'East Legon':{w:28,h:[6,12],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:82},
- 'Osu':{w:20,h:[10,24],c:PAL,p:62},'Labadi':{w:24,h:[7,14],c:['#f0d9a0','#e0e0d0','#d8c8a0'],p:72},
- 'Cantonments':{w:26,h:[8,18],c:['#e2b07a','#9fc5a8','#c9cfd6','#f0c9a8'],p:76},
- 'Labone':{w:20,h:[7,14],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:68},
- 'Teshie':{w:16,h:[4,8],c:['#e2b07a','#c8553d','#d6c4a0','#9fc5a8'],p:56},
- 'Accra Central':{w:22,h:[8,22],c:['#e8e6df','#f0e6d0','#dccb96'],p:54},
- 'Jamestown':{w:12,h:[4,8],c:['#f0c27a','#c8553d','#3f8f7a','#d9822b'],p:48},
- 'Kaneshie':{w:18,h:[5,12],c:['#f0c27a','#c8553d','#3f8f7a','#2456a6'],p:54},
- 'Mamprobi':{w:15,h:[4,9],c:['#e3d8c0','#d6c4a0','#cfa98b'],p:58},
- 'Chorkor':{w:12,h:[3,7],c:['#e3d8c0','#d6c4a0','#cfa98b'],p:48},
- 'Achimota':{w:22,h:[5,14],c:['#e2b07a','#9fc5a8','#c9cfd6'],p:76},
- 'Dzorwulu':{w:22,h:[7,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:72},
- 'North Ridge':{w:22,h:[12,30],c:['#e8e6df','#f0e6d0','#b8c4c0'],p:68}
+ 'Airport City':{w:34,h:[28,70],c:['#5b8aa8','#4a6f8a','#9dbbd0','#c4ccd4'],p:312},
+ 'Airport Residential':{w:24,h:[8,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:288},
+ 'East Legon':{w:28,h:[6,12],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:328},
+ 'Osu':{w:20,h:[10,24],c:PAL,p:248},'Labadi':{w:24,h:[7,14],c:['#f0d9a0','#e0e0d0','#d8c8a0'],p:288},
+ 'Cantonments':{w:26,h:[8,18],c:['#e2b07a','#9fc5a8','#c9cfd6','#f0c9a8'],p:304},
+ 'Labone':{w:20,h:[7,14],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:272},
+ 'Teshie':{w:16,h:[4,8],c:['#e2b07a','#c8553d','#d6c4a0','#9fc5a8'],p:224},
+ 'Accra Central':{w:22,h:[8,22],c:['#e8e6df','#f0e6d0','#dccb96'],p:216},
+ 'Jamestown':{w:12,h:[4,8],c:['#f0c27a','#c8553d','#3f8f7a','#d9822b'],p:192},
+ 'Kaneshie':{w:18,h:[5,12],c:['#f0c27a','#c8553d','#3f8f7a','#2456a6'],p:216},
+ 'Mamprobi':{w:15,h:[4,9],c:['#e3d8c0','#d6c4a0','#cfa98b'],p:232},
+ 'Chorkor':{w:12,h:[3,7],c:['#e3d8c0','#d6c4a0','#cfa98b'],p:192},
+ 'Achimota':{w:22,h:[5,14],c:['#e2b07a','#9fc5a8','#c9cfd6'],p:304},
+ 'Dzorwulu':{w:22,h:[7,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:288},
+ 'North Ridge':{w:22,h:[12,30],c:['#e8e6df','#f0e6d0','#b8c4c0'],p:272}
 };
 const signed={};
 function cityRandom(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
 for(let i=0;i<4;i++)for(let j=0;j<4;j++){const nm=DG[i][j],S=STY[nm],x0=R[i]+12,x1=R[i+1]-12,z0=R[j]+12,z1=R[j+1]-12,nx=Math.max(1,Math.floor((x1-x0)/S.p)),nz=Math.max(1,Math.floor((z1-z0)/S.p));
  const mx=(R[i]+R[i+1])/2,mz=(R[j]+R[j+1])/2,rand=cityRandom((((i+1)*73856093)^((j+1)*19349663))>>>0);
- MAP.localRoadOffsets.forEach(o=>{const lr1=box(8,.045,376,mx+o,.035,mz,'#37393d',false);lr1.name='localroad';const lr2=box(376,.045,8,mx,.035,mz+o,'#37393d',false);lr2.name='localroad';});
+ MAP.localRoadOffsets.forEach(o=>{const lr1=box(8,.045,1876,mx+o,.035,mz,'#37393d',false);lr1.name='localroad';const lr2=box(1876,.045,8,mx,.035,mz+o,'#37393d',false);lr2.name='localroad';});
  for(let a=0;a<nx;a++)for(let b=0;b<nz;b++){const cx=x0+(a+.5)*(x1-x0)/nx,cz=z0+(b+.5)*(z1-z0)/nz;
   if(Math.hypot(cx-VX,cz-VZ)<38)continue;if(MAP.localRoadOffsets.some(o=>Math.abs(cx-(mx+o))<18||Math.abs(cz-(mz+o))<18))continue;                 // keep the villa plot free
   const h=S.h[0]+rand()*(S.h[1]-S.h[0]),w=S.w-rand()*2;bldg(cx,cz,w,w*(.8+rand()*.2),h,S.c[(a+b*3+i)%S.c.length])}
