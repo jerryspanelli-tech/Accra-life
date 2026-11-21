@@ -32,8 +32,8 @@ assert.ok(M.highwayStartZ < M.cityBounds.minZ, 'intercity highway must join nort
 assert.ok(M.coastlineZ > M.cityBounds.maxZ, 'coastline must sit south of the city grid');
 const A = M.places.airport;
 const westGap = (A.x - 190) - 7;
-const eastGap = (A.x + 190) - (400 + 7);
-assert.ok(westGap >= 2 && Math.abs(eastGap) >= 2, 'airport fence must not overlap the adjacent arterial roads');
+const eastGap = (400 - 7) - (A.x + 190);
+assert.ok(westGap >= 2 && eastGap >= 2, 'airport fence must not overlap the adjacent arterial roads');
 for (const [name, p] of Object.entries(M.places)) {
   if (name === 'atms') continue;
   assert.ok(Number.isFinite(p.x) && Number.isFinite(p.z), name + ' coordinates must be finite');
