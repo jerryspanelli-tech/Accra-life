@@ -4,10 +4,11 @@ global.window = {};
 require('../accra-map.js');
 const M = window.ACCRA_MAP;
 assert.ok(M, 'shared Accra map must load');
-assert.equal(M.version, 3);
-assert.equal(M.scale, 10);
-assert.deepEqual(M.grid, [-800, -400, 0, 400, 800]);
-assert.deepEqual(M.cellCenters, [-600, -200, 200, 600]);
+assert.equal(M.version, 4);
+assert.equal(M.expansion, 5);
+assert.equal(M.scale, 50);
+assert.deepEqual(M.grid, [-4000, -2000, 0, 2000, 4000]);
+assert.deepEqual(M.cellCenters, [-3000, -1000, 1000, 3000]);
 assert.equal(M.districts.length, 4);
 assert.ok(M.districts.every(row => row.length === 4), 'district layout must be 4 x 4');
 const names = M.districts.flat();
@@ -36,8 +37,8 @@ assert.equal(cell(M.places.militaryHospital.x, M.places.militaryHospital.z), 'Ai
 assert.equal(cell(M.places.achimotaForest.x, M.places.achimotaForest.z), 'Achimota');
 assert.equal(cell(M.places.universityOfGhana.x, M.places.universityOfGhana.z), 'East Legon');
 const near = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-assert.ok(near(M.places.stadium, M.places.blackStarSquare) < 80, 'stadium and Black Star Square should be neighbouring civic sites');
-assert.ok(near(M.places.nkrumahPark, M.places.blackStarSquare) < 180, 'Nkrumah Park should remain close to Black Star Square');
+assert.ok(near(M.places.stadium, M.places.blackStarSquare) < 400, 'stadium and Black Star Square should be neighbouring civic sites');
+assert.ok(near(M.places.nkrumahPark, M.places.blackStarSquare) < 900, 'Nkrumah Park should remain close to Black Star Square');
 assert.ok(M.namedRoads.length >= 7, 'named Accra road hierarchy is missing');
 for (const name of ['N1 George Bush Highway','Ring Road Central','Liberation Road','Independence Avenue','Spintex Road','Accra–Tema Motorway','Tema Harbour Access Road']) assert.ok(M.namedRoads.some(r => r.name === name), name + ' is missing');
 for (const r of M.namedRoads) {
@@ -45,15 +46,15 @@ for (const r of M.namedRoads) {
   assert.ok(r.points.every(p => p.length === 2 && p.every(Number.isFinite)), 'road coordinates must be finite');
 }
 assert.ok(M.highwayStartZ < M.cityBounds.minZ, 'intercity highway must join north of the city grid');
-assert.ok(M.grid.includes(400), 'airport access must meet the x=400 city arterial');
+assert.ok(M.grid.includes(2000), 'airport access must meet the x=2000 city arterial');
 const segmentDistance = (p, a, b) => { const dx=b[0]-a[0], dz=b[1]-a[1], t=Math.max(0,Math.min(1,((p.x-a[0])*dx+(p.z-a[1])*dz)/(dx*dx+dz*dz))); return Math.hypot(p.x-(a[0]+t*dx),p.z-(a[1]+t*dz)); };
 const n1 = M.namedRoads.find(r => r.name === 'N1 George Bush Highway');
 const n1Gap = Math.min(...n1.points.slice(1).map((b,i) => segmentDistance(M.places.airport,n1.points[i],b)));
-assert.ok(n1Gap > 200, 'N1 must pass clear of the Kotoka airport site');
+assert.ok(n1Gap > 1000, 'N1 must pass clear of the Kotoka airport site');
 assert.ok(M.coastlineZ > M.cityBounds.maxZ, 'coastline must sit south of the city grid');
 const A = M.places.airport;
 const westGap = (A.x - 190) - 7;
-const eastGap = (400 - 7) - (A.x + 190);
+const eastGap = (2000 - 7) - (A.x + 190);
 assert.ok(westGap >= 2 && eastGap >= 2, 'airport fence must not overlap the adjacent arterial roads');
 for (const [name, p] of Object.entries(M.places)) {
   if (name === 'atms') continue;
