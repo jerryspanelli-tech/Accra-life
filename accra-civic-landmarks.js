@@ -55,8 +55,6 @@
 
     // Named roads sit over the broad district streets and provide recognisable Accra routes.
     const asphalt = matOf("#303236"), yellow = matOf("#e6c84b");
-    const dashSource = B.MeshBuilder.CreateBox("road-mark-source", { width:.28, height:.025, depth:5 }, scene);
-    dashSource.position.set(0,-1000,0); dashSource.material=yellow; dashSource.isPickable=false; dashSource.checkCollisions=false;
     M.namedRoads.forEach(route => {
       for (let i=0;i<route.points.length-1;i++) {
         const a=route.points[i], b=route.points[i+1], dx=b[0]-a[0], dz=b[1]-a[1], len=Math.hypot(dx,dz);
@@ -64,10 +62,8 @@
         const angle=Math.atan2(dx,dz), mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2;
         const surf=B.MeshBuilder.CreateBox("named-road",{width:route.width,height:.06,depth:len},scene);
         surf.position.set(mx,.055,mz); surf.rotation.y=angle; surf.material=asphalt; surf.isPickable=false; surf.checkCollisions=false;
-        for(let d=12;d<len-8;d+=26){
-          const mark=dashSource.createInstance("road-mark");
-          mark.position.set(a[0]+dx/len*d,.09,a[1]+dz/len*d); mark.rotation.y=angle; mark.isPickable=false;
-        }
+        const mark=B.MeshBuilder.CreateBox("road-mark",{width:.28,height:.025,depth:Math.max(4,len-8)},scene);
+        mark.position.set(mx,.09,mz); mark.rotation.y=angle; mark.material=yellow; mark.isPickable=false;
       }
     });
 
@@ -160,7 +156,7 @@
       ring.position.set(p.x,.09,p.z); ring.scaling.y=.04; ring.material=asphalt; ring.isPickable=false;
       const island=B.MeshBuilder.CreateCylinder("circle-island",{diameter:50,height:.25,tessellation:32},scene);
       island.position.set(p.x,.13,p.z); island.material=matOf("#4c8041"); island.isPickable=false;
-      for(let i=0;i<12;i++){const a=i*Math.PI/6; const x=p.x+17*Math.cos(a),z=p.z+17*Math.sin(a); cylinder("circle-tree-trunk",.8,4,x,2,z,"#79583c",false); const crown=B.MeshBuilder.CreateSphere("circle-tree-crown",{diameter:5,segments:6},scene); crown.position.set(x,5,z); crown.material=matOf("#397445"); crown.isPickable=false;}
+      for(let i=0;i<8;i++){const a=i*Math.PI/4; const x=p.x+17*Math.cos(a),z=p.z+17*Math.sin(a); cylinder("circle-tree-trunk",.8,4,x,2,z,"#79583c",false); const crown=B.MeshBuilder.CreateSphere("circle-tree-crown",{diameter:5,segments:6},scene); crown.position.set(x,5,z); crown.material=matOf("#397445"); crown.isPickable=false;}
       [[-1,0],[1,0],[0,-1],[0,1]].forEach(v=>{const len=52,road=box("circle-approach",12,.06,len,p.x+v[0]*48,.06,p.z+v[1]*48,"#303236",false);road.rotation.y=v[0]===0?0:Math.PI/2;});
       label("Kwame Nkrumah Circle",p.x,p.z-43,18);
       addPlace("circle","Kwame Nkrumah Circle");
@@ -184,8 +180,8 @@
       const p=P.achimotaForest; clearBlocks(p.x,p.z,105,82);
       ground("achimota-forest",210,164,p.x,p.z,"#416d3c");
       box("forest-path",5,.07,150,p.x,.08,p.z,"#c5b58d",false);
-      for(let i=0;i<34;i++){
-        const x=p.x-88+(i%7)*27+(i%2)*6,z=p.z-62+Math.floor(i/7)*25;
+      for(let i=0;i<20;i++){
+        const x=p.x-76+(i%5)*38+(i%2)*4,z=p.z-48+Math.floor(i/5)*28;
         cylinder("forest-trunk",.8,5,x,2.5,z,"#79583c",false);
         const crown=B.MeshBuilder.CreateSphere("forest-canopy",{diameter:7,segments:6},scene);
         crown.position.set(x,6,z); crown.material=matOf(i%4===0?"#315f36":"#397445"); crown.isPickable=false;
