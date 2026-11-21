@@ -71,7 +71,9 @@ assert.ok(html.includes('window.ACCRA_BUILD = 4'), 'dynamic Accra modules must u
 assert.ok(html.includes('accra-map.js?v=4'), 'the expanded shared map must bypass old browser cache');
 assert.ok(world.includes('ground.scaling.set(50, 1, 65)'), 'world terrain must cover the expanded city and highway');
 assert.ok(world.includes('ground.position.set(0, 0, -14000)'), 'world terrain must cover the south coast and northern highway');
+assert.ok(world.includes('scene.fogStart = 2500; scene.fogEnd = 9500;'), 'expanded districts must remain visible across the wider city');
 assert.ok(airport.includes('box(800, .06, 12, C.x + 600, .04, C.z + 56'), 'Kotoka east gate must connect to the x=2000 arterial');
+assert.ok(airport.includes('inAccessCorridor'), 'buildings must be cleared from the airport access road corridor');
 assert.ok(M.places.temaHarbour.x < 15000 && M.places.temaHarbour.x > 12000, 'Tema Harbour must remain inside the expanded world terrain');
 assert.ok(M.namedRoads.find(r => r.name === 'Tema Harbour Access Road').points.at(-1)[0] === M.places.temaHarbour.x, 'Tema Harbour access road must reach the harbour');
 console.log('Accra map checks passed: 16 distinct districts, aligned civic landmarks, and named road hierarchy.');
