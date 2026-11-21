@@ -20,7 +20,7 @@
 
     // ---------- police officers ----------
     const A = window.AccraAssets, cops = [], gridPts = [];
-    const ROAD_LINES = window.ACCRA_MAP ? window.ACCRA_MAP.roadLines : R; ROAD_LINES.forEach(x => ROAD_LINES.forEach(z => gridPts.push([x + 6, z + 6])));
+    const ROAD_LINES = window.ACCRA_MAP ? window.ACCRA_MAP.roadLines : R, AP = window.ACCRA_MAP && window.ACCRA_MAP.places.airport; ROAD_LINES.forEach(x => ROAD_LINES.forEach(z => { if (AP && Math.abs(x-AP.x)<195 && Math.abs(z-AP.z)<110) return; gridPts.push([x + 6, z + 6]); }));
     const mkCop = (x, z) => {
       const c = A.createCharacter(scene, { police: true, shirt: "#1d3b6b", pants: "#14213d", skin: "#6b4028", hair: "#0d0d0d", kente: false, scale: .9 });
       const cap = B.MeshBuilder.CreateBox("cap", { width: .6, height: .14, depth: .62 }, scene); cap.parent = c.root; cap.position.set(0, 2.18, 0); cap.material = mat("#14213d"); cap.isPickable = false;
