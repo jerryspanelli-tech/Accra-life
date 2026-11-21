@@ -457,7 +457,7 @@
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
     const MP = window.ACCRA_MAP.places;
-    const TELE = { mall: [MP.mall.x, MP.mall.z], stadium: [MP.stadium.x, MP.stadium.z], hospital: [MP.hospital.x, MP.hospital.z], police: [MP.police.x, MP.police.z], villa: [VX, VZ + 12], airport: [MP.airport.x, MP.airport.z],
+    const TELE = { mall: [MP.mall.x, MP.mall.z], makola: [MP.makola.x, MP.makola.z], stadium: [MP.stadium.x, MP.stadium.z], hospital: [MP.hospital.x, MP.hospital.z], police: [MP.police.x, MP.police.z], villa: [VX, VZ + 12], airport: [MP.airport.x, MP.airport.z],
       "Labadi beach": [MP.labadiBeach.x, MP.labadiBeach.z], "Amoamah estate": [MP.estate.x, MP.estate.z], "Car dealership": [MP.dealer.x, MP.dealer.z], "Gold works": [MP.goldworks.x, MP.goldworks.z], "Stone quarry": [MP.quarry.x, MP.quarry.z],
       "Accra North (highway)": [0, MP.spawn.z - 1100], "Nsawam": [140, -3500], "Suhum": [-120, -6500], "Nkawkaw": [-980, -13000], "Konongo": [-1830, -19000], "Ejisu": [-2110, -22500], "Kumasi (Kejetia)": [-2180, -24500] };
     function adminPanel() {
