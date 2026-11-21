@@ -41,11 +41,14 @@ async function waitFor(url, child) {
     if (!healthData.ok) throw new Error('Health endpoint did not return ok');
     const home = await fetch(base + '/');
     const homeHtml = await home.text();
-    if (!home.ok || !homeHtml.includes('accra-map.js') || !homeHtml.includes('online.js')) throw new Error('Game homepage or shared map script was not served');
+    if (!home.ok || !homeHtml.includes('accra-map.js') || !homeHtml.includes('online.js') || !homeHtml.includes('accra-civic-landmarks.js')) throw new Error('Game homepage or shared Accra modules were not served');
     const page = await fetch(base + '/babylon.html');
     if (!page.ok || !(await page.text()).includes('accra-map.js')) throw new Error('Babylon game page was not served');
     const map = await fetch(base + '/accra-map.js');
-    if (!map.ok || !(await map.text()).includes('Airport Residential')) throw new Error('Shared Accra map data was not served');
+    const mapText = await map.text();
+    if (!map.ok || !mapText.includes('Airport Residential') || !mapText.includes('blackStarSquare') || !mapText.includes('Accra–Tema Motorway')) throw new Error('Shared Accra map data or named roads were not served');
+    const civic = await fetch(base + '/accra-civic-landmarks.js');
+    if (!civic.ok || !(await civic.text()).includes('Jamestown Lighthouse')) throw new Error('Civic landmark module was not served');
     const handshake = await fetch(base + '/socket.io/?EIO=4&transport=polling&t=smoke');
     if (!handshake.ok) throw new Error('Socket.IO polling handshake failed');
     const packet = await handshake.text();
