@@ -33,7 +33,7 @@
     circle: { x: -200, z: -200 },
     militaryHospital: { x: 44, z: -233 },
     achimotaForest: { x: -600, z: -600 },
-    universityOfGhana: { x: 600, z: -780 },
+    universityOfGhana: { x: 600, z: -650 },
     police: { x: -600, z: -200 },
     hospital: { x: -200, z: -600 },
     dealer: { x: -600, z: 200 },
