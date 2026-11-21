@@ -67,8 +67,8 @@ assert.equal(M.places.atms.length, 10, 'ATM destinations must remain available')
 const html = fs.readFileSync(path.join(__dirname, '..', 'babylon.html'), 'utf8');
 const world = fs.readFileSync(path.join(__dirname, '..', 'accra-world.js'), 'utf8');
 const airport = fs.readFileSync(path.join(__dirname, '..', 'accra-airport.js'), 'utf8');
-assert.ok(html.includes('window.ACCRA_BUILD = 4'), 'dynamic Accra modules must use the current cache version');
-assert.ok(html.includes('accra-map.js?v=4'), 'the expanded shared map must bypass old browser cache');
+assert.ok(html.includes('window.ACCRA_BUILD = 5'), 'dynamic Accra modules must use the current cache version');
+assert.ok(html.includes('accra-map.js?v=5'), 'the expanded shared map must bypass old browser cache');
 assert.ok(html.includes('cam.maxZ=12000'), 'camera far clip must include the expanded districts');
 assert.ok(world.includes('ground.scaling.set(50, 1, 65)'), 'world terrain must cover the expanded city and highway');
 assert.ok(world.includes('ground.position.set(0, 0, -14000)'), 'world terrain must cover the south coast and northern highway');
