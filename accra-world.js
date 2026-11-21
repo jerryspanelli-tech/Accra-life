@@ -1,5 +1,5 @@
 /* accra-world.js - THE BIG MAP.
- * World = 12 km wide x 27 km long (about 324 sq km). The expanded Accra street grid joins a 24.5 km northbound highway to Kumasi (scale 1 : 10 of the real 250 km),
+ * World = 30 km wide x 39 km long (about 324 sq km). The expanded Accra street grid joins a 24.5 km northbound highway to Kumasi (scale 1 : 10 of the real 250 km),
  * streamed in 256 m chunks: road, guard rails, trees, farms, signs, toll plazas, and six towns. Loaded by accra-life.js. */
 (function () {
   try {
@@ -15,8 +15,8 @@
     const hash = (a, b, c) => ((a * 73856093) ^ (b * 19349663) ^ (c * 83492791)) >>> 0;
 
     // ---------- 1. the world gets big: ground, fog, speed ----------
-    ground.scaling.set(20, 1, 45); ground.position.set(0, 0, -12500);                       // x -6000..6000, z -26000..+1000
-    gMat.diffuseTexture.uScale = 120 * 20; gMat.diffuseTexture.vScale = 120 * 45;
+    ground.scaling.set(50, 1, 65); ground.position.set(0, 0, -14000);                       // x -15000..15000, z -33500..+5500
+    gMat.diffuseTexture.uScale = 120 * 50; gMat.diffuseTexture.vScale = 120 * 65;
     scene.fogStart = 600; scene.fogEnd = 1800;
     const mwc = car.moveWithCollisions.bind(car);
     let carF = 1, lx = car.position.x, lz = car.position.z;
@@ -169,6 +169,6 @@
     window.ACCRA_DEST_EXTRA = TOWNS.map(t => ({ n: t.n + " (" + realKm(t.z) + " km from Accra)", x: t.x, z: t.z }));
     window.ACCRA_WORLD = { hx, towns: TOWNS, tolls: TOLLS, chunks };
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).world = 1;
-    console.log("Accra big world ready: 12 x 27 km, " + TOWNS.length + " towns");
+    console.log("Accra big world ready: 30 x 39 km, " + TOWNS.length + " towns");
   } catch (err) { console.error("accra-world failed:", err); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note("\u26A0 World: " + err.message); }
 })();
