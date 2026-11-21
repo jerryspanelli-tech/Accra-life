@@ -24,7 +24,7 @@ const engine=new BABYLON.Engine($('c'),true,{adaptToDeviceRatio:true});
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.5,.71,.9,1);scene.collisionsEnabled=true;
 const ipc=scene.imageProcessingConfiguration;ipc.toneMappingEnabled=true;ipc.toneMappingType=BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;ipc.exposure=1.05;ipc.contrast=1.15;
-scene.fogMode=BABYLON.Scene.FOGMODE_LINEAR;scene.fogColor=C3('#cfe3f2');scene.fogStart=110;scene.fogEnd=300;
+scene.fogMode=BABYLON.Scene.FOGMODE_LINEAR;scene.fogColor=C3('#cfe3f2');scene.fogStart=500;scene.fogEnd=1500;
 const hemi=new BABYLON.HemisphericLight('h',V(0,1,0),scene);hemi.intensity=.75;hemi.groundColor=C3('#8d8a80');hemi.diffuse=C3('#dfeeff');
 const sun=new BABYLON.DirectionalLight('s',V(-.5,-1,-.4),scene);sun.intensity=1.3;sun.diffuse=C3('#fff1d6');sun.position=V(40,80,32);sun.autoUpdateExtends=false;sun.shadowMinZ=1;sun.shadowMaxZ=220;sun.orthoLeft=-55;sun.orthoRight=55;sun.orthoTop=55;sun.orthoBottom=-55;
 const sg=new BABYLON.ShadowGenerator(1024,sun);sg.usePercentageCloserFiltering=true;sg.bias=.0008;sg.normalBias=.02;sg.darkness=.35;
@@ -37,12 +37,24 @@ const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor
 ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
 const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
 // ===== CITY: 5 x 5 street grid, 7 districts =====
-const R=[-150,-70,0,70,150],VX=110,VZ=-95;
-function road(c,ax){const L=330,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?8:L,height:.05,depth:ax?L:8},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
- const pts=[-165];R.forEach(q=>pts.push(q-11,q+11));pts.push(165);
- for(let i=0;i<pts.length;i+=2){const a=pts[i],b=pts[i+1];if(b-a<2)continue;[-1,1].forEach(q=>box(ax?1.6:b-a,.22,ax?b-a:1.6,ax?c+q*5.2:(a+b)/2,.11,ax?(a+b)/2:c+q*5.2,'#b5b0a5',false))}
- let src=null;for(let t=-160;t<165;t+=8){if(R.some(q=>Math.abs(t-q)<9))continue;let d;
-  if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:3,height:.02,depth:ax?3:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');
+const MAP=window.ACCRA_MAP={
+ scale:10,grid:[-800,-400,0,400,800],cellCenters:[-600,-200,200,600],localRoadOffsets:[-100,100],highwayStartZ:-850,coastlineZ:850,
+ districts:[["Achimota","Kaneshie","Mamprobi","Chorkor"],["Dzorwulu","North Ridge","Accra Central","Jamestown"],["Airport Residential","Airport City","Osu","Labadi"],["East Legon","Cantonments","Labone","Teshie"]],
+ places:{
+  spawn:{x:-200,z:250},villa:{x:620,z:-690},estate:{x:600,z:-390},mall:{x:600,z:-200},
+  stadium:{x:-250,z:-180},police:{x:-600,z:-200},hospital:{x:-200,z:-400},dealer:{x:-600,z:200},
+  pub:{x:200,z:200},airport:{x:200,z:-500},labadiBeach:{x:600,z:700},
+  quarry:{x:-1200,z:-600},goldworks:{x:1200,z:400},tema:{x:2500,z:200},busStation:{x:-200,z:350},
+  atms:[[-600,-200],[-200,-600],[200,-200],[600,-200],[-600,200],[-200,400],[200,200],[600,400],[-400,0],[400,0]]
+ },
+ roadLines:[-800,-700,-500,-400,-300,-100,0,100,300,400,500,700,800]
+};
+const R=MAP.grid,DG=MAP.districts,VX=MAP.places.villa.x,VZ=MAP.places.villa.z;
+function road(c,ax){const L=1650,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?14:L,height:.05,depth:ax?L:14},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
+ const pts=[-825];R.forEach(q=>pts.push(q-18,q+18));pts.push(825);
+ for(let i=0;i<pts.length;i+=2){const a=pts[i],b=pts[i+1];if(b-a<2)continue;[-1,1].forEach(q=>box(ax?2:b-a,.22,ax?b-a:2,ax?c+q*9.2:(a+b)/2,.11,ax?(a+b)/2:c+q*9.2,'#b5b0a5',false))}
+ let src=null;for(let t=-800;t<800;t+=24){if(R.some(q=>Math.abs(t-q)<20))continue;let d;
+  if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:6,height:.02,depth:ax?6:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');
   d.position.set(ax?c:t,.08,ax?t:c);d.isPickable=false}}
 R.forEach(c=>{road(c,0);road(c,1)});
 function signText(t,x,z){const dt=new BABYLON.DynamicTexture('st',{width:512,height:128},scene,false),c=dt.getContext();c.fillStyle='#17191c';c.fillRect(0,0,512,128);c.fillStyle='#c9a54a';c.font='bold 52px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(t,256,66);dt.update();
@@ -55,11 +67,29 @@ function bldg(cx,cz,w,d,h,col){const m=BABYLON.MeshBuilder.CreateBox('bd',{width
  const r=BABYLON.MeshBuilder.CreateBox('rf',{width:w+.6,height:.5,depth:d+.6},scene);r.position.set(cx,h+.25,cz);r.material=mat('#7b4b33');r.isPickable=false;sg.addShadowCaster(r);m.freezeWorldMatrix();r.freezeWorldMatrix()}
 const PAL=['#e3d8c0','#d6c4a0','#c9b79a','#b8c4c0','#d9cbb6','#cfa98b','#e6e0d4','#a9b8a8'];
 const DG=[['Airport City','Osu','Osu','Labadi'],['Airport City','Makola','Makola','Labadi'],['East Legon','Makola','Makola','Central Accra'],['East Legon','Amoamah Estate','Amoamah Estate','Central Accra']];
-const STY={'Airport City':{w:14,h:[24,42],c:['#5b8aa8','#4a6f8a','#9dbbd0','#c4ccd4'],p:18},'Osu':{w:12,h:[10,16],c:PAL,p:17},'Makola':{w:9,h:[4,6],c:['#f0c27a','#c8553d','#3f8f7a','#2456a6','#e9f1f2','#d9822b'],p:12},'Central Accra':{w:16,h:[8,12],c:['#e8e6df','#f0e6d0','#dccb96'],p:20},'Labadi':{w:14,h:[7,12],c:['#f0d9a0','#e0e0d0','#d8c8a0'],p:18},'East Legon':{w:16,h:[6,8],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:22},'Amoamah Estate':{w:12,h:[5,6],c:['#e2b07a','#9fc5a8','#c9cfd6','#f0c9a8','#b7c4d0'],p:16}};
+const STY={
+ 'Airport City':{w:34,h:[28,70],c:['#5b8aa8','#4a6f8a','#9dbbd0','#c4ccd4'],p:78},
+ 'Airport Residential':{w:24,h:[8,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:72},
+ 'East Legon':{w:28,h:[6,12],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:82},
+ 'Osu':{w:20,h:[10,24],c:PAL,p:62},'Labadi':{w:24,h:[7,14],c:['#f0d9a0','#e0e0d0','#d8c8a0'],p:72},
+ 'Cantonments':{w:26,h:[8,18],c:['#e2b07a','#9fc5a8','#c9cfd6','#f0c9a8'],p:76},
+ 'Labone':{w:20,h:[7,14],c:['#f5f0e6','#e8e0d0','#d8e4ec'],p:68},
+ 'Teshie':{w:16,h:[4,8],c:['#e2b07a','#c8553d','#d6c4a0','#9fc5a8'],p:56},
+ 'Accra Central':{w:22,h:[8,22],c:['#e8e6df','#f0e6d0','#dccb96'],p:54},
+ 'Jamestown':{w:12,h:[4,8],c:['#f0c27a','#c8553d','#3f8f7a','#d9822b'],p:48},
+ 'Kaneshie':{w:18,h:[5,12],c:['#f0c27a','#c8553d','#3f8f7a','#2456a6'],p:54},
+ 'Mamprobi':{w:15,h:[4,9],c:['#e3d8c0','#d6c4a0','#cfa98b'],p:58},
+ 'Chorkor':{w:12,h:[3,7],c:['#e3d8c0','#d6c4a0','#cfa98b'],p:48},
+ 'Achimota':{w:22,h:[5,14],c:['#e2b07a','#9fc5a8','#c9cfd6'],p:76},
+ 'Dzorwulu':{w:22,h:[7,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:72},
+ 'North Ridge':{w:22,h:[12,30],c:['#e8e6df','#f0e6d0','#b8c4c0'],p:68}
+};
 const signed={};
 for(let i=0;i<4;i++)for(let j=0;j<4;j++){const nm=DG[i][j],S=STY[nm],x0=R[i]+12,x1=R[i+1]-12,z0=R[j]+12,z1=R[j+1]-12,nx=Math.max(1,Math.floor((x1-x0)/S.p)),nz=Math.max(1,Math.floor((z1-z0)/S.p));
+ const mx=(R[i]+R[i+1])/2,mz=(R[j]+R[j+1])/2;
+ MAP.localRoadOffsets.forEach(o=>{box(8,.045,376,mx+o,.035,mz,'#37393d',false);box(376,.045,8,mx,.035,mz+o,'#37393d',false);});
  for(let a=0;a<nx;a++)for(let b=0;b<nz;b++){const cx=x0+(a+.5)*(x1-x0)/nx,cz=z0+(b+.5)*(z1-z0)/nz;
-  if(Math.hypot(cx-VX,cz-VZ)<24)continue;                 // keep the villa plot free
+  if(Math.hypot(cx-VX,cz-VZ)<38)continue;if(MAP.localRoadOffsets.some(o=>Math.abs(cx-(mx+o))<18||Math.abs(cz-(mz+o))<18))continue;                 // keep the villa plot free
   const h=S.h[0]+Math.random()*(S.h[1]-S.h[0]),w=S.w-Math.random()*2;bldg(cx,cz,w,w*(.8+Math.random()*.2),h,S.c[(a+b*3+i)%S.c.length])}
  if(!signed[nm]){signed[nm]=1;signText(nm,(x0+x1)/2,(z0+z1)/2)}}
 // beach and sea at the south edge (Labadi)
@@ -71,10 +101,10 @@ function tree(x,z){const t=BABYLON.MeshBuilder.CreateCylinder('t',{height:5,diam
 function palm(x,z){const h=6+Math.random()*3,t=BABYLON.MeshBuilder.CreateCylinder('t',{height:h,diameterTop:.35,diameterBottom:.6},scene);t.position.set(x,h/2,z);t.material=mat('#8b6b4a');t.checkCollisions=true;sg.addShadowCaster(t);
  const top=new BABYLON.TransformNode('pt',scene);top.position.set(x,h,z);
  for(let i=0;i<7;i++){const a=new BABYLON.TransformNode('pa',scene);a.parent=top;a.rotation.y=i/7*Math.PI*2;const f=BABYLON.MeshBuilder.CreateBox('f',{width:.7,height:.06,depth:3.4},scene);f.parent=a;f.position.set(0,-.35,1.5);f.rotation.x=.5;f.material=mat('#4a7a35');f.isPickable=false;sg.addShadowCaster(f)}}
-R.forEach(c=>{for(let t=-156;t<=156;t+=36)[-7.6,7.6].forEach(o=>{if(R.some(r=>Math.abs(t-r)<14))return;palm(c+o,t);palm(t,c+o)})});
+R.forEach(c=>{for(let t=-780;t<=780;t+=160)[-9.2,9.2].forEach(o=>{if(R.some(r=>Math.abs(t-r)<24))return;palm(c+o,t);palm(t,c+o)})});
 // clouds
 const clouds=[],cloudM=Object.assign(new BABYLON.StandardMaterial('cl',scene),{emissiveColor:new BABYLON.Color3(1,1,1),disableLighting:true,alpha:.92,fogEnabled:false});
-for(let i=0;i<14;i++){const c=BABYLON.MeshBuilder.CreateSphere('cl',{diameter:1},scene);c.material=cloudM;c.scaling.set(30+Math.random()*30,6+Math.random()*3,16+Math.random()*10);c.position.set(Math.random()*400-200,85+Math.random()*25,Math.random()*400-200);c.isPickable=false;clouds.push(c)}
+for(let i=0;i<14;i++){const c=BABYLON.MeshBuilder.CreateSphere('cl',{diameter:1},scene);c.material=cloudM;c.scaling.set(30+Math.random()*30,6+Math.random()*3,16+Math.random()*10);c.position.set(Math.random()*1800-900,85+Math.random()*25,Math.random()*1800-900);c.isPickable=false;clouds.push(c)}
 // ---------- VILLA 26 x 18 m: attached garage (centre front), lounge, kitchen, office, master suite, cinema ----------
 /* villa position set above */
 const vb=(lx,lz,sw,sd,col)=>box(sw,3.2,sd,VX+lx,1.6,VZ+lz,col||'#f3ecdc');
@@ -93,14 +123,14 @@ fl(-8.2,4.5,9.4,9,'#9b6b43');fl(8.2,4.5,9.4,9,'#e8e2d6');fl(0,5,6.8,8,'#8f9296')
 const roof=box(26.6,.3,18.6,VX,3.35,VZ,'#7b4b33',false);
 // ---------- player ----------
 const player=BABYLON.MeshBuilder.CreateCapsule('p',{height:1.8,radius:.4},scene);
-player.position.set(0,.91,10);player.material=mat('#c9a54a');player.ellipsoid=V(.4,.9,.4);
+player.position.set(MAP.places.spawn.x,.91,MAP.places.spawn.z);player.material=mat('#c9a54a');player.ellipsoid=V(.4,.9,.4);
 const camT=new BABYLON.TransformNode('ct',scene);
 const cam=new BABYLON.ArcRotateCamera('cam',Math.PI/2,1.1,9,V(0,1,0),scene);
 cam.lockedTarget=camT;cam.lowerRadiusLimit=3;cam.upperRadiusLimit=16;cam.lowerBetaLimit=.25;cam.upperBetaLimit=1.45;
 cam.checkCollisions=true;cam.collisionRadius=V(.5,.5,.5);cam.minZ=.2;cam.attachControl($('c'),true);
 // ---------- car (collider box + visual parts) ----------
 const car=BABYLON.MeshBuilder.CreateBox('car',{width:2.2,height:1.4,depth:4.6},scene);
-car.isVisible=false;car.position.set(2,.8,22);car.checkCollisions=true;car.ellipsoid=V(1.15,.7,1.15);
+car.isVisible=false;car.position.set(MAP.places.spawn.x+12,.8,MAP.places.spawn.z+12);car.checkCollisions=true;car.ellipsoid=V(1.15,.7,1.15);
 const mk=(o)=>Object.assign(new BABYLON.StandardMaterial('cm',scene),o);
 const carPaint=mk({diffuseColor:C3('#a3172b'),specularColor:new BABYLON.Color3(.7,.7,.7),specularPower:80}),glassM=mk({diffuseColor:C3('#10202c'),specularColor:new BABYLON.Color3(1,1,1),specularPower:120,alpha:.92}),lightM=mk({emissiveColor:C3('#fff6d6'),disableLighting:true}),tailM=mk({emissiveColor:C3('#ff2a2a'),disableLighting:true});
 function part(w,h,d,x,y,z,m){const q=BABYLON.MeshBuilder.CreateBox('cp',{width:w,height:h,depth:d},scene);q.parent=car;q.position.set(x,y,z);q.material=typeof m==='string'?mat(m):m;q.checkCollisions=false;q.isPickable=false;sg.addShadowCaster(q);return q}
