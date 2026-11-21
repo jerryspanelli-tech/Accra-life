@@ -30,6 +30,12 @@ async function sha256(value) {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
 }
+function equalHash(left, right) {
+  if (typeof left !== "string" || typeof right !== "string" || left.length !== right.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < left.length; i++) mismatch |= left.charCodeAt(i) ^ right.charCodeAt(i);
+  return mismatch === 0;
+}
 
 export default {
   async fetch(request, env) {
@@ -89,7 +95,7 @@ export class GameRoom {
       const secretHash = await sha256(String(secret));
       const key = "player:" + pid;
       const saved = await this.ctx.storage.get(key);
-      if (saved && saved.secretHash !== secretHash) { ws.close(1008, "Player authentication failed"); return; }
+      if (saved && !equalHash(saved.secretHash, secretHash)) { ws.close(1008, "Player authentication failed"); return; }
       const account = saved || { secretHash, balance: 200 };
       if (!saved) await this.ctx.storage.put(key, account);
       const player = { id: pid, name: cleanName(name), x: 0, z: 0, ry: 0, sp: 0, drv: 0, look: {}, area: null, lastMove: 0, lastLocation: 0 };
