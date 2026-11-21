@@ -206,6 +206,24 @@
       addPlace("universityOfGhana","University of Ghana, Legon");
     }
 
+    // Tema Harbour: container stacks, quay apron and a gantry crane at the eastern end of Spintex Road.
+    {
+      const p=P.temaHarbour;
+      ground("tema-harbour-apron",240,150,p.x,p.z,"#727b7d");
+      box("tema-quay-edge",240,3,5,p.x,1.5,p.z+72,"#59666a",true);
+      const cols=["#c8102e","#2456a6","#006b3f","#e6b72f","#d8dce0"];
+      for(let r=0;r<3;r++)for(let q=0;q<4;q++){
+        const x=p.x-82+q*48,z=p.z-48+r*30,col=cols[(r*3+q)%cols.length];
+        box("tema-container-lower",34,8,12,x,4,z,col,true);
+        if((r+q)%2===0)box("tema-container-upper",34,8,12,x,12,z,col,true);
+      }
+      [-52,52].forEach(dx=>box("tema-crane-leg",4,24,4,p.x+dx,12,p.z-5,"#d7d9d6",true));
+      box("tema-crane-beam",116,4,5,p.x,26,p.z-5,"#d7d9d6",true);
+      box("tema-crane-trolley",10,3,8,p.x+12,22,p.z-5,"#c8102e",false);
+      box("tema-crane-spreader",18,1,7,p.x+12,17,p.z-5,"#25282c",false);
+      label("Tema Harbour",p.x,p.z-82,18);
+      addPlace("temaHarbour","Tema Harbour");
+    }
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).civicLandmarks = 1;
     console.log("Accra civic landmarks ready:", E.length, "registered destinations");
   } catch (err) {
