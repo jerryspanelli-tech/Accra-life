@@ -18,11 +18,20 @@ for (const file of ['index.html', 'babylon.html']) {
   const full = path.join(root, file);
   if (!fs.existsSync(full)) continue;
   const html = fs.readFileSync(full, 'utf8');
-  const blocks = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
-    .filter(match => !/\\bsrc\\s*=/.test(match[1]) && match[2].trim());
-  for (let i = 0; i < blocks.length; i++) {
-    try { new Function(blocks[i][2]); }
-    catch (error) { failed = true; console.error(file + ' inline script ' + (i + 1) + ': ' + error.message); }
+  let cursor = 0, index = 0;
+  while (true) {
+    const start = html.indexOf('<script', cursor);
+    if (start < 0) break;
+    const tagEnd = html.indexOf('>', start);
+    const end = html.indexOf('</script>', tagEnd);
+    if (tagEnd < 0 || end < 0) break;
+    const attrs = html.slice(start + 7, tagEnd).toLowerCase();
+    const source = html.slice(tagEnd + 1, end);
+    cursor = end + 9;
+    if (attrs.includes('src=') || !source.trim()) continue;
+    index++;
+    try { new Function(source); }
+    catch (error) { failed = true; console.error(file + ' inline script ' + index + ': ' + error.message); }
   }
 }
 if (failed) process.exit(1);
