@@ -3,9 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.join(__dirname, '..');
 const jsFiles = [
-  'server.js', 'online.js', 'accra-life.js', 'accra-world.js', 'landmarks.js',
-  'accra-airport.js', 'phone.js', 'accra-assets.js', 'accra-figure.js',
-  'accra-start.js', 'accra-upgrade.js', 'patch3.js', 'patch4.js'
+  'server.js', 'accra-map.js', 'online.js', 'accra-life.js', 'accra-world.js',
+  'landmarks.js', 'accra-airport.js', 'phone.js', 'accra-assets.js', 'accra-figure.js',
+  'accra-start.js', 'accra-upgrade.js', 'accra-crime.js', 'accra-mining.js',
+  'accra-decor.js', 'accra-weather.js', 'accra-fx.js', 'accra-profile.js',
+  'accra-pub.js', 'accra-cloud.js', 'accra-carskin.js', 'AccraLocations.js',
+  'patch3.js', 'patch4.js'
 ];
 let failed = false;
 for (const file of jsFiles) {
