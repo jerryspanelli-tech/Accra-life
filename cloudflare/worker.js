@@ -137,11 +137,25 @@ export class GameRoom {
 
   webSocketClose(ws) {
     const a = ws.deserializeAttachment();
-    if (a?.authenticated && a.player) this.broadcast("playerLeft", a.player.id, ws);
+    if (a?.authenticated && a.player) {
+      const stillConnected = this.sockets().some(other => {
+        if (other === ws) return false;
+        const current = other.deserializeAttachment();
+        return current?.authenticated && current.player?.id === a.player.id;
+      });
+      if (!stillConnected) this.broadcast("playerLeft", a.player.id, ws);
+    }
     ws.close();
   }
   webSocketError(ws) {
     const a = ws.deserializeAttachment();
-    if (a?.authenticated && a.player) this.broadcast("playerLeft", a.player.id, ws);
+    if (a?.authenticated && a.player) {
+      const stillConnected = this.sockets().some(other => {
+        if (other === ws) return false;
+        const current = other.deserializeAttachment();
+        return current?.authenticated && current.player?.id === a.player.id;
+      });
+      if (!stillConnected) this.broadcast("playerLeft", a.player.id, ws);
+    }
   }
 }
