@@ -246,6 +246,29 @@
       note("Accra Mall loaded \u2014 follow the gold beam");
       if (/newchar/.test(location.search)) setTimeout(() => styler("first"), 1200);
     }
+    // ---- MAKOLA MARKET: dense open-air trading stalls in Accra Central ----
+    const MK = MP.makola || { x: -200, z: 200 };
+    scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && Math.abs(m.position.x-MK.x)<78 && Math.abs(m.position.z-MK.z)<48).forEach(m => m.dispose());
+    const marketRoof = box(138,.5,86,MK.x,8,MK.z,"#454b4d",false); marketRoof.name = "makolaRoof";
+    [[-66,-40],[66,-40],[-66,40],[66,40],[-66,0],[66,0]].forEach(p=>box(.8,8,.8,MK.x+p[0],4,MK.z+p[1],"#737a7d",true));
+    const stallCols=["#c8102e","#fcd116","#006b3f","#2456a6","#d9822b","#f0e6d0"];
+    [-1,1].forEach((row,ri)=>{
+      for(let col=-4;col<=4;col++){
+        const x=MK.x+col*14,z=MK.z+row*20,co=stallCols[(col+4+ri*2)%stallCols.length];
+        box(11,.35,11,x,.2,z,"#b9a98c",false);
+        box(11,2.1,.45,x,1.2,z+5.3,co,true);
+        box(.45,2.1,11,x-5.3,1.2,z,"#7a4a2a",true);
+        box(.45,2.1,11,x+5.3,1.2,z,"#7a4a2a",true);
+        box(12,.35,12,x,3.15,z,co,false);
+        box(11,.12,2.2,x,2.25,z+3.8,"#6b4a2e",false);
+        for(let k=0;k<3;k++)box(2.1,.9,1.7,x-3.2+k*3.2,2.7,z+3.6,["#c8102e","#fcd116","#006b3f"][(k+col+4)%3],false);
+      }
+    });
+    tag("MAKOLA MARKET · ACCRA CENTRAL",MK.x,10,MK.z-49,8);
+    tag("TEXTILES · FOOD · PROVISIONS",MK.x,4.2,MK.z+44,5);
+    window.ACCRA_PLACES = Object.assign(window.ACCRA_PLACES || {}, { makola:{x:MK.x,z:MK.z} });
+    (window.ACCRA_LANDMARKS = window.ACCRA_LANDMARKS || []).push({ n:"Makola Market", x:MK.x, z:MK.z });
+
     // ---- "interact" button: appears next to the car button when you are at a wardrobe, fitting room or store counter ----
     const POINTS = [
       { x: VX - 5, z: VZ - .55, r: 2.4, t: "\uD83D\uDC54 Wardrobe", ok: p => p.z < VZ - .2, f: () => styler("wardrobe") },
