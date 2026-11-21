@@ -17,7 +17,7 @@
     // ---------- 1. the world gets big: ground, fog, speed ----------
     ground.scaling.set(50, 1, 65); ground.position.set(0, 0, -14000);                       // x -15000..15000, z -33500..+5500
     gMat.diffuseTexture.uScale = 120 * 50; gMat.diffuseTexture.vScale = 120 * 65;
-    scene.fogStart = 600; scene.fogEnd = 1800;
+    scene.fogStart = 2500; scene.fogEnd = 9500;
     const mwc = car.moveWithCollisions.bind(car);
     let carF = 1, lx = car.position.x, lz = car.position.z;
     car.moveWithCollisions = v => { const onHw = car.position.z < CITY_NORTH - 60 && Math.abs(car.position.x - hx(car.position.z)) < 16; carF += ((onHw ? 2.3 : 1) - carF) * .06; return mwc(new B.Vector3(v.x * carF, v.y, v.z * carF)); };
