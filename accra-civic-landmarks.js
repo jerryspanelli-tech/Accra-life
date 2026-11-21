@@ -49,7 +49,7 @@
     };
     const ground = (name,w,d,x,z,color) => {
       const m = B.MeshBuilder.CreateGround(name, { width:w, height:d }, scene);
-      m.position.set(x,.035,z); m.material = matOf(color); m.receiveShadows = true; m.checkCollisions = false;
+      m.position.set(x,.12,z); m.material = matOf(color); m.receiveShadows = true; m.checkCollisions = false;
       return m;
     };
 
