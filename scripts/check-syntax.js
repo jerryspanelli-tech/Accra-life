@@ -7,7 +7,7 @@ const jsFiles = [
   'landmarks.js', 'accra-airport.js', 'accra-civic-landmarks.js', 'phone.js', 'accra-assets.js', 'accra-figure.js',
   'accra-start.js', 'accra-upgrade.js', 'accra-crime.js', 'accra-mining.js',
   'accra-decor.js', 'accra-weather.js', 'accra-fx.js', 'accra-profile.js',
-  'accra-pub.js', 'accra-cloud.js', 'accra-carskin.js', 'AccraLocations.js',
+  'accra-pub.js', 'accra-cloud.js', 'accra-carskin.js', 'accra-model.js', 'AccraLocations.js',
   'patch3.js', 'patch4.js'
 ];
 let failed = false;
