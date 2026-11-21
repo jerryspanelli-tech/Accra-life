@@ -151,7 +151,7 @@
  function label(t){const dt=new BABYLON.DynamicTexture('l',{width:256,height:64},scene,false);dt.hasAlpha=true;const c=dt.getContext();c.font='bold 30px system-ui';c.textAlign='center';c.fillStyle='rgba(23,25,28,.8)';c.fillRect(0,8,256,48);c.fillStyle='#c9a54a';c.fillText(t,128,44);dt.update();
   const m=BABYLON.MeshBuilder.CreatePlane('nl',{width:1.6,height:.4},scene);m.material=Object.assign(new BABYLON.StandardMaterial('lm',scene),{diffuseTexture:dt,emissiveTexture:dt,opacityTexture:dt,disableLighting:true,backFaceCulling:false});m.billboardMode=BABYLON.Mesh.BILLBOARDMODE_ALL;m.isPickable=false;return m}
  function add(p){if(others.has(p.id)||p.id===net.id)return;const h=human(p.look||look),n=label(p.name+(p.area?' \u00B7 '+p.area:''));n.parent=h.root;n.position.y=2.15;h.root.position.set(p.x,0,p.z);others.set(p.id,{h,tx:p.x,tz:p.z,ry:p.ry,sp:p.sp,name:n,lbl:p.name+'|'+p.area,look:JSON.stringify(p.look)});count=others.size+1;paint()}
- net.on('hello',d=>{bal=d.balance;paint()});
+ net.on('hello',d=>{bal=d.balance;if(useCloudflare){others.forEach(o=>o.h.root.dispose());others.clear();count=1}paint()});
  net.on('balance',b=>{bal=b;paint()});
  net.on('areaSet',a=>{area=a;paint()});
  net.on('currentPlayers',l=>Object.values(l).forEach(add));
@@ -163,7 +163,7 @@
  net.on('connect_error',()=>{hud.textContent='Offline (server not reachable)'});
  scene.onBeforeRenderObservable.add(()=>{const dt=engine.getDeltaTime()/1000;
   others.forEach(o=>{const r=o.h.root,k=Math.min(1,dt*10);r.position.x+=(o.tx-r.position.x)*k;r.position.z+=(o.tz-r.position.z)*k;let d=o.ry-r.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));r.rotation.y+=d*k;walk(o.h,o.sp,dt)})});
- setInterval(()=>{net.emit('playerMove',snap())},250);
+ setInterval(()=>{net.emit('playerMove',snap())},useCloudflare?250:100);
  // real-world location is OPT-IN. The server turns it into an area name (like "Osu") and forgets the coordinates.
  ui('locbtn','\uD83D\uDCCD',134,()=>{
   if(area){net.emit('clearLocation');return}
