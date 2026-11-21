@@ -81,23 +81,17 @@ app.get('/health', (_req, res) => res.json({ ok: true, service: 'accra-life-mult
 // Vercel's Express entrypoint does not automatically select babylon.html as the site root.
 // Serve the actual game page explicitly so GET / opens Accra Life.
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'babylon.html')));
-// Explicit asset routes ensure Vercel's serverless file tracer bundles the game scripts.
-// Keep these paths in sync with the script tags in babylon.html.
-const gameScripts = [
-  'accra-map.js',
-  'landmarks.js',
-  'accra-airport.js',
-  'accra-civic-landmarks.js',
-  'phone.js',
-  'online.js',
-  'accra-assets.js',
-  'accra-figure.js',
-  'accra-start.js',
-  'accra-upgrade.js'
-];
-gameScripts.forEach(file => {
-  app.get('/' + file, (_req, res) => res.sendFile(path.join(__dirname, file)));
-});
+// Explicit literal paths make Vercel's serverless file tracer include each game script.
+app.get('/accra-map.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-map.js')));
+app.get('/landmarks.js', (_req, res) => res.sendFile(path.join(__dirname, 'landmarks.js')));
+app.get('/accra-airport.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-airport.js')));
+app.get('/accra-civic-landmarks.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-civic-landmarks.js')));
+app.get('/phone.js', (_req, res) => res.sendFile(path.join(__dirname, 'phone.js')));
+app.get('/online.js', (_req, res) => res.sendFile(path.join(__dirname, 'online.js')));
+app.get('/accra-assets.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-assets.js')));
+app.get('/accra-figure.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-figure.js')));
+app.get('/accra-start.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-start.js')));
+app.get('/accra-upgrade.js', (_req, res) => res.sendFile(path.join(__dirname, 'accra-upgrade.js')));
 app.use(express.static(__dirname, { extensions: ['html'] }));
 
 io.use((socket, next) => {
