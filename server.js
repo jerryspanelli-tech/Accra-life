@@ -78,6 +78,9 @@ function coarseArea(lat, lon) {
   return match ? match[0] : 'Accra area';
 }
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'accra-life-multiplayer' }));
+// Vercel's Express entrypoint does not automatically select babylon.html as the site root.
+// Serve the actual game page explicitly so GET / opens Accra Life.
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'babylon.html')));
 app.use(express.static(__dirname, { extensions: ['html'] }));
 
 io.use((socket, next) => {
