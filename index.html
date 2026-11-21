@@ -795,7 +795,7 @@ function mango(x,z){const tr=new THREE.Mesh(new THREE.CylinderGeometry(.35,.5,3.
 for(let i=0;i<80;i++){const x=(Math.random()-.5)*300,z=(Math.random()-.5)*300;if(Math.abs(x)<10||Math.abs(z)<10||Math.hypot(x,z)<4||!free(x,z,3)||(x<-85&&z<-85))continue;Math.random()<.55?palm(x,z):mango(x,z)}
 // multiplayer
 const wa=a=>Math.atan2(Math.sin(a),Math.cos(a));
-let lastM=null,lastToast='',PID=(()=>{try{let v=localStorage.getItem('accra-pid');if(!v){v='GS-'+Math.floor(10000+Math.random()*89999);localStorage.setItem('accra-pid',v)}return v}catch(e){return 'GS-'+Math.floor(10000+Math.random()*89999)}})(),mmT=0,pose=null,inb=null,ed=9,ep=.45,crashT=0,pedHitT=0,ws=0,yv=0,air=false,cy=0,cp=.45,cdist=9,jreq=0,ldx=0,ldz=1;
+let lastM=null,lastToast='',PID=(()=>{try{let v=localStorage.getItem('accra-pid');if(!v){v='GS-'+Math.floor(10000+Math.random()*89999);localStorage.setItem('accra-pid',v)}return v}catch(e){return 'GS-'+Math.floor(10000+Math.random()*89999)}})(),mmT=0,pose=null,inb=null,ed=9,ep=.45,crashT=0,ws=0,yv=0,air=false,cy=0,cp=.45,cdist=9,jreq=0,ldx=0,ldz=1;
 const SKIN=[0xc68a5e,0x8d5a3b,0x6b4028,0x4a2c1c,0xa8754f,0x3a2216],HAIRC=[0x0d0d0d,0x2a1a10,0x5a3b22,0x9a7b3c],SHIRT=[0x9a4a42,0xc9a54a,0x56705a,0x4d6a8a,0xe8e6df,0x2a2c30,0x7a6a8a,0xc08a5a],PANT=[0x1f2a44,0x111111,0x5b4630,0x6b6b6b,0x2f5d3a,0xb8a27a],SNK=[0xf0f0ec,0x1c1c1c,0x9a4a42,0xc9a54a,0x4d6a8a,0x56705a];
 let CF=[1,1,0,0,0,0,0];try{const q=JSON.parse(localStorage.getItem('accra-cf'));if(Array.isArray(q)&&q.length>=7)CF=q}catch(e){}while(CF.length<14)CF.push(0);
 const mc={},gc={};const mat=c=>mc[c]||(mc[c]=new THREE.MeshStandardMaterial({color:c,roughness:.8,metalness:.02}));const geo=(k,f)=>gc[k]||(gc[k]=f());
