@@ -4,7 +4,7 @@ global.window = {};
 require('../accra-map.js');
 const M = window.ACCRA_MAP;
 assert.ok(M, 'shared Accra map must load');
-assert.equal(M.version, 2);
+assert.equal(M.version, 3);
 assert.equal(M.scale, 10);
 assert.deepEqual(M.grid, [-800, -400, 0, 400, 800]);
 assert.deepEqual(M.cellCenters, [-600, -200, 200, 600]);
@@ -27,7 +27,22 @@ assert.equal(cell(M.places.villa.x, M.places.villa.z), 'East Legon');
 assert.equal(cell(M.places.airport.x, M.places.airport.z), 'Airport Residential');
 assert.equal(cell(M.places.labadiBeach.x, M.places.labadiBeach.z), 'Labadi');
 assert.equal(cell(M.places.estate.x, M.places.estate.z), 'Cantonments');
-assert.equal(cell(M.places.stadium.x, M.places.stadium.z), 'North Ridge');
+assert.equal(cell(M.places.stadium.x, M.places.stadium.z), 'Accra Central');
+assert.equal(cell(M.places.blackStarSquare.x, M.places.blackStarSquare.z), 'Accra Central');
+assert.equal(cell(M.places.nationalTheatre.x, M.places.nationalTheatre.z), 'Osu');
+assert.equal(cell(M.places.jamestownLighthouse.x, M.places.jamestownLighthouse.z), 'Jamestown');
+assert.equal(cell(M.places.osuCastle.x, M.places.osuCastle.z), 'Osu');
+assert.equal(cell(M.places.militaryHospital.x, M.places.militaryHospital.z), 'Airport City');
+assert.equal(cell(M.places.achimotaForest.x, M.places.achimotaForest.z), 'Achimota');
+assert.equal(cell(M.places.universityOfGhana.x, M.places.universityOfGhana.z), 'East Legon');
+const near = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+assert.ok(near(M.places.stadium, M.places.blackStarSquare) < 80, 'stadium and Black Star Square should be neighbouring civic sites');
+assert.ok(near(M.places.nkrumahPark, M.places.blackStarSquare) < 180, 'Nkrumah Park should remain close to Black Star Square');
+assert.ok(M.namedRoads.length >= 5, 'named Accra road hierarchy is missing');
+for (const r of M.namedRoads) {
+  assert.ok(r.name && r.points.length >= 2 && r.width >= 10, 'named road must have a name, path and usable width');
+  assert.ok(r.points.every(p => p.length === 2 && p.every(Number.isFinite)), 'road coordinates must be finite');
+}
 assert.ok(M.highwayStartZ < M.cityBounds.minZ, 'intercity highway must join north of the city grid');
 assert.ok(M.coastlineZ > M.cityBounds.maxZ, 'coastline must sit south of the city grid');
 const A = M.places.airport;
@@ -39,4 +54,4 @@ for (const [name, p] of Object.entries(M.places)) {
   assert.ok(Number.isFinite(p.x) && Number.isFinite(p.z), name + ' coordinates must be finite');
 }
 assert.equal(M.places.atms.length, 10, 'ATM destinations must remain available');
-console.log('Accra map checks passed: 16 distinct districts, connected road hierarchy, aligned landmarks and separated airport access.');
+console.log('Accra map checks passed: 16 distinct districts, aligned civic landmarks, and named road hierarchy.');
