@@ -1368,7 +1368,7 @@ function drawPMap(){
  g.clearRect(0,0,W,H);g.drawImage(mOff,px+335-span/2,pz+335-span*H/W/2,span,span*H/W,0,0,W,H);
  others.forEach(o=>{g.fillStyle='#9ec5d8';g.beginPath();g.arc((o.g.position.x-px)*s2+W/2,(o.g.position.z-pz)*s2+H/2,4,0,7);g.fill()});
  drawPins(g,W,H,s2,120,12,px,pz);drawRoute(g,W,H,s2,px,pz);drawNavPin(g,W,H,s2,false,px,pz);
- g.save();g.translate(W/2-mapPanX*s2,W/2-mapPanZ*s2);g.rotate(Math.PI-me.rotation.y);g.fillStyle='#FCD116';g.strokeStyle='#1a1a14';g.lineWidth=2;g.beginPath();g.moveTo(0,-9);g.lineTo(6,7);g.lineTo(-6,7);g.closePath();g.fill();g.stroke();g.restore();
+ g.save();g.translate(W/2-mapPanX*s2,H/2-mapPanZ*s2);g.rotate(Math.PI-me.rotation.y);g.fillStyle='#FCD116';g.strokeStyle='#1a1a14';g.lineWidth=2;g.beginPath();g.moveTo(0,-9);g.lineTo(6,7);g.lineTo(-6,7);g.closePath();g.fill();g.stroke();g.restore();
  if(!c.dataset.panBound){
   c.dataset.panBound='1';
   c.addEventListener('pointerdown',e=>{mapDrag={id:e.pointerId,x:e.clientX,y:e.clientY,px:mapPanX,pz:mapPanZ};c.setPointerCapture(e.pointerId);e.preventDefault()});
