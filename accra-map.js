@@ -47,7 +47,7 @@
   ];
   const namedRoads = baseRoads.map(r => ({...r,points:r.points.map(([x,z])=>[x*EXPANSION,z*EXPANSION])}));
   root.ACCRA_MAP = {
-    version:4, scale:4, expansion:EXPANSION, grid, cellCenters, localRoadOffsets,
+    version:4, scale:10, expansion:EXPANSION, grid, cellCenters, localRoadOffsets,
     roadLines, highwayStartZ:-4250, coastlineZ:4250,
     cityBounds:{minX:-4125,maxX:4125,minZ:-4125,maxZ:4125},
     districts, places, namedRoads
