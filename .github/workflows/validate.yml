@@ -2,7 +2,7 @@ name: Validate Accra Life
 on:
   pull_request:
   push:
-    branches: [main, "fix/**"]
+    branches: [main, "fix/**", "feat/**"]
 jobs:
   syntax:
     runs-on: ubuntu-latest
@@ -14,3 +14,4 @@ jobs:
       - run: npm install
       - run: npm test
       - run: npm run test:server
+      - run: npx wrangler deploy --dry-run

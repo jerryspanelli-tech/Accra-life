@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check-syntax.js",
+    "test": "node scripts/check-syntax.js && node --check cloudflare/worker.mjs",
     "test:server": "node scripts/smoke-server.js"
   },
   "engines": {

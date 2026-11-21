@@ -1,0 +1,11 @@
+name = "accra-life-multiplayer"
+main = "cloudflare/worker.mjs"
+compatibility_date = "2026-11-21"
+
+[[durable_objects.bindings]]
+name = "GAME_ROOM"
+class_name = "GameRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
