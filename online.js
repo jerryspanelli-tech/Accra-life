@@ -163,7 +163,7 @@
  net.on('connect_error',()=>{hud.textContent='Offline (server not reachable)'});
  scene.onBeforeRenderObservable.add(()=>{const dt=engine.getDeltaTime()/1000;
   others.forEach(o=>{const r=o.h.root,k=Math.min(1,dt*10);r.position.x+=(o.tx-r.position.x)*k;r.position.z+=(o.tz-r.position.z)*k;let d=o.ry-r.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));r.rotation.y+=d*k;walk(o.h,o.sp,dt)})});
- setInterval(()=>{net.emit('playerMove',snap())},100);
+ setInterval(()=>{net.emit('playerMove',snap())},250);
  // real-world location is OPT-IN. The server turns it into an area name (like "Osu") and forgets the coordinates.
  ui('locbtn','\uD83D\uDCCD',134,()=>{
   if(area){net.emit('clearLocation');return}
