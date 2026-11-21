@@ -41,7 +41,7 @@
  const DEST=Object.entries(D).map(([n,a])=>({n,x:a.reduce((s,p)=>s+p[0],0)/a.length,z:a.reduce((s,p)=>s+p[1],0)/a.length}));
  const P=MAP.places;
  DEST.push(
-  {n:'Your villa',x:P.villa.x,z:P.villa.z},{n:'Accra Mall',x:P.mall.x,z:P.mall.z},
+  {n:'Your villa',x:P.villa.x,z:P.villa.z},{n:'Accra Mall',x:P.mall.x,z:P.mall.z},{n:'Accra Sports Stadium',x:P.stadium.x,z:P.stadium.z},
   {n:'Police Department',x:P.police.x,z:P.police.z},{n:'Accra Hospital',x:P.hospital.x,z:P.hospital.z},
   {n:'Accra Motors (cars)',x:P.dealer.x,z:P.dealer.z},{n:'Kotoka International Airport',x:P.airport.x,z:P.airport.z},
   {n:'Accra Stone Quarry',x:P.quarry.x,z:P.quarry.z},{n:'Accra Gold Works',x:P.goldworks.x,z:P.goldworks.z},
