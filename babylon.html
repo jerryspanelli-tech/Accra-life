@@ -36,7 +36,7 @@ const ground=BABYLON.MeshBuilder.CreateGround('g',{width:600,height:600},scene);
 const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor:new BABYLON.Color3(0,0,0)});gMat.diffuseTexture=noiseTex('#6f9448',['#5e8038','#80a655','#6a8a40','#a3a068'],5000);gMat.diffuseTexture.uScale=gMat.diffuseTexture.vScale=120;
 ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
 const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
-// ===== CITY: 5 x 5 street grid, 7 districts =====
+// ===== CITY: 5 x 5 arterial grid, 16 distinct Accra neighbourhoods =====
 const MAP=window.ACCRA_MAP={
  scale:10,grid:[-800,-400,0,400,800],cellCenters:[-600,-200,200,600],localRoadOffsets:[-100,100],highwayStartZ:-850,coastlineZ:850,
  districts:[["Achimota","Kaneshie","Mamprobi","Chorkor"],["Dzorwulu","North Ridge","Accra Central","Jamestown"],["Airport Residential","Airport City","Osu","Labadi"],["East Legon","Cantonments","Labone","Teshie"]],
@@ -66,7 +66,6 @@ function facMat(col,vs,us){const k=col+vs+us;if(facM[k])return facM[k];const t=n
 function bldg(cx,cz,w,d,h,col){const m=BABYLON.MeshBuilder.CreateBox('bd',{width:w,height:h,depth:d},scene);m.position.set(cx,h/2,cz);m.material=facMat(col,Math.max(1,Math.round(h/6)),Math.max(1,Math.round(w/7)));m.checkCollisions=true;m.receiveShadows=true;sg.addShadowCaster(m);
  const r=BABYLON.MeshBuilder.CreateBox('rf',{width:w+.6,height:.5,depth:d+.6},scene);r.position.set(cx,h+.25,cz);r.material=mat('#7b4b33');r.isPickable=false;sg.addShadowCaster(r);m.freezeWorldMatrix();r.freezeWorldMatrix()}
 const PAL=['#e3d8c0','#d6c4a0','#c9b79a','#b8c4c0','#d9cbb6','#cfa98b','#e6e0d4','#a9b8a8'];
-const DG=[['Airport City','Osu','Osu','Labadi'],['Airport City','Makola','Makola','Labadi'],['East Legon','Makola','Makola','Central Accra'],['East Legon','Amoamah Estate','Amoamah Estate','Central Accra']];
 const STY={
  'Airport City':{w:34,h:[28,70],c:['#5b8aa8','#4a6f8a','#9dbbd0','#c4ccd4'],p:78},
  'Airport Residential':{w:24,h:[8,18],c:['#d9d6ce','#c9cfd6','#e8e2d6'],p:72},
@@ -92,9 +91,7 @@ for(let i=0;i<4;i++)for(let j=0;j<4;j++){const nm=DG[i][j],S=STY[nm],x0=R[i]+12,
   if(Math.hypot(cx-VX,cz-VZ)<38)continue;if(MAP.localRoadOffsets.some(o=>Math.abs(cx-(mx+o))<18||Math.abs(cz-(mz+o))<18))continue;                 // keep the villa plot free
   const h=S.h[0]+Math.random()*(S.h[1]-S.h[0]),w=S.w-Math.random()*2;bldg(cx,cz,w,w*(.8+Math.random()*.2),h,S.c[(a+b*3+i)%S.c.length])}
  if(!signed[nm]){signed[nm]=1;signText(nm,(x0+x1)/2,(z0+z1)/2)}}
-// beach and sea at the south edge (Labadi)
-box(330,.06,36,0,.03,184,'#e3cf9b',false);
-{const sea=BABYLON.MeshBuilder.CreateBox('sea',{width:560,height:.06,depth:140},scene);sea.position.set(0,.05,272);sea.isPickable=false;sea.material=Object.assign(new BABYLON.StandardMaterial('seam',scene),{diffuseColor:C3('#3d7388'),specularColor:new BABYLON.Color3(.8,.8,.8),specularPower:90})}
+// Labadi sand and sea are built once by landmarks.js from ACCRA_MAP.
 function tree(x,z){const t=BABYLON.MeshBuilder.CreateCylinder('t',{height:5,diameterTop:.4,diameterBottom:.7},scene);t.position.set(x,2.5,z);t.material=mat('#8b6b4a');t.checkCollisions=true;
  const c=BABYLON.MeshBuilder.CreateSphere('c',{diameter:4},scene);c.position.set(x,6,z);c.material=mat('#4a6b3a')}
 
