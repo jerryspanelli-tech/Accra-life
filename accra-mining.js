@@ -1,4 +1,4 @@
-/* accra-mining.js - Accra Stone Quarry (east, z -150) and Accra Gold Works (east, z +120).
+/* accra-mining.js - Accra Stone Quarry (western outskirts) and Accra Gold Works (eastern industrial outskirts).
  * Node-based mining: rocks and ore veins you can mine with a pickaxe or jackhammer, with swing animation and sounds,
  * loot that goes into your resources, a foreman who sells tools and buys ore, and nodes that regrow. Loaded by accra-life.js. */
 (function () {
@@ -39,7 +39,7 @@
       const n = { kind, x, z, m, flecks, s, hp: NODE[kind].hp, back: 0 }; nodes.push(n); return n;
     }
     // Quarry
-    const QX = 215, QZ = -150;
+    const Q = window.ACCRA_MAP ? window.ACCRA_MAP.places.quarry : { x: -1200, z: -600 }, QX = Q.x, QZ = Q.z;
     bx(44, .1, 34, QX, .05, QZ, "#b9b3a3");
     [0, 1, 2].forEach(i => { bx(44 - i * 6, .9 + i * .9, 3.4, QX, (.9 + i * .9) / 2, QZ + 17 + i * 3.4, ["#a39d8f", "#9a9486", "#8d887a"][i], true); bx(3.4, .9 + i * .9, 28 - i * 4, QX + 22 + i * 3.4, (.9 + i * .9) / 2, QZ - 1, ["#a39d8f", "#9a9486", "#8d887a"][i], true); });
     [[-14, -8], [-8, 6], [0, -10], [6, 8], [12, -4], [-16, 8], [-2, 2], [10, 10], [14, 4]].forEach((p, i) => node("stone", QX + p[0], QZ + p[1], .9 + (i % 3) * .2));
@@ -50,9 +50,9 @@
     bx(6, 3, 4, QX - 19, 1.5, QZ - 10, "#e8e2d6", true); bx(6.6, .25, 4.6, QX - 19, 3.1, QZ - 10, "#8c3b2b");        // foreman cabin
     sign("ACCRA STONE QUARRY", QX - 21.4, 5, QZ - 10, -Math.PI / 2);
     for (let i = 0; i < 6; i++) bx(.15, 1.5, .15, QX - 22, .75, QZ - 17 + i * 5.4, "#7a4a2a");
-    bx(36, .06, 6, 182, .06, QZ, "#8a7a5a");                                 // dirt access road to the city
+    bx(380, .06, 8, QX + 211, .06, QZ, "#8a7a5a");                           // western access road to the city grid
     // Gold mine
-    const GX = 222, GZ = 120;
+    const G = window.ACCRA_MAP ? window.ACCRA_MAP.places.goldworks : { x: 1200, z: 400 }, GX = G.x, GZ = G.z;
     bx(40, .1, 30, GX, .05, GZ, "#8f8672");
     { const hill = B.MeshBuilder.CreateSphere("hill", { diameter: 34, segments: 6 }, scene); hill.convertToFlatShadedMesh(); hill.scaling.y = .5; hill.position.set(GX + 4, 0, GZ + 18); hill.material = mat("#5f574a"); hill.isPickable = false; hill.checkCollisions = true; }
     [-2.2, 2.2].forEach(o => bx(.7, 3.6, .7, GX + o, 1.8, GZ + 4, "#6b4a2e", true)); bx(5.6, .7, .8, GX, 3.7, GZ + 4, "#6b4a2e"); bx(4, 3.2, .3, GX, 1.6, GZ + 4.4, "#0a0a0a");       // tunnel mouth
@@ -63,7 +63,7 @@
     [[-8, -2], [-12, 2], [-6, 6], [-14, -6], [-10, 8], [0, -9], [-3, -5]].forEach(p => node("gold", GX + p[0], GZ + p[1], .85 + Math.random() * .3));
     bx(6, 3, 4, GX - 18, 1.5, GZ - 6, "#e8e2d6", true); bx(6.6, .25, 4.6, GX - 18, 3.1, GZ - 6, "#2a3f6a");
     sign("ACCRA GOLD WORKS", GX - 20.4, 5, GZ - 6, -Math.PI / 2);
-    bx(48, .06, 6, 178, .06, GZ, "#8a7a5a");
+    bx(400, .06, 8, GX - 200, .06, GZ, "#8a7a5a");
 
     // ---------- mining ----------
     const best = () => st.tool.jack > 0 ? "jack" : st.tool.pick > 0 ? "pick" : null;

@@ -218,7 +218,7 @@
       else c.sort((a, b) => Math.hypot(a.position.x - R[i] - 12, a.position.z - R[j] - 12) - Math.hypot(b.position.x - R[i] - 12, b.position.z - R[j] - 12));
       const m = c[0]; if (m) used.add(m); return m;
     }
-    const nearestRoad = v => R.reduce((a, r) => Math.abs(v - r) < Math.abs(a) ? v - r : a, 1e9);
+    const ROAD_LINES = window.ACCRA_MAP ? window.ACCRA_MAP.roadLines : R; const nearestRoad = v => ROAD_LINES.reduce((a, r) => Math.abs(v - r) < Math.abs(a) ? v - r : a, 1e9);
     function door(b, l1, l2, col) {
       const e = b.getBoundingInfo().boundingBox.extendSize, w = e.x * 2, d = e.z * 2, dx = nearestRoad(b.position.x), dz = nearestRoad(b.position.z);
       let ox = 0, oz = 0, half;
@@ -247,13 +247,14 @@
     }
     const TU = [["studio", "Studio apartment", "studio", 80, 8000], ["1bed", "1-bedroom apartment", "apt1", 140, 14000], ["2bed", "2-bedroom apartment", "house", 220, 24000], ["pent", "Penthouse", "mansion", 500, 80000]];
     ["Airport Heights", "Kotoka Residence", "Skyline Towers", "Runway View"].forEach((nm, n) => {
-      const b = pick(n < 2 ? 0 : 1, 0, true); if (!b) return;
-      const units = TU.map(t => (UNITS["T" + n + t[0]] = mkUnit("T" + n + t[0], nm + " \u00B7 " + t[1], "Airport City", t[2], 1 + .08 * n + (t[2] === "mansion" ? .05 : 0))));
+      const b = pick(n < 2 ? 2 : 3, 0, true); if (!b) return;
+      const area = n < 2 ? "Airport Residential" : "East Legon";
+      const units = TU.map(t => (UNITS["T" + n + t[0]] = mkUnit("T" + n + t[0], nm + " \u00B7 " + t[1], area, t[2], 1 + .08 * n + (t[2] === "mansion" ? .05 : 0))));
       LISTS.push({ name: nm + " \u2014 Apartments", units, door: door(b, nm, "Apartments \u00B7 studio to penthouse", "#c9a54a") });
     });
-    [["osu1", "Osu 1-bed apartment", "Osu", 0, 1, "apt1", 150, 14000], ["osu2", "Osu 2-bed flat", "Osu", 0, 2, "house", 230, 24000], ["mak1", "Makola single room", "Makola", 1, 1, "room", 35, 2500],
-     ["mak2", "Makola chamber & hall", "Makola", 1, 2, "hall", 60, 5000], ["cen1", "Central Accra studio", "Central Accra", 2, 3, "studio", 90, 8000], ["lab1", "Labadi beach house", "Labadi", 1, 3, "house", 320, 38000],
-     ["eln1", "East Legon 4-bed house", "East Legon", 2, 0, "house", 380, 52000], ["elm1", "East Legon mansion", "East Legon", 3, 0, "mansion", 650, 120000], ["amo1", "Amoamah family house", "Amoamah Estate", 3, 1, "house", 200, 26000], ["amo2", "Amoamah garden house", "Amoamah Estate", 3, 1, "house", 240, 32000], ["amo3", "Amoamah poolside house", "Amoamah Estate", 3, 1, "mansion", 300, 42000]].forEach(h => {
+    [["osu1", "Osu 1-bed apartment", "Osu", 2, 2, "apt1", 150, 14000], ["osu2", "Osu 2-bed flat", "Osu", 2, 2, "house", 230, 24000], ["mak1", "Makola single room", "Accra Central", 1, 2, "room", 35, 2500],
+     ["mak2", "Makola chamber & hall", "Accra Central", 1, 2, "hall", 60, 5000], ["cen1", "Central Accra studio", "Accra Central", 1, 2, "studio", 90, 8000], ["lab1", "Labadi beach house", "Labadi", 2, 3, "house", 320, 38000],
+     ["eln1", "East Legon 4-bed house", "East Legon", 3, 0, "house", 380, 52000], ["elm1", "East Legon mansion", "East Legon", 3, 0, "mansion", 650, 120000], ["amo1", "Amoamah family house", "Cantonments", 3, 1, "house", 200, 26000], ["amo2", "Amoamah garden house", "Cantonments", 3, 1, "house", 240, 32000], ["amo3", "Amoamah poolside house", "Cantonments", 3, 1, "mansion", 300, 42000]].forEach(h => {
       const b = pick(h[3], h[4], false); if (!b) return;
       const u = UNITS[h[0]] = mkUnit(h[0], h[1], h[2], h[5], SZ[h[0]] || 1);
       LISTS.push({ name: h[1], units: [u], gar: b.metadata && b.metadata.garage, door: door(b, h[1], u.area + " m\u00B2 \u00B7 Rent GH\u00A2" + u.rent + "/wk \u00B7 Buy GH\u00A2" + u.buy.toLocaleString(), "#2a7ab8") });
@@ -452,13 +453,14 @@
       get busy() { return busy; }, set busy(v) { busy = v; }, get seated() { return seated; }, get inside() { return inside; }, get driving() { return driving; },
       homes: () => Object.keys(st.keys).filter(id => UNITS[id]).map(id => ({ name: UNITS[id].name, own: st.keys[id].t === "own", rent: UNITS[id].rent, mins: Math.max(0, Math.ceil((st.keys[id].due - st.play) / 60)) })), leaveHome: () => leave(), vitals: d => { Object.keys(d).forEach(k => { if (k in st) st[k] = clamp(st[k] + d[k]); }); save(); }
     };
-    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js", "accra-world.js", "accra-weather.js", "accra-profile.js", "accra-carskin.js", "accra-model.js"].forEach(f => { const s = document.createElement("script"); s.src = f + "?v=" + (window.ACCRA_BUILD || 0); s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
+    ["accra-decor.js", "accra-crime.js", "accra-pub.js", "accra-fx.js", "accra-mining.js", "accra-world.js", "accra-weather.js", "accra-profile.js", "accra-carskin.js", "accra-model.js"].forEach(f => { const s = document.createElement("script"); s.async = false; s.src = f + "?v=" + (window.ACCRA_BUILD || 0); s.onerror = () => note("\u26A0 " + f + " was not found. Upload it to your repo."); document.body.appendChild(s); });
 
     // ---------- admin (tap the "ACCRA LIFE" label 5 times) ----------
     const ADMIN_CODE = "ACCRA-ADMIN-2026";   // change this. It only protects this device: online gifts must also be checked by the server.
-    const TELE = { mall: [35, 12], stadium: [110, 12], hospital: [110, 80], police: [35, 80], villa: [VX, VZ + 12], airport: [-60, -66],
-      "Labadi beach": [-90, 190], "Amoamah estate": [110, -30], "Car dealership": [35, -35], "Gold works": [196, 120], "Stone quarry": [190, -150],
-      "Accra North (highway)": [-60, -180], "Nsawam": [-120, -3470], "Suhum": [-120, -6470], "Nkawkaw": [-120, -12970], "Konongo": [-120, -18970], "Ejisu": [-760, -22470], "Kumasi (Kejetia)": [-820, -24470] };
+    const MP = window.ACCRA_MAP.places;
+    const TELE = { mall: [MP.mall.x, MP.mall.z], makola: [MP.makola.x, MP.makola.z], stadium: [MP.stadium.x, MP.stadium.z], hospital: [MP.hospital.x, MP.hospital.z], police: [MP.police.x, MP.police.z], villa: [VX, VZ + 12], airport: [MP.airport.x, MP.airport.z],
+      "Labadi beach": [MP.labadiBeach.x, MP.labadiBeach.z], "Amoamah estate": [MP.estate.x, MP.estate.z], "Car dealership": [MP.dealer.x, MP.dealer.z], "Gold works": [MP.goldworks.x, MP.goldworks.z], "Stone quarry": [MP.quarry.x, MP.quarry.z],
+      "Accra North (highway)": [0, MP.spawn.z - 1100], "Nsawam": [140, -3500], "Suhum": [-120, -6500], "Nkawkaw": [-980, -13000], "Konongo": [-1830, -19000], "Ejisu": [-2110, -22500], "Kumasi (Kejetia)": [-2180, -24500] };
     function adminPanel() {
       show(ttl("\uD83D\uDD27 Admin") + "<small>Play-money and test tools</small>" + [500, 5000, 50000, 500000].map(a => '<button data-m="' + a + '" style="' + BS + '">Give myself GH\u00A2' + a.toLocaleString() + "</button>").join("") +
         '<button data-p="1" style="' + BS + '">Give play money to an online player\u2026</button><button data-v="1" style="' + BS + '">Refill my health, energy, hunger</button>' +
@@ -468,7 +470,7 @@
         if (d.x) return hide();
         if (d.m) { earn(+d.m, "Admin grant"); note("You received GH\u00A2" + (+d.m).toLocaleString()); }
         else if (d.v) { st.hp = st.en = st.hu = st.hy = st.md = 100; note("Refilled"); }
-        else if (d.t) { hide(); tp(TELE[d.t][0], TELE[d.t][1]); }
+        else if (d.t) { hide(); const town = window.ACCRA_WORLD && window.ACCRA_WORLD.towns.find(q => q.n === d.t); if (town) tp(town.x + 30, town.z + 30); else tp(TELE[d.t][0], TELE[d.t][1]); }
         else if (d.w) { if (window.ACCRA_WEATHER) { if (d.w === "auto") window.ACCRA_WEATHER.auto(); else window.ACCRA_WEATHER.set(d.w); } note(d.w === "auto" ? "Weather is automatic again" : "Weather set to " + d.w); }
         else if (d.r) { if (window.ACCRA_CRIME) window.ACCRA_CRIME.setWanted(0); note("Wanted level cleared"); }
         else if (d.p) { const to = prompt("Player name"), amount = Math.round(+prompt("Amount in GH\u00A2")), n = NET(); if (!to || !(amount > 0)) return; if (!n) return note("Not online: no server connection."); n.emit("adminGive", { to, amount, code: ADMIN_CODE }); note("Request sent. The server must support adminGive."); }

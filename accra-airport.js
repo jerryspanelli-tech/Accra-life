@@ -5,7 +5,7 @@
 (function () {
   try {
     const B = BABYLON;
-    const C = { x: -420, z: -300 };                         // airport centre, west of the city
+    const C = window.ACCRA_MAP ? window.ACCRA_MAP.places.airport : { x: 200, z: -550 };                         // airport centre, north of Airport City
     const X = x => C.x + x, Z = z => C.z + z;
     const cars = [];                                         // moving vehicles, updated every frame
 
@@ -31,6 +31,12 @@
 
     // ----- fence around the whole site, with a gate on the east side -----
     const FX = 190, FZ = 105, GATE = [50, 62];                 // local fence extent; gate opening at z 50..62
+    scene.meshes.filter(m => {
+      if (m.name !== "bd" && m.name !== "rf" && m.name !== "localroad") return false;
+      const inAirport = Math.abs(m.position.x - C.x) < FX + 5 && Math.abs(m.position.z - C.z) < FZ + 5;
+      const inAccessCorridor = m.position.x >= C.x + 190 && m.position.x <= C.x + 1000 && Math.abs(m.position.z - (C.z + 56)) < 35;
+      return inAirport || inAccessCorridor;
+    }).forEach(m => m.dispose());
     const fenceH = 2.4;
     function fenceRun(x1, z1, x2, z2) {
       const len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(z2 - z1, x2 - x1), n = Math.max(1, Math.round(len / 10));
@@ -116,9 +122,9 @@
     });
     [-130, -100, 100, 130].forEach(x => palm(X(x), Z(102)));
 
-    // ----- access road: the city avenue (z -150) south to the airport gate -----
-    box(8, .06, 94, -165, .04, -197, "#2b2d31", false);                                       // x -165, z -244..-150
-    box(70, .06, 8, -197.5, .04, -244, "#2b2d31", false);                                     // z -244, x -230..-165
+    // ----- access road: east-side gate connects directly to the x=2000 city arterial -----
+    // The gate is at C.x+200; this 800m connector reaches the arterial without crossing the runway.
+    box(800, .06, 12, C.x + 600, .04, C.z + 56, "#2b2d31", false);
 
     // ----- moving traffic -----
     // closed loop along the drop-off road: east on one lane, west on the other, so nothing drives head-on
@@ -143,7 +149,7 @@
       return { x: l.b.x, z: l.b.z, dx: l.b.x - l.a.x, dz: l.b.z - l.a.z };
     }
     const loop = makePath([{ x: X(-100), z: Z(53) }, { x: X(170), z: Z(53) }, { x: X(170), z: Z(59) }, { x: X(-100), z: Z(59) }], true);
-    const access = makePath([{ x: -165, z: -150 }, { x: -165, z: -244 }, { x: -230, z: -244 }], false);
+    const access = makePath([{ x: X(FX), z: Z(56) }, { x: C.x + 200, z: C.z + 50 }, { x: C.x + 200, z: C.z + 150 }], false);
 
     function addVehicle(kind, color, path, offset, speed, pingPong) {
       if (!window.AccraAssets || !window.AccraAssets.createCar) return;

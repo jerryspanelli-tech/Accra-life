@@ -1,33 +1,32 @@
 /* accra-world.js - THE BIG MAP.
- * World = 12 km wide x 27 km long (about 324 sq km, roughly 4x the land of GTA V).
- * Accra stays exactly where it is. North of it (negative z) a 24.5 km highway runs to Kumasi (scale 1 : 10 of the real 250 km),
+ * World = 30 km wide x 39 km long (about 324 sq km). The expanded Accra street grid joins a 24.5 km northbound highway to Kumasi (scale 1 : 10 of the real 250 km),
  * streamed in 256 m chunks: road, guard rails, trees, farms, signs, toll plazas, and six towns. Loaded by accra-life.js. */
 (function () {
   try {
     const L = window.ACCRA_LIFE && window.ACCRA_LIFE.api;
     if (!L) { console.log("accra-world: life API not ready"); return; }
     const B = BABYLON, { st, cash, pay, note, show, hide, ttl, BS, CLOSE, points, fade, tp } = L;
-    const END = -24500, DRIFT = -2400, CH = 256;
+    const END = -24500, DRIFT = -2400, CH = 256, CITY_NORTH = window.ACCRA_MAP ? window.ACCRA_MAP.highwayStartZ : -850;
     const S = t => t * t * (3 - 2 * t);
-    const hx = z => DRIFT * S(Math.min(1, Math.max(0, (-z - 165) / (-END - 165))));        // highway centre line x at z
+    const hx = z => DRIFT * S(Math.min(1, Math.max(0, (-z - CITY_NORTH) / (-END - CITY_NORTH))));        // highway centre line x at z
     const slope = z => (hx(z - 8) - hx(z + 8)) / 16;
-    const realKm = z => Math.round((-z - 165) / 1000 * 10.2);                               // 1 : 10 scale, so game km x 10.2 = real km
+    const realKm = z => Math.round((-z) / 1000 * 10.2);                               // 1 : 10 scale, so game km x 10.2 = real km
     const rng = seed => { let s = (seed * 2654435761) >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
     const hash = (a, b, c) => ((a * 73856093) ^ (b * 19349663) ^ (c * 83492791)) >>> 0;
 
     // ---------- 1. the world gets big: ground, fog, speed ----------
-    ground.scaling.set(20, 1, 45); ground.position.set(0, 0, -12500);                       // x -6000..6000, z -26000..+1000
-    gMat.diffuseTexture.uScale = 120 * 20; gMat.diffuseTexture.vScale = 120 * 45;
-    scene.fogStart = 260; scene.fogEnd = 950;
+    ground.scaling.set(50, 1, 65); ground.position.set(0, 0, -14000);                       // x -15000..15000, z -33500..+5500
+    gMat.diffuseTexture.uScale = 120 * 50; gMat.diffuseTexture.vScale = 120 * 65;
+    scene.fogStart = 2500; scene.fogEnd = 9500;
     const mwc = car.moveWithCollisions.bind(car);
     let carF = 1, lx = car.position.x, lz = car.position.z;
-    car.moveWithCollisions = v => { const onHw = car.position.z < -260 && Math.abs(car.position.x - hx(car.position.z)) < 16; carF += ((onHw ? 2.3 : 1) - carF) * .06; return mwc(new B.Vector3(v.x * carF, v.y, v.z * carF)); };
+    car.moveWithCollisions = v => { const onHw = car.position.z < CITY_NORTH - 60 && Math.abs(car.position.x - hx(car.position.z)) < 16; carF += ((onHw ? 2.3 : 1) - carF) * .06; return mwc(new B.Vector3(v.x * carF, v.y, v.z * carF)); };
     scene.onBeforeRenderObservable.add(() => { const dt = Math.max(engine.getDeltaTime() / 1000, .001), sp = Math.hypot(car.position.x - lx, car.position.z - lz) / dt; lx = car.position.x; lz = car.position.z;
       const el = document.getElementById("spd"); if (L.driving && el && sp < 90) el.textContent = Math.round(sp * 3.6) + " km/h"; });
 
     // ---------- 2. chunk streaming ----------
-    const TOWNS = [["Nsawam", -3500, 0], ["Suhum", -6500, 0], ["Nkawkaw", -13000, 0], ["Konongo", -19000, 0], ["Ejisu", -22500, 1], ["Kumasi", -24500, 2]].map(t => ({ n: t[0], z: t[1], big: t[2], x: hx(t[1]) + 220, R: [150, 190, 340][t[2] === 2 ? 2 : t[2]] }));
-    const TOLLS = [{ z: -1200, fee: 15, n: "Accra Gate toll" }, { z: -21500, fee: 20, n: "Ejisu toll" }];
+    const TOWNS = [["Nsawam", -5000, 0], ["Suhum", -7500, 0], ["Nkawkaw", -13000, 0], ["Konongo", -19000, 0], ["Ejisu", -22500, 1], ["Kumasi", -24500, 2]].map(t => ({ n: t[0], z: t[1], big: t[2], x: hx(t[1]) + 220, R: [150, 190, 340][t[2] === 2 ? 2 : t[2]] }));
+    const TOLLS = [{ z: -4700, fee: 15, n: "Accra Gate toll" }, { z: -21500, fee: 20, n: "Ejisu toll" }];
     const asphalt = mat("#2f3033"), white = mat("#f2f2f2"), rail = mat("#b8bcc2"), conc = mat("#9a9a96");
     const mk = (w, h, d, x, y, z, m, ry) => { const b = B.MeshBuilder.CreateBox("wb", { width: w, height: h, depth: d }, scene); b.position.set(x, y, z); b.material = typeof m === "string" ? mat(m) : m; if (ry) b.rotation.y = ry; b.isPickable = false; return b; };
     const merge = (arr, solid) => { if (!arr.length) return null; const m = B.Mesh.MergeMeshes(arr, true, true, undefined, false, true); if (m) { m.checkCollisions = !!solid; m.isPickable = false; } return m; };
@@ -39,7 +38,7 @@
     function roadTask(z0, list) {
       const surf = [], bars = [];
       for (let z = z0; z > z0 - CH; z -= 64) {
-        if (z - 32 > -150) continue;                               // nothing north of the city avenue is skipped; the city core keeps its own roads
+        if (z - 32 > CITY_NORTH) continue;                               // nothing north of the city avenue is skipped; the city core keeps its own roads
         const zm = z - 32, x = hx(zm), th = -Math.atan(slope(zm)), cs = Math.cos(th), sn = Math.sin(th);
         const add = (arr, w, h, d, ox, y, oz, m) => { const b = mk(w, h, d, x + cs * ox + sn * oz, y, zm - sn * ox + cs * oz, m, th); arr.push(b); };
         add(surf, 20, .08, 66, 0, .05, 0, asphalt); add(surf, .25, .09, 66, -9.7, .06, 0, white); add(surf, .25, .09, 66, 9.7, .06, 0, white);
@@ -48,7 +47,7 @@
       }
       const a = merge(surf, false), b = merge(bars, true); if (a) list.push(a); if (b) list.push(b);
       // distance gantry every 2 km
-      const gz = Math.round((z0 - 128) / 2000) * 2000 - 165; if (gz <= z0 && gz > z0 - CH && gz < -300) {
+      const gz = Math.round((z0 - 128 - CITY_NORTH) / 2000) * 2000 + CITY_NORTH; if (gz <= z0 && gz > z0 - CH && gz < CITY_NORTH - 300) {
         const x = hx(gz); [-11, 11].forEach(o => list.push(mk(.5, 7.5, .5, x + o, 3.75, gz, "#555")));
         const n = mk(16, 2.4, .2, x, 7, gz, "#555"), s1 = B.MeshBuilder.CreatePlane("gs", { width: 14, height: 2 }, scene), s2 = s1.clone("gs2");
         s1.position.set(x, 7, gz + .15); s1.rotation.y = Math.PI; s1.material = gantryTex("KUMASI " + Math.max(0, 250 - realKm(gz)) + " km"); s2.position.set(x, 7, gz - .15); s2.material = gantryTex("ACCRA " + realKm(gz) + " km");
@@ -57,7 +56,7 @@
     }
     function propsTask(cx, cz, list) {       // trees, fields and farmhouses beside the road
       const r = rng(hash(cx, cz, 7)), farm = cz * CH < -7000 && cz * CH > -17000;
-      for (let i = 0; i < (farm ? 7 : 16); i++) { const z = cz * CH + r() * CH; if (z > -160) continue; const side = r() < .5 ? -1 : 1, x = hx(z) + side * (16 + r() * 70);
+      for (let i = 0; i < (farm ? 7 : 16); i++) { const z = cz * CH + r() * CH; if (z > CITY_NORTH) continue; const side = r() < .5 ? -1 : 1, x = hx(z) + side * (16 + r() * 70);
         if (TOWNS.some(t => Math.hypot(x - t.x, z - t.z) < t.R + 30)) continue;
         const t = treeSrc.createInstance("tr"); t.position.set(x, 0, z); t.scaling.setAll(.8 + r() * .8); t.isPickable = false; list.push(t); }
       if (farm) for (let i = 0; i < 3; i++) { const z = cz * CH + 30 + r() * (CH - 60), side = r() < .5 ? -1 : 1, x = hx(z) + side * (50 + r() * 60);
@@ -92,7 +91,7 @@
     }
 
     const chunks = new Map(), queue = [];
-    const near = (cx, cz) => { const zc = cz * CH + CH / 2; if (zc > -120) return false; if (zc < END - 400) return false; const hxc = hx(zc);
+    const near = (cx, cz) => { const zc = cz * CH + CH / 2; if (zc > CITY_NORTH - 120) return false; if (zc < END - 400) return false; const hxc = hx(zc);
       return Math.abs(cx * CH + CH / 2 - hxc) < CH + 120 || TOWNS.some(t => Math.abs(cx * CH + CH / 2 - t.x) < t.R + CH && Math.abs(zc - t.z) < t.R + CH); };
     function request(cx, cz) {
       const k = cx + "," + cz; if (chunks.has(k)) return; const list = []; chunks.set(k, list);
@@ -115,7 +114,7 @@
     let tt = 0;
     scene.onBeforeRenderObservable.add(() => {
       const p = L.driving ? car.position : player.position;
-      if (++tt % 10 === 0 && p.z < -150) {
+      if (++tt % 10 === 0 && p.z < CITY_NORTH - 100) {
         const cx = Math.floor(p.x / CH), cz = Math.floor(p.z / CH), want = new Set();
         for (let x = cx - 3; x <= cx + 3; x++) for (let z = cz - 3; z <= cz + 3; z++) if (near(x, z)) { want.add(x + "," + z); request(x, z); }
         for (const k of [...chunks.keys()]) if (!want.has(k)) drop(k);
@@ -128,7 +127,7 @@
     });
 
     // ---------- 3. intercity buses (fast travel): the stop list and fares ----------
-    const STOPS = [["Accra", 14, -185]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
+    const BUS_STATION = window.ACCRA_MAP ? window.ACCRA_MAP.places.busStation : { x: -200, z: 350 }; const STOPS = [["Accra", BUS_STATION.x, BUS_STATION.z]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
     const FARE = { Accra: 0, Nsawam: 25, Suhum: 40, Nkawkaw: 70, Konongo: 90, Ejisu: 110, Kumasi: 130 };
     function bus(here) {
       const draw = () => show(ttl("\uD83D\uDE8C Intercity buses") + "<small>You are in " + here + " \u00B7 cash GH\u00A2" + cash() + "</small>" + STOPS.filter(s => s[0] !== here).map(s => '<button data-d="' + s[0] + '" style="' + BS + '">' + s[0] + " \u00B7 GH\u00A2" + Math.max(FARE[s[0]], FARE[here]) + "</button>").join("") + CLOSE, d => {
@@ -150,7 +149,7 @@
     }
     scene.onBeforeRenderObservable.add(() => {
       const dt = Math.min(engine.getDeltaTime() / 1000, .1);
-      ayaBodies.forEach(b => { b.t = (b.t + dt / 900) % 1; const u = b.dir > 0 ? b.t : 1 - b.t, z = -165 - u * (24500 - 165), x = hx(z);
+      ayaBodies.forEach(b => { b.t = (b.t + dt / 900) % 1; const u = b.dir > 0 ? b.t : 1 - b.t, z = CITY_NORTH - u * (Math.abs(END) - Math.abs(CITY_NORTH)), x = hx(z);
         b.m.position.set(x, 0, z); b.m.rotation.y = -Math.atan(slope(z)) + (b.dir > 0 ? 0 : Math.PI); });
     });
     const ayaBoard = s => show(ttl("\uD83D\uDE8C " + AYA.line) + "<small>Fare GH\u00A2" + AYA.fare + " to any stop, a bus about every 5 minutes. You are at " + s.n + ". Cash GH\u00A2" + cash() + "</small>" +
@@ -170,6 +169,6 @@
     window.ACCRA_DEST_EXTRA = TOWNS.map(t => ({ n: t.n + " (" + realKm(t.z) + " km from Accra)", x: t.x, z: t.z }));
     window.ACCRA_WORLD = { hx, towns: TOWNS, tolls: TOLLS, chunks };
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).world = 1;
-    console.log("Accra big world ready: 12 x 27 km, " + TOWNS.length + " towns");
+    console.log("Accra big world ready: 30 x 39 km, " + TOWNS.length + " towns");
   } catch (err) { console.error("accra-world failed:", err); if (window.ACCRA_LIFE && window.ACCRA_LIFE.api) window.ACCRA_LIFE.api.note("\u26A0 World: " + err.message); }
 })();

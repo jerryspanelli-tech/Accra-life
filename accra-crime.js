@@ -20,7 +20,7 @@
 
     // ---------- police officers ----------
     const A = window.AccraAssets, cops = [], gridPts = [];
-    R.forEach(x => R.forEach(z => gridPts.push([x + 6, z + 6])));
+    const ROAD_LINES = window.ACCRA_MAP ? window.ACCRA_MAP.roadLines : R, AP = window.ACCRA_MAP && window.ACCRA_MAP.places.airport; ROAD_LINES.forEach(x => ROAD_LINES.forEach(z => { if (AP && Math.abs(x-AP.x)<195 && Math.abs(z-AP.z)<110) return; gridPts.push([x + 6, z + 6]); }));
     const mkCop = (x, z) => {
       const c = A.createCharacter(scene, { police: true, shirt: "#1d3b6b", pants: "#14213d", skin: "#6b4028", hair: "#0d0d0d", kente: false, scale: .9 });
       const cap = B.MeshBuilder.CreateBox("cap", { width: .6, height: .14, depth: .62 }, scene); cap.parent = c.root; cap.position.set(0, 2.18, 0); cap.material = mat("#14213d"); cap.isPickable = false;
@@ -93,8 +93,7 @@
     });
 
     // ---------- ATMs ----------
-    const ATMS = [[-6.9, -30, Math.PI / 2], [6.9, 78, -Math.PI / 2], [63.1, -30, Math.PI / 2], [76.9, 100, -Math.PI / 2], [-63.1, 60, -Math.PI / 2], [-76.9, -30, Math.PI / 2],
-      [-30, 6.9, Math.PI], [30, -6.9, 0], [44, 15.6, Math.PI], [-120, -52.5, Math.PI]];
+    const ATMS = (window.ACCRA_MAP ? window.ACCRA_MAP.places.atms : [[-6.9,-30],[6.9,78],[63.1,-30],[76.9,100],[-63.1,60],[-76.9,-30],[-30,6.9],[30,-6.9],[44,15.6],[-120,-52.5]]).map((p,i)=>[p[0],p[1],i%2?Math.PI:0]);
     const scr = new B.StandardMaterial("atmscr", scene); scr.emissiveColor = B.Color3.FromHexString("#47d7ff"); scr.disableLighting = true;
     const dark = new B.StandardMaterial("atmdark", scene); dark.diffuseColor = B.Color3.FromHexString("#0a0a0a");
     const atms = ATMS.map(a => {

@@ -27,23 +27,27 @@
       this.buildLabadiBeachAndSwimming();
     }
 
-    // Labadi Beach: uses the sea already in the game (z 203 to 332) instead of a second ocean.
+    // Labadi Beach swimming area shares the coastline built by landmarks.js.
     buildLabadiBeachAndSwimming() {
-      this.waterZones.push({ minX: -278, maxX: 278, minZ: 203.5, maxZ: 332 });
-      const wall = this.box(600, 6, 2, 0, 3, 335, "#000000", true); wall.isVisible = false;   // keeps swimmers inside the sea
-      for (let i = 0; i < 28; i++) { const b = BABYLON.MeshBuilder.CreateSphere("buoy", { diameter: .9, segments: 4 }, this.scene); b.position.set(-270 + i * 20, .3, 330); b.material = this.mat(i % 2 ? "#ff7a1a" : "#ffffff"); b.isPickable = false; }
-      [-120, -90, 44, 80, 120].forEach((x, i) => {                                            // beach umbrellas and loungers
-        this.box(.12, 3, .12, x, 1.5, 190, "#dddddd");
+      const P = window.ACCRA_MAP ? window.ACCRA_MAP.places.labadiBeach : { x: 600, z: 700 };
+      this.waterZones.push({ minX: P.x - 300, maxX: P.x + 300, minZ: P.z + 12, maxZ: P.z + 300 });
+      const wall = this.box(1000, 6, 2, P.x, 3, P.z + 305, "#000000", true); wall.isVisible = false;
+      for (let i = 0; i < 28; i++) {
+        const b = BABYLON.MeshBuilder.CreateSphere("buoy", { diameter: .9, segments: 4 }, this.scene);
+        b.position.set(P.x - 270 + i * 20, .3, P.z + 300); b.material = this.mat(i % 2 ? "#ff7a1a" : "#ffffff"); b.isPickable = false;
+      }
+      [-220, -140, -40, 60, 160, 220].forEach((x, i) => {
+        this.box(.12, 3, .12, P.x + x, 1.5, P.z - 35, "#dddddd");
         const u = BABYLON.MeshBuilder.CreateCylinder("umb", { diameterTop: .2, diameterBottom: 4, height: 1, tessellation: 8 }, this.scene);
-        u.position.set(x, 3.3, 190); u.material = this.mat(["#c8102e", "#fcd116", "#006b3f"][i % 3]); u.isPickable = false;
-        this.box(.9, .25, 2, x + 1.6, .2, 191, "#f3e8c8");
+        u.position.set(P.x + x, 3.3, P.z - 35); u.material = this.mat(["#c8102e", "#fcd116", "#006b3f"][i % 3]); u.isPickable = false;
+        this.box(.9, .25, 2, P.x + x + 1.6, .2, P.z - 34, "#f3e8c8");
       });
-      const LX = -62;                                                                         // lifeguard tower
-      this.box(2.6, .25, 2.6, LX, 3.2, 196, "#ffffff");
-      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(c => this.box(.2, 3.2, .2, LX + c[0], 1.6, 196 + c[1], "#c8102e"));
-      this.box(.1, 1.4, .1, LX, 4.2, 196, "#cccccc"); this.box(1, .6, .05, LX + .5, 4.6, 196, "#c8102e");
+      const LX = P.x - 60;
+      this.box(2.6, .25, 2.6, LX, 3.2, P.z - 34, "#ffffff");
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(q => this.box(.2, 3.2, .2, LX + q[0], 1.6, P.z - 34 + q[1], "#c8102e"));
+      this.box(.1, 1.4, .1, LX, 4.2, P.z - 34, "#cccccc"); this.box(1, .6, .05, LX + .5, 4.6, P.z - 34, "#c8102e");
       window.ACCRA_WATER = { contains: p => this.checkSwimming(p) };
-      this.landmarks.push({ name: "Labadi Beach Swimming Zone", pos: new BABYLON.Vector3(0, 0, 190) });
+      this.landmarks.push({ name: "Labadi Beach Swimming Zone", pos: new BABYLON.Vector3(P.x, 0, P.z) });
     }
     checkSwimming(p) {
       for (const z of this.waterZones) if (p.x > z.minX && p.x < z.maxX && p.z > z.minZ && p.z < z.maxZ) return true;

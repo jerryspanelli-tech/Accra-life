@@ -150,8 +150,8 @@
       draw();
     }
 
-    // ---- the mall: replaces the Makola block at x 15..55, z 17..53; entrance faces the road ----
-    const MX = 35, MZ = 35, MH = 4.6;
+    // ---- Accra Mall, East Legon; entrance faces the local road ----
+    const MP = window.ACCRA_MAP ? window.ACCRA_MAP.places : { mall:{x:600,z:-600}, villa:{x:750,z:-600}, estate:{x:600,z:-200}, makola:{x:-200,z:200}, stadium:{x:-250,z:-180}, police:{x:-600,z:-200}, hospital:{x:-200,z:-400}, dealer:{x:-600,z:200}, pub:{x:200,z:200} }; const MX = MP.mall.x, MZ = MP.mall.z, MH = 4.6;
     scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && Math.abs(m.position.x - MX) < 26 && Math.abs(m.position.z - MZ) < 26).forEach(m => m.dispose());
     const mw = (lx, lz, sw, sd) => box(sw, MH, sd, MX + lx, MH / 2, MZ + lz, "#efe7d2");
     const fl = (lx, lz, sw, sd, c) => box(sw, .05, sd, MX + lx, .03, MZ + lz, c, false);
@@ -246,6 +246,29 @@
       note("Accra Mall loaded \u2014 follow the gold beam");
       if (/newchar/.test(location.search)) setTimeout(() => styler("first"), 1200);
     }
+    // ---- MAKOLA MARKET: dense open-air trading stalls in Accra Central ----
+    const MK = MP.makola || { x: -200, z: 200 };
+    scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && Math.abs(m.position.x-MK.x)<78 && Math.abs(m.position.z-MK.z)<48).forEach(m => m.dispose());
+    const marketRoof = box(138,.5,86,MK.x,8,MK.z,"#454b4d",false); marketRoof.name = "makolaRoof";
+    [[-66,-40],[66,-40],[-66,40],[66,40],[-66,0],[66,0]].forEach(p=>box(.8,8,.8,MK.x+p[0],4,MK.z+p[1],"#737a7d",true));
+    const stallCols=["#c8102e","#fcd116","#006b3f","#2456a6","#d9822b","#f0e6d0"];
+    [-1,1].forEach((row,ri)=>{
+      for(let col=-4;col<=4;col++){
+        const x=MK.x+col*14,z=MK.z+row*20,co=stallCols[(col+4+ri*2)%stallCols.length];
+        box(11,.35,11,x,.2,z,"#b9a98c",false);
+        box(11,2.1,.45,x,1.2,z+5.3,co,true);
+        box(.45,2.1,11,x-5.3,1.2,z,"#7a4a2a",true);
+        box(.45,2.1,11,x+5.3,1.2,z,"#7a4a2a",true);
+        box(12,.35,12,x,3.15,z,co,false);
+        box(11,.12,2.2,x,2.25,z+3.8,"#6b4a2e",false);
+        for(let k=0;k<3;k++)box(2.1,.9,1.7,x-3.2+k*3.2,2.7,z+3.6,["#c8102e","#fcd116","#006b3f"][(k+col+4)%3],false);
+      }
+    });
+    tag("MAKOLA MARKET · ACCRA CENTRAL",MK.x,10,MK.z-49,8);
+    tag("TEXTILES · FOOD · PROVISIONS",MK.x,4.2,MK.z+44,5);
+    window.ACCRA_PLACES = Object.assign(window.ACCRA_PLACES || {}, { makola:{x:MK.x,z:MK.z} });
+    (window.ACCRA_LANDMARKS = window.ACCRA_LANDMARKS || []).push({ n:"Makola Market", x:MK.x, z:MK.z });
+
     // ---- "interact" button: appears next to the car button when you are at a wardrobe, fitting room or store counter ----
     const POINTS = [
       { x: VX - 5, z: VZ - .55, r: 2.4, t: "\uD83D\uDC54 Wardrobe", ok: p => p.z < VZ - .2, f: () => styler("wardrobe") },
@@ -270,7 +293,7 @@
 
     try {
     // ===== AMOAMAH ESTATE: detached houses with red hip-tile roofs, lawns, wooden fences, pools; and the SPORTS STADIUM =====
-    scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.x > 80 && m.position.x < 140 && Math.abs(m.position.z) > 10 && Math.abs(m.position.z) < 60).forEach(m => m.dispose());
+    scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && Math.abs(m.position.x - MP.estate.x) < 80 && Math.abs(m.position.z - MP.estate.z) < 80).forEach(m => m.dispose());
     const hipSrc = {};
     window.ACCRA_HIP = hex => hip(hex);
     try {   // the villa gets a pitched hip roof instead of the flat box
@@ -309,11 +332,11 @@
       else tree(cx + s * 9, cz + s * 7.5);
       tree(cx - 10.2, cz - 7); tree(cx + 10.2, cz - 7);
     }
-    [[96, 1], [124, 1]].forEach((p, i) => { [[-46.5, 1], [-23.5, -1]].forEach((q, j) => amoPlot(p[0], q[0], q[1], i * 2 + j)); });
+    [[MP.estate.x - 14, 1], [MP.estate.x + 14, 1]].forEach((p, i) => { [[MP.estate.z - 14, 1], [MP.estate.z + 14, -1]].forEach((q, j) => amoPlot(p[0], q[0], q[1], i * 2 + j)); });
 
     // ---- sports stadium (block x 82..138, z 12..58) ----
     {
-      const SX = 110, SZ = 35, g = (w, h, d, x, y, z, c, solid) => box(w, h, d, SX + x, y, SZ + z, c, solid);
+      const SX = MP.stadium.x, SZ = MP.stadium.z, g = (w, h, d, x, y, z, c, solid) => box(w, h, d, SX + x, y, SZ + z, c, solid);
       g(44, .05, 36, 0, .03, 0, "#9a9a92", false);                                              // concrete apron
       g(36, .06, 22, 0, .06, 0, "#3f9a3a", false);                                              // pitch
       for (let i = 0; i < 6; i += 2) g(6, .02, 22, -15 + i * 6, .1, 0, "#388a34", false);       // mowing stripes
@@ -338,13 +361,14 @@
       c.fillStyle = "#17191c"; c.fillRect(0, 0, 512, 128); c.fillStyle = "#fcd116"; c.font = "bold 44px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("ACCRA SPORTS STADIUM", 256, 66, 490); dt.update();
       const sn = B.MeshBuilder.CreatePlane("stsn", { width: 14, height: 3.5 }, scene); sn.position.set(SX, 6, SZ - 17.4); sn.isPickable = false;
       const mt = new B.StandardMaterial("stsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
+      (window.ACCRA_LANDMARKS = window.ACCRA_LANDMARKS || []).push({ n: "Accra Sports Stadium", x: SX, z: SZ });
     }
     } catch (e) { banner("Amoamah/stadium: " + e.message); }
 
     // ===== POLICE DEPARTMENT, ACCRA HOSPITAL and CAR DEALERSHIP: real buildings with separate rooms =====
     try {
       const inB = (m, x0, x1, z0, z1) => m.position.x > x0 && m.position.x < x1 && m.position.z > z0 && m.position.z < z1;
-      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && (inB(m, 12, 58, 82, 112) || inB(m, 82, 138, 82, 112) || inB(m, 12, 58, -58, -12))).forEach(m => m.dispose());
+      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && (inB(m, MP.police.x-25, MP.police.x+25, MP.police.z-18, MP.police.z+18) || inB(m, MP.hospital.x-30, MP.hospital.x+30, MP.hospital.z-18, MP.hospital.z+18) || inB(m, MP.dealer.x-25, MP.dealer.x+25, MP.dealer.z-18, MP.dealer.z+18))).forEach(m => m.dispose());
       const roofs = [], dec = new B.TransformNode("facDeco", scene), PI = Math.PI;
       const D = (w, h, d, x, y, z, c) => { const m = B.MeshBuilder.CreateBox("d", { width: w, height: h, depth: d }, scene); m.parent = dec; m.position.set(x, y, z); m.material = mat(c); return m; };
       const I = (id, x, z, ry, sc) => { collider(id, x, z, ry, sc); return item(id, x, z, ry, false, sc, dec); };
@@ -365,7 +389,7 @@
       }
       const fl = (x, z, w, d, c) => box(w, .04, d, x, .06, z, c, false);
       // ---- POLICE DEPARTMENT: lobby, 2 offices, interview room, holding cells ----
-      { const cx = 35, cz = 98;
+      { const cx = MP.police.x, cz = MP.police.z;
         bld(cx, cz, 30, 18, "#dfe6ee", "#c9d3de", [[-9, -1, 12, .3], [9, -1, 12, .3], [-3, 0, .3, 2], [-3, 4.1, .3, 3.8], [-3, 8.1, .3, 1.8], [3, 0, .3, 2], [3, 4.1, .3, 3.8], [3, 8.1, .3, 1.8], [-9, 4.1, 12, .3], [11, 2.1, 8, .3], [11, 5.4, 8, .3]], "POLICE DEPARTMENT", "#1d3b6b", "#ffffff");
         fl(cx - 9, cz + 1.5, 11.5, 5, "#b9c6d6"); fl(cx - 9, cz + 6.5, 11.5, 4.5, "#cdbfa5"); fl(cx + 9, cz + 4, 11.5, 10, "#8f979f");
         SOLID(7, 1.1, 1.2, cx, .55, cz - 5.2, "#5a4a3a"); D(.6, .4, .05, cx - 1.5, 1.3, cz - 5.2, "#111");
@@ -373,12 +397,12 @@
         I("desk", cx - 14, cz + 1.5, PI / 2, 1); I("shelf", cx - 8, cz + .3, 0, 1); I("desk", cx - 14, cz + 6.8, PI / 2, 1); I("dining", cx - 8.5, cz + 6.8, 0, .9);
         for (let i = 0; i < 17; i++) D(.07, 3, .07, cx + 7, 1.5, cz - .8 + i * .6, "#555");
         [0, 3.3, 6.6].forEach(z => D(2.2, .45, .8, cx + 13.6, .22, cz + z + .6, "#7a7a7a"));
-        box(.15, 8, .15, 18, 4, 86, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => D(1.8, .5, .05, 18.95, f[1], 86, f[0]));
-        D(6, .02, 10, cx, .07, 83, "#ffffff"); D(5.6, .03, 9.6, cx, .075, 83, "#3a3d42");
-        A.createTrotro(scene, { position: [24, 0, 83], rotY: PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
+        box(.15, 8, .15, cx-17, 4, cz-12, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => D(1.8, .5, .05, cx-16.05, f[1]-4, cz-12, f[0]));
+        D(6, .02, 10, cx, .07, cz-15, "#ffffff"); D(5.6, .03, 9.6, cx, .075, cz-15, "#3a3d42");
+        A.createTrotro(scene, { position: [cx-11, 0, cz-15], rotY: PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
       }
       // ---- HOSPITAL: reception, emergency room, consulting room, pharmacy, 2 wards ----
-      { const cx = 110, cz = 98;
+      { const cx = MP.hospital.x, cz = MP.hospital.z;
         bld(cx, cz, 44, 24, "#f4f7fa", "#e6eef2", [[-19.5, -3, 5, .3], [-8.9, -3, 13.8, .3], [8, -3, 12, .3], [18.6, -3, 6.8, .3], [-11, 4.5, .3, 15], [-2, 0, .3, 6], [-2, 8.1, .3, 7.8], [2, 0, .3, 6], [2, 8.1, .3, 7.8], [9, 4.5, .3, 15], [11.5, 4.5, 5, .3], [18.6, 4.5, 6.8, .3]], "ACCRA HOSPITAL", "#ffffff", "#c8102e");
         D(4.4, 4.4, .3, cx, 9.4, cz - 12.4, "#ffffff"); D(1.2, 3.6, .4, cx, 9.4, cz - 12.5, "#c8102e"); D(3.6, 1.2, .4, cx, 9.4, cz - 12.5, "#c8102e");
         fl(cx - 16.5, cz + 4.5, 11, 15, "#d6e6ea"); fl(cx - 6.5, cz + 4.5, 9, 15, "#e0e8f0"); fl(cx + 5.5, cz + 4.5, 7, 15, "#e4efe0"); fl(cx + 15.5, cz + 4.5, 13, 15, "#dce8f0");
@@ -388,10 +412,10 @@
         I("desk", cx - 10, cz + 1, PI / 2, 1); I("bed1", cx - 4, cz + 10, PI);
         SOLID(5, 1, .8, cx + 5.5, .5, cz + 1.5, "#cfd6dc"); I("shelf", cx + 8.4, cz + 7, -PI / 2); I("shelf", cx + 8.4, cz + 9.4, -PI / 2);
         [-1.8, .8, 3.2].forEach(z => I("bed1", cx + 20.4, cz + z, -PI / 2)); [6, 8.5, 11].forEach(z => I("bed1", cx + 20.4, cz + z, -PI / 2));
-        A.createTrotro(scene, { position: [100, 0, 83], rotY: PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
+        A.createTrotro(scene, { position: [cx-10, 0, cz-15], rotY: PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
       }
       // ---- CAR DEALERSHIP (Makola, east) ----
-      { const cx = 35, cz = -35;
+      { const cx = MP.dealer.x, cz = MP.dealer.z;
         bld(cx, cz, 36, 22, "#e4ebf0", "#d9dde3", [[12, 6, .3, 8], [14.5, 2.2, 5, .3]], "ACCRA MOTORS \u00B7 CAR DEALERSHIP", "#17191c", "#fcd116", 8);
         fl(cx, cz, 36, 22, "#e9eaee");
         const car = (x, z, hex, ry) => {
@@ -407,16 +431,16 @@
       const meshDec = mergeAsset(dec); if (meshDec) meshDec.isPickable = false;
       scene.onBeforeRenderObservable.add(() => { const p = player.position; roofs.forEach(r => r[0].setEnabled(!(Math.abs(p.x - r[1]) < r[3] + .5 && Math.abs(p.z - r[2]) < r[4] + .5))); });
       window.ACCRA_PLACES = {
-        pd: { x: 35, z: 94.4, ox: 35, oz: 84, depot: { x: 35, z: 83, h: Math.PI } },
-        hp: { x: 110, z: 89.5, ox: 110, oz: 82, depot: { x: 110, z: 81, h: Math.PI } },
-        dealer: { x: 24, z: -26, ox: 35, oz: -50 }
+        pd: { x: MP.police.x, z: MP.police.z-3.6, ox: MP.police.x, oz: MP.police.z-14, depot: { x: MP.police.x, z: MP.police.z-15, h: Math.PI } },
+        hp: { x: MP.hospital.x, z: MP.hospital.z+2.5, ox: MP.hospital.x, oz: MP.hospital.z-16, depot: { x: MP.hospital.x, z: MP.hospital.z-17, h: Math.PI } },
+        dealer: { x: MP.dealer.x-11, z: MP.dealer.z+9, ox: MP.dealer.x, oz: MP.dealer.z-15 }
       };
     } catch (e) { banner("Police/Hospital/Dealership: " + e.message); }
 
     // ===== THE ACCRA VIBES PUB (Osu): glass front, bar, football TVs, dance floor, rooftop deck, patio and parking =====
     try {
-      const PX = -110, PZ = -41, PH = 4.6;   // 34 x 18 m, front wall faces -z (the road)
-      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && m.position.x > -136 && m.position.x < -86 && m.position.z < -34 && m.position.z > -60).forEach(m => m.dispose());
+      const PX = MP.pub.x, PZ = MP.pub.z, PH = 4.6;   // 34 x 18 m, front wall faces -z (the road)
+      scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && Math.abs(m.position.x-PX)<26 && Math.abs(m.position.z-PZ)<20).forEach(m => m.dispose());
       ITEMS.pubchair = ["Pub chair", 0, [[.45, .06, .45, 0, .45, 0, "#6b4a2e"], [.45, .5, .05, 0, .72, -.2, "#6b4a2e"], [.05, .45, .05, -.18, .22, -.18, "#3a2a1c"], [.05, .45, .05, .18, .22, -.18, "#3a2a1c"], [.05, .45, .05, -.18, .22, .18, "#3a2a1c"], [.05, .45, .05, .18, .22, .18, "#3a2a1c"]]];
       const dec = new B.TransformNode("pubDeco", scene), roofN = new B.TransformNode("pubRoof", scene), emc = {};
       const em = hex => emc[hex] || (emc[hex] = Object.assign(new B.StandardMaterial("pem" + hex, scene), { emissiveColor: B.Color3.FromHexString(hex), disableLighting: true }));
@@ -522,8 +546,8 @@
 
     // ===== LAYOUT GUARD: no older building may overlap or poke into anything new (runs before roofs are added) =====
     try {
-      const FOOT = { mall: [14, 56, 16, 54], pub: [-128, -80, -61, -31], pubVIP: [-128, -113, -32, -21], police: [19, 51, 88, 108], hospital: [87, 133, 85, 111],
-        dealer: [17, 53, -46, -24], stadium: [85, 135, 13, 57], amoamah: [81, 139, -59, -11] };
+      const FOOT = { mall: [MX-22, MX+22, MZ-20, MZ+20], makola: [MK.x-70, MK.x+70, MK.z-44, MK.z+44], pub: [PX-19, PX+19, PZ-11, PZ+11], pubVIP: [PX-19, PX-4, PZ+8, PZ+20], police: [MP.police.x-25, MP.police.x+25, MP.police.z-18, MP.police.z+18], hospital: [MP.hospital.x-30, MP.hospital.x+30, MP.hospital.z-18, MP.hospital.z+18],
+        dealer: [MP.dealer.x-25, MP.dealer.x+25, MP.dealer.z-18, MP.dealer.z+18], stadium: [MP.stadium.x-30, MP.stadium.x+30, MP.stadium.z-25, MP.stadium.z+25], amoamah: [MP.estate.x-40, MP.estate.x+40, MP.estate.z-40, MP.estate.z+40] };
       let gone = 0;
       scene.meshes.filter(m => m.name === "bd" || m.name === "rf").forEach(m => {
         const e = m.getBoundingInfo().boundingBox.extendSize, x = m.position.x, z = m.position.z;
@@ -562,7 +586,7 @@
       m.material = mt; m.isVisible = false; m.isPickable = false;
       return (awnSrc[hex] = m);
     }
-    const nearest = v => R.reduce((a, r) => Math.abs(v - r) < Math.abs(a) ? v - r : a, 1e9);
+    const nearest = v => (window.ACCRA_MAP ? window.ACCRA_MAP.roadLines : R).reduce((a, r) => Math.abs(v - r) < Math.abs(a) ? v - r : a, 1e9);
     function awning(b, w, d, col) {
       const dx = nearest(b.position.x), dz = nearest(b.position.z);
       let ox = 0, oz = 0, W, half;
@@ -641,8 +665,8 @@
     } catch (e) {}
     window.ACCRA_KIT = { item, ITEMS, note, show, hide, ttl, BS, GOLD, cash, pay, ls, sv, styler, points: POINTS, MX, MZ, collider, tag, keep: () => { lock = true; } };
     (window.ACCRA_MODULES = window.ACCRA_MODULES || {}).upgrade = 1;
-    const lifeJs = document.createElement("script"); window.ACCRA_BUILD = window.ACCRA_BUILD || 29; lifeJs.src = "accra-life.js?v=" + window.ACCRA_BUILD; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
-    const locJs = document.createElement("script"); locJs.src = "AccraLocations.js?v=" + (window.ACCRA_BUILD || 29);
+    const lifeJs = document.createElement("script"); lifeJs.async = false; window.ACCRA_BUILD = window.ACCRA_BUILD || 29; lifeJs.src = "accra-life.js?v=" + window.ACCRA_BUILD; lifeJs.onerror = () => banner("accra-life.js was not found. Upload it to your repo."); document.body.appendChild(lifeJs);
+    const locJs = document.createElement("script"); locJs.async = false; locJs.src = "AccraLocations.js?v=" + (window.ACCRA_BUILD || 29);
     locJs.onload = () => {
       try {
         if (typeof window.AccraLocations !== "function") { banner("AccraLocations.js on your site is the OLD module version (import/export), so it cannot run. Upload the fixed AccraLocations.js and reload."); return; }
