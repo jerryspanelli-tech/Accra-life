@@ -55,6 +55,8 @@
 
     // Named roads sit over the broad district streets and provide recognisable Accra routes.
     const asphalt = matOf("#303236"), yellow = matOf("#e6c84b");
+    const dashSource = B.MeshBuilder.CreateBox("road-mark-source", { width:.28, height:.025, depth:5 }, scene);
+    dashSource.position.set(0,-1000,0); dashSource.material=yellow; dashSource.isPickable=false; dashSource.checkCollisions=false;
     M.namedRoads.forEach(route => {
       for (let i=0;i<route.points.length-1;i++) {
         const a=route.points[i], b=route.points[i+1], dx=b[0]-a[0], dz=b[1]-a[1], len=Math.hypot(dx,dz);
@@ -63,8 +65,8 @@
         const surf=B.MeshBuilder.CreateBox("named-road",{width:route.width,height:.06,depth:len},scene);
         surf.position.set(mx,.055,mz); surf.rotation.y=angle; surf.material=asphalt; surf.isPickable=false; surf.checkCollisions=false;
         for(let d=12;d<len-8;d+=26){
-          const mark=B.MeshBuilder.CreateBox("road-mark",{width:.28,height:.025,depth:5},scene);
-          mark.position.set(a[0]+dx/len*d,.09,a[1]+dz/len*d); mark.rotation.y=angle; mark.material=yellow; mark.isPickable=false;
+          const mark=dashSource.createInstance("road-mark");
+          mark.position.set(a[0]+dx/len*d,.09,a[1]+dz/len*d); mark.rotation.y=angle; mark.isPickable=false;
         }
       }
     });
