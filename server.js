@@ -81,6 +81,23 @@ app.get('/health', (_req, res) => res.json({ ok: true, service: 'accra-life-mult
 // Vercel's Express entrypoint does not automatically select babylon.html as the site root.
 // Serve the actual game page explicitly so GET / opens Accra Life.
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'babylon.html')));
+// Explicit asset routes ensure Vercel's serverless file tracer bundles the game scripts.
+// Keep these paths in sync with the script tags in babylon.html.
+const gameScripts = [
+  'accra-map.js',
+  'landmarks.js',
+  'accra-airport.js',
+  'accra-civic-landmarks.js',
+  'phone.js',
+  'online.js',
+  'accra-assets.js',
+  'accra-figure.js',
+  'accra-start.js',
+  'accra-upgrade.js'
+];
+gameScripts.forEach(file => {
+  app.get('/' + file, (_req, res) => res.sendFile(path.join(__dirname, file)));
+});
 app.use(express.static(__dirname, { extensions: ['html'] }));
 
 io.use((socket, next) => {
