@@ -56,15 +56,18 @@
     // Named roads sit over the broad district streets and provide recognisable Accra routes.
     const asphalt = matOf("#303236"), yellow = matOf("#e6c84b");
     M.namedRoads.forEach(route => {
-      for (let i=0;i<route.points.length-1;i++) {
-        const a=route.points[i], b=route.points[i+1], dx=b[0]-a[0], dz=b[1]-a[1], len=Math.hypot(dx,dz);
-        if (len < 1) continue;
-        const angle=Math.atan2(dx,dz), mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2;
-        const surf=B.MeshBuilder.CreateBox("named-road",{width:route.width,height:.06,depth:len},scene);
-        surf.position.set(mx,.055,mz); surf.rotation.y=angle; surf.material=asphalt; surf.isPickable=false; surf.checkCollisions=false;
-        const mark=B.MeshBuilder.CreateBox("road-mark",{width:.28,height:.025,depth:Math.max(4,len-8)},scene);
-        mark.position.set(mx,.09,mz); mark.rotation.y=angle; mark.material=yellow; mark.isPickable=false;
+      const pts=route.points, closed=pts.length>2 && pts[0][0]===pts[pts.length-1][0] && pts[0][1]===pts[pts.length-1][1];
+      const left=[],right=[];
+      for(let i=0;i<pts.length;i++){
+        const p=pts[i], prev=pts[i===0?(closed?pts.length-2:0):i-1], next=pts[i===pts.length-1?(closed?1:pts.length-1):i+1];
+        const dx=next[0]-prev[0],dz=next[1]-prev[1],len=Math.hypot(dx,dz)||1,nx=dz/len,nz=-dx/len;
+        left.push(new B.Vector3(p[0]+nx*route.width/2,.055,p[1]+nz*route.width/2));
+        right.push(new B.Vector3(p[0]-nx*route.width/2,.055,p[1]-nz*route.width/2));
       }
+      const surf=B.MeshBuilder.CreateRibbon("named-road",{pathArray:[left,right],closeArray:false,sideOrientation:B.Mesh.DOUBLESIDE},scene);
+      surf.material=asphalt; surf.material.backFaceCulling=false; surf.isPickable=false; surf.checkCollisions=false;
+      const mark=B.MeshBuilder.CreateTube("road-mark",{path:pts.map(p=>new B.Vector3(p[0],.09,p[1])),radius:.14,tessellation:4},scene);
+      mark.material=yellow; mark.isPickable=false; mark.checkCollisions=false;
     });
 
     // Black Star Square / Independence Square: open parade ground and the Black Star Gate.
