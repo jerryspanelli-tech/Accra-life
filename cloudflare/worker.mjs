@@ -66,13 +66,13 @@ export class GameRoom {
   }
   broadcast(event, data, except) {
     for (const ws of this.sockets()) {
-      if (ws !== except && ws.deserializeAttachment()?.authenticated) this.send(ws, event, data);
+      if (ws !== except && ws.readyState === WebSocket.OPEN && ws.deserializeAttachment()?.authenticated) this.send(ws, event, data);
     }
   }
   players(except) {
     const out = {};
     for (const ws of this.sockets()) {
-      if (ws === except) continue;
+      if (ws === except || ws.readyState !== WebSocket.OPEN) continue;
       const a = ws.deserializeAttachment();
       if (a?.authenticated && a.player) out[a.player.id] = publicPlayer(a.player);
     }
@@ -98,13 +98,19 @@ export class GameRoom {
       if (saved && !equalHash(saved.secretHash, secretHash)) { ws.close(1008, "Player authentication failed"); return; }
       const account = saved || { secretHash, balance: 200 };
       if (!saved) await this.ctx.storage.put(key, account);
-      const player = { id: pid, name: cleanName(name), x: 0, z: 0, ry: 0, sp: 0, drv: 0, look: {}, area: null, lastMove: 0, lastLocation: 0 };
-      // A new login replaces an older connection for the same player ID.
+      // Reuse the last live state when the same player reconnects.
+      let previousPlayer = null;
       for (const other of this.sockets()) {
         if (other === ws) continue;
         const old = other.deserializeAttachment();
-        if (old?.authenticated && old.player?.id === pid) other.close(4001, "Reconnected elsewhere");
+        if (old?.authenticated && old.player?.id === pid) {
+          previousPlayer = old.player;
+          other.close(4001, "Reconnected elsewhere");
+        }
       }
+      const player = previousPlayer
+        ? { ...previousPlayer, name: cleanName(name), lastMove: 0, lastLocation: 0 }
+        : { id: pid, name: cleanName(name), x: 0, z: 0, ry: 0, sp: 0, drv: 0, look: {}, area: null, lastMove: 0, lastLocation: 0 };
       ws.serializeAttachment({ authenticated: true, player });
       this.send(ws, "hello", { balance: account.balance });
       this.send(ws, "currentPlayers", this.players(ws));
