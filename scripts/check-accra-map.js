@@ -1,0 +1,42 @@
+'use strict';
+const assert = require('node:assert/strict');
+global.window = {};
+require('../accra-map.js');
+const M = window.ACCRA_MAP;
+assert.ok(M, 'shared Accra map must load');
+assert.equal(M.version, 2);
+assert.equal(M.scale, 10);
+assert.deepEqual(M.grid, [-800, -400, 0, 400, 800]);
+assert.deepEqual(M.cellCenters, [-600, -200, 200, 600]);
+assert.equal(M.districts.length, 4);
+assert.ok(M.districts.every(row => row.length === 4), 'district layout must be 4 x 4');
+const names = M.districts.flat();
+assert.equal(new Set(names).size, 16, 'all sixteen neighbourhood blocks must be distinct');
+assert.deepEqual([...M.roadLines], [...new Set(M.roadLines)].sort((a, b) => a - b), 'road lines must be unique and ordered');
+for (const road of M.grid) assert.ok(M.roadLines.includes(road), 'arterial road missing from road line index');
+for (const center of M.cellCenters) for (const offset of M.localRoadOffsets) assert.ok(M.roadLines.includes(center + offset), 'local road missing from road line index');
+const cell = (x, z) => {
+  const i = M.grid.findIndex((v, n) => n < 4 && x >= v && x < M.grid[n + 1]);
+  const j = M.grid.findIndex((v, n) => n < 4 && z >= v && z < M.grid[n + 1]);
+  return i < 0 || j < 0 ? null : M.districts[i][j];
+};
+assert.equal(cell(M.places.makola.x, M.places.makola.z), 'Accra Central');
+assert.equal(cell(M.places.pub.x, M.places.pub.z), 'Osu');
+assert.equal(cell(M.places.mall.x, M.places.mall.z), 'East Legon');
+assert.equal(cell(M.places.villa.x, M.places.villa.z), 'East Legon');
+assert.equal(cell(M.places.airport.x, M.places.airport.z), 'Airport Residential');
+assert.equal(cell(M.places.labadiBeach.x, M.places.labadiBeach.z), 'Labadi');
+assert.equal(cell(M.places.estate.x, M.places.estate.z), 'Cantonments');
+assert.equal(cell(M.places.stadium.x, M.places.stadium.z), 'North Ridge');
+assert.ok(M.highwayStartZ < M.cityBounds.minZ, 'intercity highway must join north of the city grid');
+assert.ok(M.coastlineZ > M.cityBounds.maxZ, 'coastline must sit south of the city grid');
+const A = M.places.airport;
+const westGap = (A.x - 190) - 7;
+const eastGap = (A.x + 190) - (400 + 7);
+assert.ok(westGap >= 2 && Math.abs(eastGap) >= 2, 'airport fence must not overlap the adjacent arterial roads');
+for (const [name, p] of Object.entries(M.places)) {
+  if (name === 'atms') continue;
+  assert.ok(Number.isFinite(p.x) && Number.isFinite(p.z), name + ' coordinates must be finite');
+}
+assert.equal(M.places.atms.length, 10, 'ATM destinations must remain available');
+console.log('Accra map checks passed: 16 distinct districts, connected road hierarchy, aligned landmarks and separated airport access.');
