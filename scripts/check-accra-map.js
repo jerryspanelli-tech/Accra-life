@@ -69,6 +69,7 @@ const world = fs.readFileSync(path.join(__dirname, '..', 'accra-world.js'), 'utf
 const airport = fs.readFileSync(path.join(__dirname, '..', 'accra-airport.js'), 'utf8');
 assert.ok(html.includes('window.ACCRA_BUILD = 4'), 'dynamic Accra modules must use the current cache version');
 assert.ok(html.includes('accra-map.js?v=4'), 'the expanded shared map must bypass old browser cache');
+assert.ok(html.includes('cam.maxZ=12000'), 'camera far clip must include the expanded districts');
 assert.ok(world.includes('ground.scaling.set(50, 1, 65)'), 'world terrain must cover the expanded city and highway');
 assert.ok(world.includes('ground.position.set(0, 0, -14000)'), 'world terrain must cover the south coast and northern highway');
 assert.ok(world.includes('scene.fogStart = 2500; scene.fogEnd = 9500;'), 'expanded districts must remain visible across the wider city');
