@@ -18,7 +18,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#9fd3ee;touch-action:n
 <div id="joy"><div id="knob"></div></div>
 <button id="jump" class="pb" aria-label="Jump or brake">⬆</button><button id="act" class="pb" aria-label="Car">🚗</button>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="accra-map.js?v=3"></script>
+<script src="accra-map.js?v=4"></script>
 <script>
 const $=id=>document.getElementById(id),V=(x,y,z)=>new BABYLON.Vector3(x,y,z),C3=h=>BABYLON.Color3.FromHexString(h);
 const engine=new BABYLON.Engine($('c'),true,{adaptToDeviceRatio:true});
@@ -172,4 +172,4 @@ function update(dt){
 }
 engine.runRenderLoop(()=>{update(Math.min(engine.getDeltaTime()/1000,.05));scene.render()});
 addEventListener('resize',()=>engine.resize());
-</script><script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script><script src="landmarks.js?v=38"></script><script src="accra-airport.js?v=38"></script><script src="accra-civic-landmarks.js?v=1"></script><script src="phone.js?v=28"></script><script src="online.js?v=29"></script><script src="accra-assets.js?v=29"></script><script src="accra-figure.js?v=32"></script><script src="accra-start.js?v=29"></script><script src="accra-upgrade.js?v=29"></script></body></html>
+</script><script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script><script src="landmarks.js?v=39"></script><script src="accra-airport.js?v=39"></script><script src="accra-civic-landmarks.js?v=2"></script><script src="phone.js?v=28"></script><script src="online.js?v=29"></script><script src="accra-assets.js?v=29"></script><script src="accra-figure.js?v=32"></script><script src="accra-start.js?v=29"></script><script src="accra-upgrade.js?v=29"></script></body></html>
