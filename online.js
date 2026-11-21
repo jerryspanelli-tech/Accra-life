@@ -96,7 +96,7 @@
     mine.al.rotation.x=-2.5+w*.9;mine.ar.rotation.x=-2.5-w*.9;mine.ll.rotation.x=Math.sin(mine.ph*2)*.4;mine.lr.rotation.x=-Math.sin(mine.ph*2)*.4}
   else{mine.al.rotation.z=mine.ar.rotation.z=0;mine.g.rotation.z=0;r.rotation.x=0;r.position.set(0,-.91,0);walk(mine,driving?0:smv,dt)}});
  // ---------- online ----------
- const URL_=window.ACCRA_SERVER||'PASTE_SERVER_URL_HERE';
+ const URL_=window.ACCRA_SERVER||window.location.origin;
  const cur={sp:0};let px=0,pz=0;
  const snap=()=>{const o=driving?car:player;return{x:o.position.x,z:o.position.z,ry:driving?heading:player.rotation.y,sp:cur.sp,drv:driving?1:0,look}};
  if(!window.io||URL_.indexOf('PASTE')===0){console.log('Offline mode: set ACCRA_SERVER in online.js to play online');return}
