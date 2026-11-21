@@ -73,6 +73,8 @@ assert.ok(html.includes('cam.maxZ=12000'), 'camera far clip must include the exp
 assert.ok(world.includes('ground.scaling.set(50, 1, 65)'), 'world terrain must cover the expanded city and highway');
 assert.ok(world.includes('ground.position.set(0, 0, -14000)'), 'world terrain must cover the south coast and northern highway');
 assert.ok(world.includes('scene.fogStart = 2500; scene.fogEnd = 9500;'), 'expanded districts must remain visible across the wider city');
+assert.ok(world.includes('[\"Nsawam\", -5000, 0]') && world.includes('[\"Suhum\", -7500, 0]'), 'first intercity towns must sit beyond the expanded city edge');
+assert.ok(world.includes('const realKm = z => Math.round((-z) / 1000 * 10.2)'), 'intercity distance labels must measure from Accra, not the highway entry');
 assert.ok(airport.includes('box(800, .06, 12, C.x + 600, .04, C.z + 56'), 'Kotoka east gate must connect to the x=2000 arterial');
 assert.ok(airport.includes('inAccessCorridor'), 'buildings must be cleared from the airport access road corridor');
 assert.ok(M.places.temaHarbour.x < 15000 && M.places.temaHarbour.x > 12000, 'Tema Harbour must remain inside the expanded world terrain');
