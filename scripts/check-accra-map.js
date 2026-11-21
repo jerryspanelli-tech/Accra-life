@@ -51,6 +51,7 @@ assert.ok(M.highwayStartZ < M.cityBounds.minZ, 'intercity highway must join nort
 assert.ok(M.grid.includes(2000), 'airport access must meet the x=2000 city arterial');
 const segmentDistance = (p, a, b) => { const dx=b[0]-a[0], dz=b[1]-a[1], t=Math.max(0,Math.min(1,((p.x-a[0])*dx+(p.z-a[1])*dz)/(dx*dx+dz*dz))); return Math.hypot(p.x-(a[0]+t*dx),p.z-(a[1]+t*dz)); };
 const n1 = M.namedRoads.find(r => r.name === 'N1 George Bush Highway');
+assert.ok(n1.points.some(([x,z]) => x === 0 && z === M.highwayStartZ), 'N1 must join the northbound Kumasi highway at the city edge');
 const n1Gap = Math.min(...n1.points.slice(1).map((b,i) => segmentDistance(M.places.airport,n1.points[i],b)));
 assert.ok(n1Gap > 1000, 'N1 must pass clear of the Kotoka airport site');
 assert.ok(M.coastlineZ > M.cityBounds.maxZ, 'coastline must sit south of the city grid');
@@ -79,4 +80,6 @@ assert.ok(airport.includes('box(800, .06, 12, C.x + 600, .04, C.z + 56'), 'Kotok
 assert.ok(airport.includes('inAccessCorridor'), 'buildings must be cleared from the airport access road corridor');
 assert.ok(M.places.temaHarbour.x < 15000 && M.places.temaHarbour.x > 12000, 'Tema Harbour must remain inside the expanded world terrain');
 assert.ok(M.namedRoads.find(r => r.name === 'Tema Harbour Access Road').points.at(-1)[0] === M.places.temaHarbour.x, 'Tema Harbour access road must reach the harbour');
+assert.ok(M.namedRoads.find(r => r.name === 'Spintex Road').points.at(-1)[0] === M.places.tema.x, 'Spintex Road must reach Tema');
+assert.ok(M.namedRoads.find(r => r.name === 'Accra–Tema Motorway').points.at(-1)[0] === M.places.tema.x, 'Accra–Tema Motorway must reach Tema');
 console.log('Accra map checks passed: 16 distinct districts, aligned civic landmarks, and named road hierarchy.');
