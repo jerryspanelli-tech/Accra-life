@@ -248,7 +248,8 @@
     const TU = [["studio", "Studio apartment", "studio", 80, 8000], ["1bed", "1-bedroom apartment", "apt1", 140, 14000], ["2bed", "2-bedroom apartment", "house", 220, 24000], ["pent", "Penthouse", "mansion", 500, 80000]];
     ["Airport Heights", "Kotoka Residence", "Skyline Towers", "Runway View"].forEach((nm, n) => {
       const b = pick(n < 2 ? 2 : 3, 0, true); if (!b) return;
-      const units = TU.map(t => (UNITS["T" + n + t[0]] = mkUnit("T" + n + t[0], nm + " \u00B7 " + t[1], "Airport City", t[2], 1 + .08 * n + (t[2] === "mansion" ? .05 : 0))));
+      const area = n < 2 ? "Airport Residential" : "East Legon";
+      const units = TU.map(t => (UNITS["T" + n + t[0]] = mkUnit("T" + n + t[0], nm + " \u00B7 " + t[1], area, t[2], 1 + .08 * n + (t[2] === "mansion" ? .05 : 0))));
       LISTS.push({ name: nm + " \u2014 Apartments", units, door: door(b, nm, "Apartments \u00B7 studio to penthouse", "#c9a54a") });
     });
     [["osu1", "Osu 1-bed apartment", "Osu", 2, 2, "apt1", 150, 14000], ["osu2", "Osu 2-bed flat", "Osu", 2, 2, "house", 230, 24000], ["mak1", "Makola single room", "Accra Central", 1, 2, "room", 35, 2500],
