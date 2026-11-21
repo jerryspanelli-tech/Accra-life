@@ -150,8 +150,8 @@
       draw();
     }
 
-    // ---- the mall: replaces the Makola block at x 15..55, z 17..53; entrance faces the road ----
-    const MP = window.ACCRA_MAP ? window.ACCRA_MAP.places : { mall:{x:600,z:-200}, villa:{x:620,z:-690}, estate:{x:600,z:-390}, stadium:{x:-250,z:-180}, police:{x:-600,z:-200}, hospital:{x:-200,z:-400}, dealer:{x:-600,z:200}, pub:{x:200,z:200} }; const MX = MP.mall.x, MZ = MP.mall.z, MH = 4.6;
+    // ---- Accra Mall, East Legon; entrance faces the local road ----
+    const MP = window.ACCRA_MAP ? window.ACCRA_MAP.places : { mall:{x:600,z:-600}, villa:{x:750,z:-600}, estate:{x:600,z:-200}, makola:{x:-200,z:200}, stadium:{x:-250,z:-180}, police:{x:-600,z:-200}, hospital:{x:-200,z:-400}, dealer:{x:-600,z:200}, pub:{x:200,z:200} }; const MX = MP.mall.x, MZ = MP.mall.z, MH = 4.6;
     scene.meshes.filter(m => (m.name === "bd" || m.name === "rf") && Math.abs(m.position.x - MX) < 26 && Math.abs(m.position.z - MZ) < 26).forEach(m => m.dispose());
     const mw = (lx, lz, sw, sd) => box(sw, MH, sd, MX + lx, MH / 2, MZ + lz, "#efe7d2");
     const fl = (lx, lz, sw, sd, c) => box(sw, .05, sd, MX + lx, .03, MZ + lz, c, false);
@@ -546,7 +546,7 @@
 
     // ===== LAYOUT GUARD: no older building may overlap or poke into anything new (runs before roofs are added) =====
     try {
-      const FOOT = { mall: [MX-22, MX+22, MZ-20, MZ+20], pub: [PX-19, PX+19, PZ-11, PZ+11], pubVIP: [PX-19, PX-4, PZ+8, PZ+20], police: [MP.police.x-25, MP.police.x+25, MP.police.z-18, MP.police.z+18], hospital: [MP.hospital.x-30, MP.hospital.x+30, MP.hospital.z-18, MP.hospital.z+18],
+      const FOOT = { mall: [MX-22, MX+22, MZ-20, MZ+20], makola: [MK.x-70, MK.x+70, MK.z-44, MK.z+44], pub: [PX-19, PX+19, PZ-11, PZ+11], pubVIP: [PX-19, PX-4, PZ+8, PZ+20], police: [MP.police.x-25, MP.police.x+25, MP.police.z-18, MP.police.z+18], hospital: [MP.hospital.x-30, MP.hospital.x+30, MP.hospital.z-18, MP.hospital.z+18],
         dealer: [MP.dealer.x-25, MP.dealer.x+25, MP.dealer.z-18, MP.dealer.z+18], stadium: [MP.stadium.x-30, MP.stadium.x+30, MP.stadium.z-25, MP.stadium.z+25], amoamah: [MP.estate.x-40, MP.estate.x+40, MP.estate.z-40, MP.estate.z+40] };
       let gone = 0;
       scene.meshes.filter(m => m.name === "bd" || m.name === "rf").forEach(m => {
