@@ -16,7 +16,7 @@ const io = new Server(httpServer, {
   maxHttpBufferSize: 16 * 1024
 });
 const PORT = Number(process.env.PORT || 3000);
-const DATA_DIR = process.env.ACCRA_DATA_DIR || path.join(__dirname, 'data');
+const DATA_DIR = process.env.ACCRA_DATA_DIR || path.join(__dirname, '..', 'accra-life-data');
 const DATA_FILE = path.join(DATA_DIR, 'players.json');
 const players = new Map();
 const active = new Map();
@@ -89,8 +89,12 @@ io.use((socket, next) => {
   }
   const hash = crypto.createHash('sha256').update(secret).digest('hex');
   const saved = players.get(id);
-  if (saved && !crypto.timingSafeEqual(Buffer.from(saved.secretHash, 'hex'), Buffer.from(hash, 'hex'))) {
-    return next(new Error('Player authentication failed'));
+  if (saved) {
+    const stored = Buffer.from(saved.secretHash, 'hex');
+    const incoming = Buffer.from(hash, 'hex');
+    if (stored.length !== incoming.length || !crypto.timingSafeEqual(stored, incoming)) {
+      return next(new Error('Player authentication failed'));
+    }
   }
   if (!saved) {
     players.set(id, { secretHash: hash, balance: 200 });
@@ -106,7 +110,12 @@ io.use((socket, next) => {
 io.on('connection', socket => {
   const p = socket.data.player;
   const account = players.get(p.id);
+  const previous = active.get(p.id);
   active.set(p.id, socket.id);
+  if (previous && previous !== socket.id) {
+    const oldSocket = io.sockets.sockets.get(previous);
+    if (oldSocket) oldSocket.disconnect(true);
+  }
   socket.emit('hello', { balance: account.balance });
   socket.emit('currentPlayers', Object.fromEntries([...active.keys()]
     .filter(id => id !== p.id)
