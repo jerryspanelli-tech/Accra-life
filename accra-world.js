@@ -127,7 +127,7 @@
     });
 
     // ---------- 3. intercity buses (fast travel): the stop list and fares ----------
-    const BS = window.ACCRA_MAP ? window.ACCRA_MAP.places.busStation : { x: -200, z: 350 }; const STOPS = [["Accra", BS.x, BS.z]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
+    const BUS_STATION = window.ACCRA_MAP ? window.ACCRA_MAP.places.busStation : { x: -200, z: 350 }; const STOPS = [["Accra", BUS_STATION.x, BUS_STATION.z]].concat(TOWNS.map(t => [t.n, t.x + 30, t.z + 30]));
     const FARE = { Accra: 0, Nsawam: 25, Suhum: 40, Nkawkaw: 70, Konongo: 90, Ejisu: 110, Kumasi: 130 };
     function bus(here) {
       const draw = () => show(ttl("\uD83D\uDE8C Intercity buses") + "<small>You are in " + here + " \u00B7 cash GH\u00A2" + cash() + "</small>" + STOPS.filter(s => s[0] !== here).map(s => '<button data-d="' + s[0] + '" style="' + BS + '">' + s[0] + " \u00B7 GH\u00A2" + Math.max(FARE[s[0]], FARE[here]) + "</button>").join("") + CLOSE, d => {
