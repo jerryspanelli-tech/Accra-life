@@ -1,7 +1,7 @@
 /* accra-map.js
- * Shared 1:10-scale city layout for the Babylon.js Accra Life game.
- * Coordinates are game metres; 10 game metres represent roughly 100 real-world metres.
- * x increases east, z increases south. District blocks and all major POIs use this source.
+ * Shared 1:10-scale Accra layout for the Babylon.js game.
+ * Coordinates are game metres; x increases east and z increases south.
+ * Major places and named routes are kept here so every game system uses one map.
  */
 (function (root) {
   "use strict";
@@ -17,8 +17,48 @@
   const roadLines = [...grid];
   cellCenters.forEach(c => localRoadOffsets.forEach(o => roadLines.push(c + o)));
   roadLines.sort((a, b) => a - b);
+  const places = {
+    spawn: { x: -200, z: 250 },
+    villa: { x: 750, z: -600 },
+    estate: { x: 600, z: -200 },
+    mall: { x: 600, z: -600 },
+    makola: { x: -200, z: 200 },
+    stadium: { x: -36, z: 160 },
+    blackStarSquare: { x: -42, z: 202 },
+    nkrumahPark: { x: -150, z: 105 },
+    artsCentre: { x: -80, z: 180 },
+    nationalTheatre: { x: 80, z: 50 },
+    jamestownLighthouse: { x: -257, z: 430 },
+    osuCastle: { x: 150, z: 300 },
+    circle: { x: -200, z: -200 },
+    militaryHospital: { x: 44, z: -233 },
+    achimotaForest: { x: -600, z: -600 },
+    universityOfGhana: { x: 600, z: -780 },
+    police: { x: -600, z: -200 },
+    hospital: { x: -200, z: -600 },
+    dealer: { x: -600, z: 200 },
+    pub: { x: 200, z: 200 },
+    airport: { x: 200, z: -550 },
+    labadiBeach: { x: 200, z: 700 },
+    quarry: { x: -1200, z: -600 },
+    goldworks: { x: 1200, z: 400 },
+    tema: { x: 2500, z: 200 },
+    busStation: { x: -200, z: 350 },
+    atms: [
+      [-670, -260], [-230, -660], [230, -230], [650, -230],
+      [-650, 230], [-150, 350], [250, 250], [650, 450],
+      [-350, -150], [250, -650]
+    ]
+  };
+  const namedRoads = [
+    { name: "N1 George Bush Highway", type: "highway", width: 18, points: [[-600, -650], [-200, -650], [200, -550], [420, -390], [600, -180]] },
+    { name: "Ring Road Central", type: "arterial", width: 14, points: [[-450, -120], [-360, -300], [-120, -390], [180, -350], [390, -120], [350, 160], [120, 340], [-190, 350], [-420, 170], [-450, -120]] },
+    { name: "Liberation Road", type: "arterial", width: 14, points: [[200, -550], [150, -360], [110, -160], [130, 40], [280, 230], [600, 350]] },
+    { name: "Independence Avenue", type: "arterial", width: 12, points: [[-200, -200], [-150, -60], [-80, 80], [-42, 202], [40, 350]] },
+    { name: "Spintex Road", type: "arterial", width: 16, points: [[200, 700], [520, 700], [850, 620], [1200, 470], [1650, 300], [2100, 200], [2500, 200]] }
+  ];
   root.ACCRA_MAP = {
-    version: 2,
+    version: 3,
     scale: 10,
     grid,
     cellCenters,
@@ -28,28 +68,7 @@
     coastlineZ: 850,
     cityBounds: { minX: -825, maxX: 825, minZ: -825, maxZ: 825 },
     districts,
-    places: {
-      spawn: { x: -200, z: 250 },
-      villa: { x: 750, z: -600 },
-      estate: { x: 600, z: -200 },
-      mall: { x: 600, z: -600 },
-      makola: { x: -200, z: 200 },
-      stadium: { x: -250, z: -180 },
-      police: { x: -600, z: -200 },
-      hospital: { x: -200, z: -600 },
-      dealer: { x: -600, z: 200 },
-      pub: { x: 200, z: 200 },
-      airport: { x: 200, z: -550 },
-      labadiBeach: { x: 200, z: 700 },
-      quarry: { x: -1200, z: -600 },
-      goldworks: { x: 1200, z: 400 },
-      tema: { x: 2500, z: 200 },
-      busStation: { x: -200, z: 350 },
-      atms: [
-        [-670, -260], [-230, -660], [230, -230], [650, -230],
-        [-650, 230], [-150, 350], [250, 250], [650, 450],
-        [-350, -150], [250, -650]
-      ]
-    }
+    places,
+    namedRoads
   };
 })(window);
