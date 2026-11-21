@@ -8,18 +8,36 @@ html,body{margin:0;height:100%;overflow:hidden;background:#9fd3ee;touch-action:n
 .pill{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;background:rgba(28,30,33,.78);border-radius:14px;padding:7px 12px;font:700 14px system-ui;color:#c9a54a}
 #spd{left:auto;right:8px;color:#fff}
 #joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 18px);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:140px;height:140px;border-radius:50%;background:rgba(28,30,33,.35);border:2px solid rgba(255,255,255,.55);touch-action:none}
-#knob{position:absolute;left:50%;top:200%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(201,165,74,.92);pointer-events:none}
+#knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(201,165,74,.92);pointer-events:none}
 .pb{position:fixed;width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(28,30,33,.55);color:#fff;font-size:26px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);touch-action:none}
 #jump{right:calc(env(safe-area-inset-right,0px) + 18px)}
 #act{right:calc(env(safe-area-inset-right,0px) + 96px);background:rgba(201,165,74,.9);color:#17191c;display:none}
 </style></head><body>
 <canvas id="c"></canvas>
-<div class="pill">ACCRA LIFE · v3 city</div><div class="pill" id="spd" style="display:none"></div>
+<div class="pill">ACCRA LIFE · GREATER ACCRA</div><div class="pill" id="spd" style="display:none"></div>
 <div id="joy"><div id="knob"></div></div>
 <button id="jump" class="pb" aria-label="Jump or brake">⬆</button><button id="act" class="pb" aria-label="Car">🚗</button>
 <script>window.ACCRA_BUILD = 5;</script>
+<script>
+(function(){
+  let shown=false;
+  function report(message){
+    if(shown)return; shown=true;
+    const panel=document.createElement('div');
+    panel.style.cssText='position:fixed;inset:12% 6% auto;z-index:9999;background:#17191c;color:#fff;border:2px solid #c9a54a;border-radius:14px;padding:16px;font:14px/1.5 system-ui;white-space:pre-wrap;max-height:70vh;overflow:auto';
+    panel.textContent='Accra Life could not start.\n\n'+message+'\n\nPlease refresh once and share this error.';
+    document.body.appendChild(panel);
+  }
+  window.addEventListener('error',function(e){
+    if(e.target&&e.target.tagName==='SCRIPT') report('Could not load script: '+(e.target.src||'unknown script'));
+    else report((e.message||'JavaScript error')+(e.filename?'\n'+e.filename+':'+e.lineno:''));
+  },true);
+  window.addEventListener('unhandledrejection',function(e){report('Startup promise failed: '+(e.reason&&e.reason.message||e.reason||'unknown error'));});
+  window.setTimeout(function(){if(!window.__ACCRA_FIRST_FRAME)report('The game engine did not render its first frame within 15 seconds. Check the Babylon.js connection or device graphics support.');},15000);
+})();
+</script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="accra-map.js?v=5"></script>
+<script src="greater-accra-map.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id),V=(x,y,z)=>new BABYLON.Vector3(x,y,z),C3=h=>BABYLON.Color3.FromHexString(h);
 const engine=new BABYLON.Engine($('c'),true,{adaptToDeviceRatio:true});
@@ -34,17 +52,17 @@ const mats={};
 const mat=h=>mats[h]||(mats[h]=Object.assign(new BABYLON.StandardMaterial('m'+h,scene),{diffuseColor:C3(h),specularColor:new BABYLON.Color3(.05,.05,.05)}));
 // every solid mesh gets checkCollisions: players, cars and the camera cannot pass through it
 function box(w,h,d,x,y,z,col,solid){const m=BABYLON.MeshBuilder.CreateBox('b',{width:w,height:h,depth:d},scene);m.position.set(x,y,z);m.material=mat(col);m.checkCollisions=solid!==false;m.receiveShadows=true;if(h>.1)sg.addShadowCaster(m);return m}
-const ground=BABYLON.MeshBuilder.CreateGround('g',{width:600,height:600},scene);function noiseTex(base,sp,n){const t=new BABYLON.DynamicTexture('nt',256,scene,true),c=t.getContext();c.fillStyle=base;c.fillRect(0,0,256,256);for(let i=0;i<n;i++){c.fillStyle=sp[i%sp.length];const q=1+Math.random()*3;c.fillRect(Math.random()*256,Math.random()*256,q,q)}t.update();t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;return t}
+const ground=BABYLON.MeshBuilder.CreateGround('g',{width:18000,height:18000},scene);function noiseTex(base,sp,n){const t=new BABYLON.DynamicTexture('nt',256,scene,true),c=t.getContext();c.fillStyle=base;c.fillRect(0,0,256,256);for(let i=0;i<n;i++){c.fillStyle=sp[i%sp.length];const q=1+Math.random()*3;c.fillRect(Math.random()*256,Math.random()*256,q,q)}t.update();t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;return t}
 const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor:new BABYLON.Color3(0,0,0)});gMat.diffuseTexture=noiseTex('#6f9448',['#5e8038','#80a655','#6a8a40','#a3a068'],5000);gMat.diffuseTexture.uScale=gMat.diffuseTexture.vScale=120;
 ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
 const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
 // ===== CITY: 5 x 5 arterial grid, 16 distinct Accra neighbourhoods =====
 const MAP=window.ACCRA_MAP;
 const R=MAP.grid,DG=MAP.districts,VX=MAP.places.villa.x,VZ=MAP.places.villa.z;
-function road(c,ax){const L=8250,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?14:L,height:.05,depth:ax?L:14},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
- const pts=[-4125];R.forEach(q=>pts.push(q-18,q+18));pts.push(4125);
+function road(c,ax){const L=12000,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?14:L,height:.05,depth:ax?L:14},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
+ const pts=[-5500];R.forEach(q=>pts.push(q-18,q+18));pts.push(5500);
  for(let i=0;i<pts.length;i+=2){const a=pts[i],b=pts[i+1];if(b-a<2)continue;[-1,1].forEach(q=>box(ax?2:b-a,.22,ax?b-a:2,ax?c+q*9.2:(a+b)/2,.11,ax?(a+b)/2:c+q*9.2,'#b5b0a5',false))}
- let src=null;for(let t=-4000;t<4000;t+=120){if(R.some(q=>Math.abs(t-q)<20))continue;let d;
+ let src=null;for(let t=-5000;t<5000;t+=120){if(R.some(q=>Math.abs(t-q)<20))continue;let d;
   if(!src){src=BABYLON.MeshBuilder.CreateBox('d',{width:ax?.3:6,height:.02,depth:ax?6:.3},scene);src.material=mat('#f2f2f2');d=src}else d=src.createInstance('di');
   d.position.set(ax?c:t,.08,ax?t:c);d.isPickable=false}}
 R.forEach(c=>{road(c,0);road(c,1)});
@@ -78,7 +96,7 @@ const signed={};
 function cityRandom(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
 for(let i=0;i<4;i++)for(let j=0;j<4;j++){const nm=DG[i][j],S=STY[nm],x0=R[i]+12,x1=R[i+1]-12,z0=R[j]+12,z1=R[j+1]-12,nx=Math.max(1,Math.floor((x1-x0)/S.p)),nz=Math.max(1,Math.floor((z1-z0)/S.p));
  const mx=(R[i]+R[i+1])/2,mz=(R[j]+R[j+1])/2,rand=cityRandom((((i+1)*73856093)^((j+1)*19349663))>>>0);
- MAP.localRoadOffsets.forEach(o=>{const lr1=box(8,.045,1876,mx+o,.035,mz,'#37393d',false);lr1.name='localroad';const lr2=box(1876,.045,8,mx,.035,mz+o,'#37393d',false);lr2.name='localroad';});
+ MAP.localRoadOffsets.forEach(o=>{const lr1=box(8,.045,2376,mx+o,.035,mz,'#37393d',false);lr1.name='localroad';const lr2=box(2376,.045,8,mx,.035,mz+o,'#37393d',false);lr2.name='localroad';});
  for(let a=0;a<nx;a++)for(let b=0;b<nz;b++){const cx=x0+(a+.5)*(x1-x0)/nx,cz=z0+(b+.5)*(z1-z0)/nz;
   if(Math.hypot(cx-VX,cz-VZ)<38)continue;if(MAP.localRoadOffsets.some(o=>Math.abs(cx-(mx+o))<18||Math.abs(cz-(mz+o))<18))continue;                 // keep the villa plot free
   const h=S.h[0]+rand()*(S.h[1]-S.h[0]),w=S.w-rand()*2;bldg(cx,cz,w,w*(.8+rand()*.2),h,S.c[(a+b*3+i)%S.c.length])}
@@ -93,7 +111,7 @@ function palm(x,z){const h=6+Math.random()*3,t=BABYLON.MeshBuilder.CreateCylinde
 R.forEach(c=>{for(let t=-780;t<=780;t+=160)[-9.2,9.2].forEach(o=>{if(R.some(r=>Math.abs(t-r)<24))return;palm(c+o,t);palm(t,c+o)})});
 // clouds
 const clouds=[],cloudM=Object.assign(new BABYLON.StandardMaterial('cl',scene),{emissiveColor:new BABYLON.Color3(1,1,1),disableLighting:true,alpha:.92,fogEnabled:false});
-for(let i=0;i<14;i++){const c=BABYLON.MeshBuilder.CreateSphere('cl',{diameter:1},scene);c.material=cloudM;c.scaling.set(30+Math.random()*30,6+Math.random()*3,16+Math.random()*10);c.position.set(Math.random()*1800-900,85+Math.random()*25,Math.random()*1800-900);c.isPickable=false;clouds.push(c)}
+for(let i=0;i<14;i++){const c=BABYLON.MeshBuilder.CreateSphere('cl',{diameter:1},scene);c.material=cloudM;c.scaling.set(30+Math.random()*30,6+Math.random()*3,16+Math.random()*10);c.position.set(Math.random()*12000-6000,85+Math.random()*25,Math.random()*12000-6000);c.isPickable=false;clouds.push(c)}
 // ---------- VILLA 26 x 18 m: attached garage (centre front), lounge, kitchen, office, master suite, cinema ----------
 /* villa position set above */
 const vb=(lx,lz,sw,sd,col)=>box(sw,3.2,sd,VX+lx,1.6,VZ+lz,col||'#f3ecdc');
@@ -171,6 +189,6 @@ function update(dt){
  $('act').style.display=(near||driving)?'block':'none';
  roof.setEnabled(!(Math.abs(focus.x-VX)<13&&Math.abs(focus.z-VZ)<9));   // roof hides while you are inside the villa
 }
-engine.runRenderLoop(()=>{update(Math.min(engine.getDeltaTime()/1000,.05));scene.render()});
+engine.runRenderLoop(()=>{update(Math.min(engine.getDeltaTime()/1000,.05));scene.render();window.__ACCRA_FIRST_FRAME=true;});
 addEventListener('resize',()=>engine.resize());
 </script><script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script><script src="landmarks.js?v=40"></script><script src="accra-airport.js?v=40"></script><script src="accra-civic-landmarks.js?v=3"></script><script src="phone.js?v=28"></script><script src="online.js?v=29"></script><script src="accra-assets.js?v=29"></script><script src="accra-figure.js?v=32"></script><script src="accra-start.js?v=29"></script><script src="accra-upgrade.js?v=29"></script></body></html>

@@ -114,9 +114,19 @@
     let tt = 0;
     scene.onBeforeRenderObservable.add(() => {
       const p = L.driving ? car.position : player.position;
-      if (++tt % 10 === 0 && p.z < CITY_NORTH - 100) {
-        const cx = Math.floor(p.x / CH), cz = Math.floor(p.z / CH), want = new Set();
-        for (let x = cx - 3; x <= cx + 3; x++) for (let z = cz - 3; z <= cz + 3; z++) if (near(x, z)) { want.add(x + "," + z); request(x, z); }
+      if (++tt % 10 === 0) {
+        const want = new Set();
+        // Only stream intercity chunks while the player is outside the Accra core.
+        // Always reconcile the loaded set: returning to Accra must unload every
+        // highway/town chunk rather than leaving those meshes resident forever.
+        if (p.z < CITY_NORTH - 100) {
+          const cx = Math.floor(p.x / CH), cz = Math.floor(p.z / CH);
+          for (let x = cx - 3; x <= cx + 3; x++) for (let z = cz - 3; z <= cz + 3; z++) if (near(x, z)) {
+            const k = x + "," + z;
+            want.add(k);
+            request(x, z);
+          }
+        }
         for (const k of [...chunks.keys()]) if (!want.has(k)) drop(k);
       }
       const t0 = performance.now(); while (queue.length && performance.now() - t0 < 4) { const task = queue.shift(); if (chunks.get(task.key) === task.list) task.run(); }
