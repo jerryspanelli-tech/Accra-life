@@ -56,7 +56,8 @@
     { name: "Ring Road Central", type: "arterial", width: 14, points: [[-450, -120], [-360, -300], [-120, -390], [180, -350], [390, -120], [350, 160], [120, 340], [-190, 350], [-420, 170], [-450, -120]] },
     { name: "Liberation Road", type: "arterial", width: 14, points: [[420, -550], [430, -360], [350, -160], [200, 40], [280, 230], [600, 350]] },
     { name: "Independence Avenue", type: "arterial", width: 12, points: [[-200, -200], [-150, -60], [-80, 80], [-42, 202], [40, 350]] },
-    { name: "Spintex Road", type: "arterial", width: 16, points: [[250, 500], [520, 500], [850, 430], [1200, 350], [1650, 260], [2100, 200], [2500, 200]] }
+    { name: "Spintex Road", type: "arterial", width: 16, points: [[250, 500], [520, 500], [850, 430], [1200, 350], [1650, 260], [2100, 200], [2500, 200]] },
+    { name: "Tema Harbour Access Road", type: "arterial", width: 12, points: [[2500, 200], [2550, 250], [2600, 330]] }
   ];
   root.ACCRA_MAP = {
     version: 3,
