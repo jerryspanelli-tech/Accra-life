@@ -1,6 +1,5 @@
 /* accra-world.js - THE BIG MAP.
- * World = 12 km wide x 27 km long (about 324 sq km, roughly 4x the land of GTA V).
- * Accra stays exactly where it is. North of it (negative z) a 24.5 km highway runs to Kumasi (scale 1 : 10 of the real 250 km),
+ * World = 12 km wide x 27 km long (about 324 sq km). The expanded Accra street grid joins a 24.5 km northbound highway to Kumasi (scale 1 : 10 of the real 250 km),
  * streamed in 256 m chunks: road, guard rails, trees, farms, signs, toll plazas, and six towns. Loaded by accra-life.js. */
 (function () {
   try {
@@ -21,7 +20,7 @@
     scene.fogStart = 600; scene.fogEnd = 1800;
     const mwc = car.moveWithCollisions.bind(car);
     let carF = 1, lx = car.position.x, lz = car.position.z;
-    car.moveWithCollisions = v => { const onHw = car.position.z < -260 && Math.abs(car.position.x - hx(car.position.z)) < 16; carF += ((onHw ? 2.3 : 1) - carF) * .06; return mwc(new B.Vector3(v.x * carF, v.y, v.z * carF)); };
+    car.moveWithCollisions = v => { const onHw = car.position.z < CITY_NORTH - 60 && Math.abs(car.position.x - hx(car.position.z)) < 16; carF += ((onHw ? 2.3 : 1) - carF) * .06; return mwc(new B.Vector3(v.x * carF, v.y, v.z * carF)); };
     scene.onBeforeRenderObservable.add(() => { const dt = Math.max(engine.getDeltaTime() / 1000, .001), sp = Math.hypot(car.position.x - lx, car.position.z - lz) / dt; lx = car.position.x; lz = car.position.z;
       const el = document.getElementById("spd"); if (L.driving && el && sp < 90) el.textContent = Math.round(sp * 3.6) + " km/h"; });
 
@@ -48,7 +47,7 @@
       }
       const a = merge(surf, false), b = merge(bars, true); if (a) list.push(a); if (b) list.push(b);
       // distance gantry every 2 km
-      const gz = Math.round((z0 - 128) / 2000) * 2000 - 165; if (gz <= z0 && gz > z0 - CH && gz < -300) {
+      const gz = Math.round((z0 - 128 - CITY_NORTH) / 2000) * 2000 + CITY_NORTH; if (gz <= z0 && gz > z0 - CH && gz < CITY_NORTH - 300) {
         const x = hx(gz); [-11, 11].forEach(o => list.push(mk(.5, 7.5, .5, x + o, 3.75, gz, "#555")));
         const n = mk(16, 2.4, .2, x, 7, gz, "#555"), s1 = B.MeshBuilder.CreatePlane("gs", { width: 14, height: 2 }, scene), s2 = s1.clone("gs2");
         s1.position.set(x, 7, gz + .15); s1.rotation.y = Math.PI; s1.material = gantryTex("KUMASI " + Math.max(0, 250 - realKm(gz)) + " km"); s2.position.set(x, 7, gz - .15); s2.material = gantryTex("ACCRA " + realKm(gz) + " km");
@@ -57,7 +56,7 @@
     }
     function propsTask(cx, cz, list) {       // trees, fields and farmhouses beside the road
       const r = rng(hash(cx, cz, 7)), farm = cz * CH < -7000 && cz * CH > -17000;
-      for (let i = 0; i < (farm ? 7 : 16); i++) { const z = cz * CH + r() * CH; if (z > -160) continue; const side = r() < .5 ? -1 : 1, x = hx(z) + side * (16 + r() * 70);
+      for (let i = 0; i < (farm ? 7 : 16); i++) { const z = cz * CH + r() * CH; if (z > CITY_NORTH) continue; const side = r() < .5 ? -1 : 1, x = hx(z) + side * (16 + r() * 70);
         if (TOWNS.some(t => Math.hypot(x - t.x, z - t.z) < t.R + 30)) continue;
         const t = treeSrc.createInstance("tr"); t.position.set(x, 0, z); t.scaling.setAll(.8 + r() * .8); t.isPickable = false; list.push(t); }
       if (farm) for (let i = 0; i < 3; i++) { const z = cz * CH + 30 + r() * (CH - 60), side = r() < .5 ? -1 : 1, x = hx(z) + side * (50 + r() * 60);
