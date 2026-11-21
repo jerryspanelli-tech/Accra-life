@@ -338,6 +338,7 @@
       c.fillStyle = "#17191c"; c.fillRect(0, 0, 512, 128); c.fillStyle = "#fcd116"; c.font = "bold 44px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("ACCRA SPORTS STADIUM", 256, 66, 490); dt.update();
       const sn = B.MeshBuilder.CreatePlane("stsn", { width: 14, height: 3.5 }, scene); sn.position.set(SX, 6, SZ - 17.4); sn.isPickable = false;
       const mt = new B.StandardMaterial("stsm", scene); mt.diffuseTexture = dt; mt.emissiveTexture = dt; mt.disableLighting = true; mt.backFaceCulling = false; sn.material = mt;
+      (window.ACCRA_LANDMARKS = window.ACCRA_LANDMARKS || []).push({ n: "Accra Sports Stadium", x: SX, z: SZ });
     }
     } catch (e) { banner("Amoamah/stadium: " + e.message); }
 
@@ -373,9 +374,9 @@
         I("desk", cx - 14, cz + 1.5, PI / 2, 1); I("shelf", cx - 8, cz + .3, 0, 1); I("desk", cx - 14, cz + 6.8, PI / 2, 1); I("dining", cx - 8.5, cz + 6.8, 0, .9);
         for (let i = 0; i < 17; i++) D(.07, 3, .07, cx + 7, 1.5, cz - .8 + i * .6, "#555");
         [0, 3.3, 6.6].forEach(z => D(2.2, .45, .8, cx + 13.6, .22, cz + z + .6, "#7a7a7a"));
-        box(.15, 8, .15, 18, 4, 86, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => D(1.8, .5, .05, 18.95, f[1], 86, f[0]));
-        D(6, .02, 10, cx, .07, 83, "#ffffff"); D(5.6, .03, 9.6, cx, .075, 83, "#3a3d42");
-        A.createTrotro(scene, { position: [24, 0, 83], rotY: PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
+        box(.15, 8, .15, cx-17, 4, cz-12, "#cccccc", false); [["#c8102e", 7.6], ["#fcd116", 7.1], ["#006b3f", 6.6]].forEach(f => D(1.8, .5, .05, cx-16.05, f[1]-4, cz-12, f[0]));
+        D(6, .02, 10, cx, .07, cz-15, "#ffffff"); D(5.6, .03, 9.6, cx, .075, cz-15, "#3a3d42");
+        A.createTrotro(scene, { position: [cx-11, 0, cz-15], rotY: PI / 2, color: "#1d3b6b", stripe: "#ffffff" });
       }
       // ---- HOSPITAL: reception, emergency room, consulting room, pharmacy, 2 wards ----
       { const cx = MP.hospital.x, cz = MP.hospital.z;
@@ -388,7 +389,7 @@
         I("desk", cx - 10, cz + 1, PI / 2, 1); I("bed1", cx - 4, cz + 10, PI);
         SOLID(5, 1, .8, cx + 5.5, .5, cz + 1.5, "#cfd6dc"); I("shelf", cx + 8.4, cz + 7, -PI / 2); I("shelf", cx + 8.4, cz + 9.4, -PI / 2);
         [-1.8, .8, 3.2].forEach(z => I("bed1", cx + 20.4, cz + z, -PI / 2)); [6, 8.5, 11].forEach(z => I("bed1", cx + 20.4, cz + z, -PI / 2));
-        A.createTrotro(scene, { position: [100, 0, 83], rotY: PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
+        A.createTrotro(scene, { position: [cx-10, 0, cz-15], rotY: PI / 2, color: "#f0f0f0", stripe: "#c8102e" });
       }
       // ---- CAR DEALERSHIP (Makola, east) ----
       { const cx = MP.dealer.x, cz = MP.dealer.z;
