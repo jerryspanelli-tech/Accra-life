@@ -74,12 +74,13 @@ const STY={
  'North Ridge':{w:22,h:[12,30],c:['#e8e6df','#f0e6d0','#b8c4c0'],p:68}
 };
 const signed={};
+function cityRandom(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
 for(let i=0;i<4;i++)for(let j=0;j<4;j++){const nm=DG[i][j],S=STY[nm],x0=R[i]+12,x1=R[i+1]-12,z0=R[j]+12,z1=R[j+1]-12,nx=Math.max(1,Math.floor((x1-x0)/S.p)),nz=Math.max(1,Math.floor((z1-z0)/S.p));
- const mx=(R[i]+R[i+1])/2,mz=(R[j]+R[j+1])/2;
+ const mx=(R[i]+R[i+1])/2,mz=(R[j]+R[j+1])/2,rand=cityRandom((((i+1)*73856093)^((j+1)*19349663))>>>0);
  MAP.localRoadOffsets.forEach(o=>{const lr1=box(8,.045,376,mx+o,.035,mz,'#37393d',false);lr1.name='localroad';const lr2=box(376,.045,8,mx,.035,mz+o,'#37393d',false);lr2.name='localroad';});
  for(let a=0;a<nx;a++)for(let b=0;b<nz;b++){const cx=x0+(a+.5)*(x1-x0)/nx,cz=z0+(b+.5)*(z1-z0)/nz;
   if(Math.hypot(cx-VX,cz-VZ)<38)continue;if(MAP.localRoadOffsets.some(o=>Math.abs(cx-(mx+o))<18||Math.abs(cz-(mz+o))<18))continue;                 // keep the villa plot free
-  const h=S.h[0]+Math.random()*(S.h[1]-S.h[0]),w=S.w-Math.random()*2;bldg(cx,cz,w,w*(.8+Math.random()*.2),h,S.c[(a+b*3+i)%S.c.length])}
+  const h=S.h[0]+rand()*(S.h[1]-S.h[0]),w=S.w-rand()*2;bldg(cx,cz,w,w*(.8+rand()*.2),h,S.c[(a+b*3+i)%S.c.length])}
  if(!signed[nm]){signed[nm]=1;signText(nm,(x0+x1)/2,(z0+z1)/2)}}
 // Labadi sand and sea are built once by landmarks.js from ACCRA_MAP.
 function tree(x,z){const t=BABYLON.MeshBuilder.CreateCylinder('t',{height:5,diameterTop:.4,diameterBottom:.7},scene);t.position.set(x,2.5,z);t.material=mat('#8b6b4a');t.checkCollisions=true;
