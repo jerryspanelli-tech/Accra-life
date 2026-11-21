@@ -18,6 +18,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#9fd3ee;touch-action:n
 <div id="joy"><div id="knob"></div></div>
 <button id="jump" class="pb" aria-label="Jump or brake">⬆</button><button id="act" class="pb" aria-label="Car">🚗</button>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="accra-map.js?v=2"></script>
 <script>
 const $=id=>document.getElementById(id),V=(x,y,z)=>new BABYLON.Vector3(x,y,z),C3=h=>BABYLON.Color3.FromHexString(h);
 const engine=new BABYLON.Engine($('c'),true,{adaptToDeviceRatio:true});
@@ -37,18 +38,7 @@ const gMat=Object.assign(new BABYLON.StandardMaterial('gm',scene),{specularColor
 ground.material=gMat;ground.receiveShadows=true;ground.checkCollisions=true;
 const roadM=Object.assign(new BABYLON.StandardMaterial('rm',scene),{specularColor:new BABYLON.Color3(.04,.04,.04)});roadM.diffuseTexture=noiseTex('#37393d',['#2c2e31','#46484c','#55575b'],4000);roadM.diffuseTexture.uScale=40;
 // ===== CITY: 5 x 5 arterial grid, 16 distinct Accra neighbourhoods =====
-const MAP=window.ACCRA_MAP={
- scale:10,grid:[-800,-400,0,400,800],cellCenters:[-600,-200,200,600],localRoadOffsets:[-100,100],highwayStartZ:-850,coastlineZ:850,
- districts:[["Achimota","Kaneshie","Mamprobi","Chorkor"],["Dzorwulu","North Ridge","Accra Central","Jamestown"],["Airport Residential","Airport City","Osu","Labadi"],["East Legon","Cantonments","Labone","Teshie"]],
- places:{
-  spawn:{x:-200,z:250},villa:{x:750,z:-600},estate:{x:600,z:-200},mall:{x:600,z:-600},
-  stadium:{x:-250,z:-180},police:{x:-600,z:-200},hospital:{x:-200,z:-600},dealer:{x:-600,z:200},
-  pub:{x:200,z:200},makola:{x:-200,z:200},airport:{x:200,z:-550},labadiBeach:{x:600,z:700},
-  quarry:{x:-1200,z:-600},goldworks:{x:1200,z:400},tema:{x:2500,z:200},busStation:{x:-200,z:350},
-  atms:[[-600,-200],[-200,-600],[200,-200],[600,-200],[-600,200],[-200,400],[200,200],[600,400],[-400,0],[400,0]]
- },
- roadLines:[-800,-700,-500,-400,-300,-100,0,100,300,400,500,700,800]
-};
+const MAP=window.ACCRA_MAP;
 const R=MAP.grid,DG=MAP.districts,VX=MAP.places.villa.x,VZ=MAP.places.villa.z;
 function road(c,ax){const L=1650,r=BABYLON.MeshBuilder.CreateBox('r',{width:ax?14:L,height:.05,depth:ax?L:14},scene);r.position.set(ax?c:0,ax?.04:.03,ax?0:c);r.material=roadM;r.receiveShadows=true;r.isPickable=false;
  const pts=[-825];R.forEach(q=>pts.push(q-18,q+18));pts.push(825);
