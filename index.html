@@ -168,10 +168,40 @@ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c
 const P=[],C=[],B=[];
 const L2W=(o,r,lx,lz)=>[o.x+lx*Math.cos(r)+lz*Math.sin(r),o.z-lx*Math.sin(r)+lz*Math.cos(r)];
 function addC(x0,x1,z0,z1,door){const c={x0,x1,z0,z1,door};C.push(c);return c}
-function wcol(o,r,lx,lz,sw,sd,door){const X=[],Z=[];[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{const q=L2W(o,r,lx+a*sw/2,lz+b*sd/2);X.push(q[0]);Z.push(q[1])});return addC(Math.min(...X),Math.max(...X),Math.min(...Z),Math.max(...Z),door)}
-function insideSolid(x,z){return cellC(x,z).some(c=>!(c.door&&c.door.open)&&x>c.x0+.01&&x<c.x1-.01&&z>c.z0+.01&&z<c.z1-.01)}
-function push(px,pz,r){let hit=false;for(const c of cellC(px,pz)){if(c.door&&c.door.open)continue;if(px<c.x0-r||px>c.x1+r||pz<c.z0-r||pz>c.z1+r)continue;const qx=Math.max(c.x0,Math.min(px,c.x1)),qz=Math.max(c.z0,Math.min(pz,c.z1)),dx=px-qx,dz=pz-qz,d=Math.hypot(dx,dz);
- if(d<r){hit=true;if(d>1e-4){px=qx+dx/d*r;pz=qz+dz/d*r}else{const l=px-c.x0,rr=c.x1-px,t=pz-c.z0,b=c.z1-pz,m=Math.min(l,rr,t,b);if(m==l)px=c.x0-r;else if(m==rr)px=c.x1+r;else if(m==t)pz=c.z0-r;else pz=c.z1+r}}}return[px,pz,hit]}
+function wcol(o,r,lx,lz,sw,sd,door){
+ const center=L2W(o,r,lx,lz),X=[],Z=[];
+ [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{const q=L2W(o,r,lx+a*sw/2,lz+b*sd/2);X.push(q[0]);Z.push(q[1])});
+ const c=addC(Math.min(...X),Math.max(...X),Math.min(...Z),Math.max(...Z),door);
+ c.obb={x:center[0],z:center[1],a:r,hx:sw/2,hz:sd/2};return c;
+}
+function localPoint(c,x,z){const dx=x-c.obb.x,dz=z-c.obb.z,a=c.obb.a,co=Math.cos(a),si=Math.sin(a);return{x:dx*co-dz*si,z:dx*si+dz*co}}
+function worldVector(c,x,z){const a=c.obb.a,co=Math.cos(a),si=Math.sin(a);return{x:x*co+z*si,z:-x*si+z*co}}
+function insideSolid(x,z){return cellC(x,z).some(c=>{
+ if(c.door&&c.door.open)return false;
+ if(!c.obb)return x>c.x0+.01&&x<c.x1-.01&&z>c.z0+.01&&z<c.z1-.01;
+ const q=localPoint(c,x,z);return Math.abs(q.x)<c.obb.hx-.01&&Math.abs(q.z)<c.obb.hz-.01;
+})}
+function push(px,pz,r){
+ let hit=false;
+ for(const c of cellC(px,pz)){
+  if(c.door&&c.door.open)continue;
+  if(!c.obb){
+   if(px<c.x0-r||px>c.x1+r||pz<c.z0-r||pz>c.z1+r)continue;
+   const qx=Math.max(c.x0,Math.min(px,c.x1)),qz=Math.max(c.z0,Math.min(pz,c.z1)),dx=px-qx,dz=pz-qz,d=Math.hypot(dx,dz);
+   if(d<r){hit=true;if(d>1e-4){px=qx+dx/d*r;pz=qz+dz/d*r}else{const l=px-c.x0,rr=c.x1-px,t=pz-c.z0,b=c.z1-pz,m=Math.min(l,rr,t,b);if(m==l)px=c.x0-r;else if(m==rr)px=c.x1+r;else if(m==t)pz=c.z0-r;else pz=c.z1+r}}
+   continue;
+  }
+  const q=localPoint(c,px,pz),hx=c.obb.hx,hz=c.obb.hz;
+  if(Math.abs(q.x)>hx+r||Math.abs(q.z)>hz+r)continue;
+  const qx=Math.max(-hx,Math.min(q.x,hx)),qz=Math.max(-hz,Math.min(q.z,hz)),dx=q.x-qx,dz=q.z-qz,d=Math.hypot(dx,dz);
+  if(d<r){hit=true;let nx=dx,nz=dz;
+   if(d>1e-4){nx=dx/d*r;nz=dz/d*r}
+   else{const l=q.x+hx,rr=hx-q.x,t=q.z+hz,b=hz-q.z,m=Math.min(l,rr,t,b);if(m===l)nx=-hx-r-q.x;else if(m===rr)nx=hx+r-q.x;else if(m===t)nz=-hz-r-q.z;else nz=hz+r-q.z}
+   const w=worldVector(c,qx+nx,qz+nz);px=c.obb.x+w.x;pz=c.obb.z+w.z;
+  }
+ }
+ return[px,pz,hit]
+}
 const onRoad=(x,z,m)=>RD.some(r=>{const l=r.ax?x:z,a=r.ax?z:x;return Math.abs(l-r.c)<r.w/2+1.4+m&&a>r.a0-2&&a<r.a1+2});
 const sigA=new THREE.MeshBasicMaterial({color:0x00e676}),sigB=new THREE.MeshBasicMaterial({color:0xff1744});
 function sigState(ax,t){const m=t%28,g=ax==0?m<12:(m>=14&&m<26),am=ax==0?(m>=10.5&&m<12):(m>=24.5&&m<26);return g?(am?1:0):2}
@@ -765,7 +795,7 @@ function mango(x,z){const tr=new THREE.Mesh(new THREE.CylinderGeometry(.35,.5,3.
 for(let i=0;i<80;i++){const x=(Math.random()-.5)*300,z=(Math.random()-.5)*300;if(Math.abs(x)<10||Math.abs(z)<10||Math.hypot(x,z)<4||!free(x,z,3)||(x<-85&&z<-85))continue;Math.random()<.55?palm(x,z):mango(x,z)}
 // multiplayer
 const wa=a=>Math.atan2(Math.sin(a),Math.cos(a));
-let lastM=null,lastToast='',PID=(()=>{try{let v=localStorage.getItem('accra-pid');if(!v){v='GS-'+Math.floor(10000+Math.random()*89999);localStorage.setItem('accra-pid',v)}return v}catch(e){return 'GS-'+Math.floor(10000+Math.random()*89999)}})(),mmT=0,pose=null,inb=null,ed=9,ep=.45,crashT=0,ws=0,yv=0,air=false,cy=0,cp=.45,cdist=9,jreq=0,ldx=0,ldz=1;
+let lastM=null,lastToast='',PID=(()=>{try{let v=localStorage.getItem('accra-pid');if(!v){v='GS-'+Math.floor(10000+Math.random()*89999);localStorage.setItem('accra-pid',v)}return v}catch(e){return 'GS-'+Math.floor(10000+Math.random()*89999)}})(),mmT=0,pose=null,inb=null,ed=9,ep=.45,crashT=0,pedHitT=0,ws=0,yv=0,air=false,cy=0,cp=.45,cdist=9,jreq=0,ldx=0,ldz=1;
 const SKIN=[0xc68a5e,0x8d5a3b,0x6b4028,0x4a2c1c,0xa8754f,0x3a2216],HAIRC=[0x0d0d0d,0x2a1a10,0x5a3b22,0x9a7b3c],SHIRT=[0x9a4a42,0xc9a54a,0x56705a,0x4d6a8a,0xe8e6df,0x2a2c30,0x7a6a8a,0xc08a5a],PANT=[0x1f2a44,0x111111,0x5b4630,0x6b6b6b,0x2f5d3a,0xb8a27a],SNK=[0xf0f0ec,0x1c1c1c,0x9a4a42,0xc9a54a,0x4d6a8a,0x56705a];
 let CF=[1,1,0,0,0,0,0];try{const q=JSON.parse(localStorage.getItem('accra-cf'));if(Array.isArray(q)&&q.length>=7)CF=q}catch(e){}while(CF.length<14)CF.push(0);
 const mc={},gc={};const mat=c=>mc[c]||(mc[c]=new THREE.MeshStandardMaterial({color:c,roughness:.8,metalness:.02}));const geo=(k,f)=>gc[k]||(gc[k]=f());
@@ -919,7 +949,10 @@ function setDriveLabels(on){hornBtn(on);const sp=$('sprint'),jp=$('jump');if(!sp
  else{if(sp.dataset.o!==undefined)sp.innerHTML=sp.dataset.o;if(jp.dataset.o!==undefined)jp.innerHTML=jp.dataset.o}}
 function drive(dt,x,thr,brk){if(jreq){jreq=0;spd*=.55}{const w=myCar.userData.wh;if(w){const r=spd*dt/.4;for(const q of w)q.rotation.x+=r}}if(thr)spd+=12*dt*(1-Math.max(0,spd)/22);if(brk)spd-=Math.sign(spd||1)*18*dt;spd*=Math.pow(.5,dt);if(fuel<=0){spd*=.9;if(Math.random()<dt)toast('Out of fuel! Find Goil Fuel.')}else if(Math.abs(spd)>1)fuel=Math.max(0,fuel-dt*(.05+.12*Math.min(1,Math.abs(spd)/22)));
  spd=Math.max(-8,Math.min(22,spd));hd-=x*dt*1.8*Math.max(-1,Math.min(1,spd/8));const cpx0=me.position.x,cpz0=me.position.z;{const dd=spd*dt,nn=Math.max(1,Math.ceil(Math.abs(dd)/.15)),sx=Math.sin(hd)*dd/nn,sz=Math.cos(hd)*dd/nn;for(let k=0;k<nn;k++){me.position.x=Math.max(-330,Math.min(330,me.position.x+sx));me.position.z=Math.max(-330,Math.min(330,me.position.z+sz));let hit=false;for(const off of[-1.5,0,1.5]){const cx=me.position.x+Math.sin(hd)*off,cz=me.position.z+Math.cos(hd)*off,q=push(cx,cz,1.15);if(q[2]){me.position.x+=q[0]-cx;me.position.z+=q[1]-cz;hit=true}}if(hit){if(Math.abs(spd)>2.5){spd*=-.3;if(performance.now()-crashT>800){crashT=performance.now();toast('Crash!');playCrash()}}else spd*=.5;break}}}if(insideSolid(me.position.x,me.position.z)){me.position.x=cpx0;me.position.z=cpz0;spd=0}me.rotation.y=hd;
- for(const t of T)if(Math.hypot(t.m.position.x-me.position.x,t.m.position.z-me.position.z)<3.2){spd*=-.4;toast('Crash!');playCrash()}
+ const now=performance.now();
+ for(const t of T)if(Math.hypot(t.m.position.x-me.position.x,t.m.position.z-me.position.z)<3.2){spd*=-.4;if(now-crashT>900){crashT=now;toast('Crash!');playCrash()}break}
+ // P contains parked taxis and player-owned vehicles created by spawnCar().
+ for(const p of P)if(p!==drv&&p.act==='car'&&p.g&&Math.hypot(p.g.position.x-me.position.x,p.g.position.z-me.position.z)<3.1){spd*=-.35;if(now-crashT>900){crashT=now;toast('Crash!');playCrash()}break}
  if(S.duty){fare+=Math.abs(spd)*dt;if(fare>=30){fare-=30;S.money+=Math.round(3*(1+.2*lv('drive')));S.sk.drive=(S.sk.drive||0)+1}}}
 let myName=(()=>{try{return localStorage.getItem('accra-name')||''}catch(e){return ''}})()||'Player';
 const myCol=[0xb5473d,0xc9a54a,0x4d6a8a,0xc08a5a,0x7a6a8a,0x00acc1][Math.floor(Math.random()*6)];
@@ -1150,7 +1183,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clk.getDelta(),.1)
   if(n.pause>0){n.pause-=dt}else if(dd<1){n.pause=1+Math.random()*4;const sp2=sidewalkPoint();n.tx=sp2[0];n.tz=sp2[1]}
   else{mv=n.sp;{const q=push(n.g.position.x+dx/dd*mv*dt,n.g.position.z+dz/dd*mv*dt,.4);n.g.position.x=q[0];n.g.position.z=q[1];if(q[2]){n.pause=.5;n.tx=q[0]+(Math.random()-.5)*20;n.tz=q[1]+(Math.random()-.5)*20}}n.g.rotation.y+=wa(Math.atan2(dx,dz)-n.g.rotation.y)*Math.min(1,dt*6)}
   n.cs+=(mv-n.cs)*Math.min(1,dt*6);anim(n.h,n.cs,false,dt);
-  if(drv&&Math.abs(spd)>5&&Math.hypot(px,pz)<2.5){toast('Careful! You hit a pedestrian.');spd*=.3;n.pause=3}}
+  if(drv&&Math.abs(spd)>5&&Math.hypot(px,pz)<2.5&&performance.now()>(n.hitUntil||0)){n.hitUntil=performance.now()+1800;toast('Careful! You hit a pedestrian.');spd*=.3;n.pause=3}}
  if(MS){const q=MS.st?MS.b:MS.a;mk.position.set(q.x,20,q.z);if(Math.hypot(q.x-me.position.x,q.z-me.position.z)<5){if(!MS.st){MS.st=1;toast('Package picked up!')}else{S.money+=MS.pay;S.sk.ride=(S.sk.ride||0)+5;toast('Delivered! +GH₵'+MS.pay);scene.remove(mk);MS=null}objU()}}
  if(ci&&ci.s=='on'){const e=$('ct');if(e)e.textContent=Math.floor((Date.now()-cstart)/1000)+'s'}
  for(const o of others.values()){const g=o.g,ox=g.position.x,oz=g.position.z;g.position.x+=(o.tx-g.position.x)*Math.min(1,dt*10);g.position.z+=(o.tz-g.position.z)*Math.min(1,dt*10);const ds=Math.hypot(g.position.x-ox,g.position.z-oz)/Math.max(dt,.001);o.sp=(o.sp||0)*.8+ds*.2;g.rotation.y+=wa(o.ry-g.rotation.y)*Math.min(1,dt*10);if(!o.drv&&g.userData.h){if(o.ps)applyPose(g.userData.h,o.ps,o.sy);else{g.userData.h.rotation.x=0;g.userData.h.position.y=0;if(o.em&&o.sp<.4&&!o.air&&(o.et=(o.et||0)+dt)<12)applyEmote(g.userData.h,o.em,o.et);else anim(g.userData.h,o.sp>.4?o.sp:0,o.air,dt)}}g.userData.parts.forEach(p=>p.visible=!o.drv);g.userData.car.visible=!!o.drv;drawTag(g.userData.tag,o.name,now-o.sat<6000?o.say:'')}
