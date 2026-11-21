@@ -5,7 +5,7 @@
 (function () {
   try {
     const B = BABYLON;
-    const C = { x: -420, z: -300 };                         // airport centre, west of the city
+    const C = window.ACCRA_MAP ? window.ACCRA_MAP.places.airport : { x: 200, z: -500 };                         // airport centre, west of the city
     const X = x => C.x + x, Z = z => C.z + z;
     const cars = [];                                         // moving vehicles, updated every frame
 
@@ -117,8 +117,8 @@
     [-130, -100, 100, 130].forEach(x => palm(X(x), Z(102)));
 
     // ----- access road: the city avenue (z -150) south to the airport gate -----
-    box(8, .06, 94, -165, .04, -197, "#2b2d31", false);                                       // x -165, z -244..-150
-    box(70, .06, 8, -197.5, .04, -244, "#2b2d31", false);                                     // z -244, x -230..-165
+    box(12, .06, 260, C.x + 200, .04, C.z + 180, "#2b2d31", false);                       // airport gate to the north-south city avenue
+    box(24, .06, 12, C.x + 200, .04, C.z + 50, "#2b2d31", false);                         // short gate connector
 
     // ----- moving traffic -----
     // closed loop along the drop-off road: east on one lane, west on the other, so nothing drives head-on
