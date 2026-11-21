@@ -121,7 +121,7 @@
     let packet;try{packet=JSON.parse(event.data)}catch(e){return}
     if(!packet||typeof packet.event!=='string')return;
     if(packet.event==='hello'){
-     authenticated=true;fire('hello',packet.data);
+     authenticated=true;
      pending.forEach((data,name)=>socket.send(JSON.stringify({event:name,data})));pending.clear();
     }
     fire(packet.event,packet.data);
